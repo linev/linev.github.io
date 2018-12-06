@@ -1,0 +1,15 @@
+<core:FragmentDefinition
+	xmlns:core="sap.ui.core"
+	xmlns="sap.m">
+	<ColumnListItem
+		type="{
+			path: 'ProductId',
+			formatter: 'sap.m.sample.SplitApp.Formatter.listItemType'
+		}">
+		<cells>
+			<ObjectIdentifier
+				title="{Name}"
+				text="{ProductId}" />
+		</cells>
+	</ColumnListItem>
+</core:FragmentDefinition>
