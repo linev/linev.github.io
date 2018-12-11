@@ -1,0 +1,381 @@
+MODEL:{
+  "_typename" : "FitPanelModel",
+  "fDataSet" : [{
+    "_typename" : "ComboBoxItem",
+    "fId" : "1",
+    "fSet" : "No Selection"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "2",
+    "fSet" : "TH1F::hpx"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "3",
+    "fSet" : "TH2F::hpxhpy"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "4",
+    "fSet" : "TProfile::hprof"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "5",
+    "fSet" : "TNtuple::ntuple"
+  }],
+  "fSelectDataId" : "2",
+  "fTypeFunc" : [{
+    "_typename" : "ComboBoxItem",
+    "fId" : "0",
+    "fSet" : "Predef-1D"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "1",
+    "fSet" : "User Func"
+  }],
+  "fSelectXYId" : "1",
+  "fMethod" : [{
+    "_typename" : "ComboBoxItem",
+    "fId" : "1",
+    "fSet" : "Chi-square"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "2",
+    "fSet" : "Binned Likelihood"
+  }],
+  "fSelectMethodId" : "1",
+  "fRealFunc" : "",
+  "fOption" : "",
+  "fFuncChange" : "",
+  "fMethodMinAll" : [[{
+    "_typename" : "ComboBoxItem",
+    "fId" : "1",
+    "fSet" : "MIGRAD"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "2",
+    "fSet" : "SIMPLEX"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "3",
+    "fSet" : "SCAN"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "4",
+    "fSet" : "Combination"
+  }], [{
+    "_typename" : "ComboBoxItem",
+    "fId" : "1",
+    "fSet" : "MIGRAD"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "2",
+    "fSet" : "SIMPLEX"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "3",
+    "fSet" : "SCAN"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "4",
+    "fSet" : "Combination"
+  }], [{
+    "_typename" : "ComboBoxItem",
+    "fId" : "1",
+    "fSet" : "FUMILI"
+  }], [], [{
+    "_typename" : "ComboBoxItem",
+    "fId" : "1",
+    "fSet" : "TMVA Genetic Algorithm"
+  }]],
+  "fTypeXYAll" : [[{
+    "_typename" : "ComboBoxItem",
+    "fId" : "1",
+    "fSet" : "gaus"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "2",
+    "fSet" : "gausn"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "3",
+    "fSet" : "expo"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "4",
+    "fSet" : "landau"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "5",
+    "fSet" : "landaun"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "6",
+    "fSet" : "pol0"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "7",
+    "fSet" : "pol1"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "8",
+    "fSet" : "pol2"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "9",
+    "fSet" : "pol3"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "10",
+    "fSet" : "pol4"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "11",
+    "fSet" : "pol5"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "12",
+    "fSet" : "pol6"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "13",
+    "fSet" : "pol7"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "14",
+    "fSet" : "pol8"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "15",
+    "fSet" : "pol9"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "16",
+    "fSet" : "cheb0"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "17",
+    "fSet" : "cheb1"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "18",
+    "fSet" : "cheb2"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "19",
+    "fSet" : "cheb3"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "20",
+    "fSet" : "cheb4"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "21",
+    "fSet" : "cheb5"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "22",
+    "fSet" : "cheb6"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "23",
+    "fSet" : "cheb7"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "24",
+    "fSet" : "cheb8"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "25",
+    "fSet" : "cheb9"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "26",
+    "fSet" : "user"
+  }], [{
+    "_typename" : "ComboBoxItem",
+    "fId" : "1",
+    "fSet" : "chebyshev0"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "2",
+    "fSet" : "chebyshev1"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "3",
+    "fSet" : "chebyshev2"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "4",
+    "fSet" : "chebyshev3"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "5",
+    "fSet" : "chebyshev4"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "6",
+    "fSet" : "chebyshev5"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "7",
+    "fSet" : "chebyshev6"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "8",
+    "fSet" : "chebyshev7"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "9",
+    "fSet" : "chebyshev8"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "10",
+    "fSet" : "chebyshev9"
+  }]],
+  "fMethodMin" : [{
+    "_typename" : "ComboBoxItem",
+    "fId" : "1",
+    "fSet" : "MIGRAD"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "2",
+    "fSet" : "SIMPLEX"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "3",
+    "fSet" : "SCAN"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "4",
+    "fSet" : "Combination"
+  }],
+  "fTypeXY" : [{
+    "_typename" : "ComboBoxItem",
+    "fId" : "1",
+    "fSet" : "gaus"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "2",
+    "fSet" : "gausn"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "3",
+    "fSet" : "expo"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "4",
+    "fSet" : "landau"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "5",
+    "fSet" : "landaun"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "6",
+    "fSet" : "pol0"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "7",
+    "fSet" : "pol1"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "8",
+    "fSet" : "pol2"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "9",
+    "fSet" : "pol3"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "10",
+    "fSet" : "pol4"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "11",
+    "fSet" : "pol5"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "12",
+    "fSet" : "pol6"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "13",
+    "fSet" : "pol7"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "14",
+    "fSet" : "pol8"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "15",
+    "fSet" : "pol9"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "16",
+    "fSet" : "cheb0"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "17",
+    "fSet" : "cheb1"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "18",
+    "fSet" : "cheb2"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "19",
+    "fSet" : "cheb3"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "20",
+    "fSet" : "cheb4"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "21",
+    "fSet" : "cheb5"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "22",
+    "fSet" : "cheb6"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "23",
+    "fSet" : "cheb7"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "24",
+    "fSet" : "cheb8"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "25",
+    "fSet" : "cheb9"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "26",
+    "fSet" : "user"
+  }],
+  "fSelectTypeId" : "0",
+  "fSelectMethodMinId" : "1",
+  "fMinRange" : -4,
+  "fMaxRange" : 4,
+  "fStep" : 0.08,
+  "fRange" : [-4, 4],
+  "fOperation" : 0,
+  "fFitOptions" : 3,
+  "fLinear" : false,
+  "fRobust" : false,
+  "fLibrary" : 0,
+  "fPrint" : 0,
+  "fTypeId" : 0,
+  "fFuncChangeInt" : 0,
+  "fIntegral" : false,
+  "fBestErrors" : false,
+  "fWeights" : false,
+  "fBins" : false,
+  "fUseRange" : false,
+  "fImproveFit" : false,
+  "fAddList" : false,
+  "fUseGradient" : false,
+  "fSame" : false,
+  "fNoDrawing" : false,
+  "fNoStore" : false
+}
