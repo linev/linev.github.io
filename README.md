@@ -7,3 +7,5 @@ These are different test web pages with use of OpenUI
 [Tree-based example](UI-Tree/index.html)
 
 [FitPanel snapshot](fitPanel/panel.htm)
+
+[Eve7 demo](eve7/index.html)  [Only WebGL](eve7/index.html?view=Default)
