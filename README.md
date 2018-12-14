@@ -8,4 +8,5 @@ These are different test web pages with use of OpenUI
 
 [FitPanel snapshot](fitPanel/panel.htm)
 
-[Eve7 demo](eve7/index.html)  [Only WebGL](eve7/index.html?view=Default)
+[Eve7 demo](eve7/index.html)  
+[Only WebGL in Eve7](eve7/index.html?view=Default)
