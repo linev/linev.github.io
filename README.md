@@ -2,11 +2,14 @@
 
 These are different test web pages with use of OpenUI
 
-[Table-based example](UI-Table/index.html)
+[Table-based example](UI-Table/)
 
-[Tree-based example](UI-Tree/index.html)
+[Tree-based example](UI-Tree/)
 
-[FitPanel snapshot](fitPanel/panel.htm)
+[FitPanel snapshot](fitPanel/)
 
-[Eve7 demo](eve7/index.html)  
-[Only WebGL in Eve7](eve7/index.html?view=Default)
+[Eve7 demo](eve7/) 
+ 
+[Only WebGL in Eve7](eve7/?view=Default)
+
+[Geometry viewer](geomCMS/)
