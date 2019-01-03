@@ -226,27 +226,12 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
             this.geomControl.assignClones(this.clones, this.descr.fDrawOptions);
             
          } else if (msg.indexOf("DRAW:") == 0) {
-            this.draw_msg = JSROOT.parse(msg.substr(5));
+            this.last_draw_msg = this.draw_msg = JSROOT.parse(msg.substr(5));
          }
       },
       
-      /// check if tree node should be created
-      /// func() should return 
-      checkTreeNode: function(indx, func) {
-         var node = this.clones.nodes[indx];
-         if (func(node)) return true;
-
-         if (node.chlds)
-            for (var k=0;k<node.chlds.length;++k)
-               if (this.checkTreeNode(node.chlds[k], func)) return true;
-         
-         return false;
-         
-      },
       
-      buildTreeNode: function(indx, func) {
-         if (func && !this.checkTreeNode(indx,func)) return null;
-
+      buildTreeNode: function(indx) {
          var tnode = this.tree_nodes[indx];
          if (tnode) return tnode;
 
@@ -257,16 +242,31 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          
          if (node.chlds) {
             tnode.chlds = [];
-            for (var k=0;k<node.chlds.length;++k) {
-               var chld = this.buildTreeNode(node.chlds[k], func);
-               if (chld) tnode.chlds.push(chld);
-            }
-            
-            if (tnode.chlds.length == 0)
-               delete tnode.chlds;
+            for (var k=0;k<node.chlds.length;++k) 
+               tnode.chlds.push(this.buildTreeNode(node.chlds[k]));
          }
          
          return tnode;
+      },
+      
+      appendStackToTree: function(stack) {
+         var prnt = null, node = null;
+         for (var i=-1;i<stack.length;++i) {
+            var indx = (i<0) ? 0 : node.chlds[stack[i]];
+            node = this.clones.nodes[indx];
+            var tnode = this.tree_nodes[indx];
+            if (!tnode) {
+               this.tree_nodes[indx] = tnode = { title: node.name };
+               this.tree_cnt++;
+            }
+            
+            if (prnt) {
+               if (!prnt.chlds) prnt.chlds = [];
+               if (prnt.chlds.indexOf(tnode) < 0)
+                  prnt.chlds.push(tnode);
+            }
+            prnt = tnode;
+         }
       },
       
       buildTree: function() {
@@ -282,26 +282,36 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          this.model.refresh();
       },
       
-      selectTree: function(func) {
-         if (!this.originalNodes) return;
+      /// try to select only from visisble nodes - no need for server 
+      selectDrawn: function(func) {
+         if (!this.originalNodes || !this.last_draw_msg) return;
 
-         if (!func) {
-            this.data.Nodes = this.originalNodes;
-         } else {
-            this.tree_cnt = 0;
-            this.tree_nodes = [];
-            this.data.Nodes = [ this.buildTreeNode(0, func) ];
+         this.tree_nodes = [];
+         this.tree_cnt = 0;
+         
+         for (var k=0;k<this.last_draw_msg.length;++k) {
+            var item = this.last_draw_msg[k];
+            
+            var res = this.clones.ResolveStack(item.stack);
+            
+            if (func(res.node)) {
+               // console.log("Match stack", item.stack);
+               this.appendStackToTree(item.stack); 
+            }
          }
          
-         if (!func || (this.tree_cnt > 99))
-            this.byId("treeTable").collapseAll();
+         if (this.tree_cnt == 0) {
+            this.data.Nodes = null;
+            this.model.refresh();
+         } else {
+         
+            this.data.Nodes = [ this.tree_nodes[0] ];
 
-         this.model.refresh();
+            this.model.refresh();
          
-         console.log('counter', this.tree_cnt);
-         
-         if (func && (this.tree_cnt < 100))
-            this.byId("treeTable").expandToLevel(99);
+            if (this.tree_cnt < 100)
+               this.byId("treeTable").expandToLevel(99);
+         }
       },
 
       OnWebsocketClosed: function() {
@@ -333,15 +343,15 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
       
       onSearch : function(oEvt) {
          var query = oEvt.getSource().getValue(), func = null;
-         if (query)
-            func = function(node) {
-               if (!node || !node.name) return false;
+         if (query) {
+            this.selectDrawn(function(node) {
                return node.name.indexOf(query)==0;
-            }
-
-         console.log('Got query', query);
-         
-         this.selectTree(func);
+            });
+         } else {
+            this.data.Nodes = this.originalNodes || null;
+            this.model.refresh();
+            this.byId("treeTable").expandToLevel(1);
+         }
       }
    });
 });
