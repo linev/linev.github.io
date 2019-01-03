@@ -125,7 +125,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
             if (this.draw_msg) {
                // here we should decode render data
                
-               console.log('DRAWING cnt:', this.draw_msg.length, "BYNARY", msg.byteLength, offset);
+               console.log('DRAWING cnt:', this.draw_msg.length, "BINARY", msg.byteLength, offset);
                
                var rnr_cache = {};
                
@@ -230,17 +230,40 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          }
       },
       
-      buildTreeNode: function(indx) {
+      /// check if tree node should be created
+      /// func() should return 
+      checkTreeNode: function(indx, func) {
+         var node = this.clones.nodes[indx];
+         if (func(node)) return true;
+
+         if (node.chlds)
+            for (var k=0;k<node.chlds.length;++k)
+               if (this.checkTreeNode(node.chlds[k], func)) return true;
+         
+         return false;
+         
+      },
+      
+      buildTreeNode: function(indx, func) {
+         if (func && !this.checkTreeNode(indx,func)) return null;
+
          var tnode = this.tree_nodes[indx];
          if (tnode) return tnode;
+
          var node = this.clones.nodes[indx];
          
          this.tree_nodes[indx] = tnode = { title: node.name };
+         this.tree_cnt++;
          
          if (node.chlds) {
             tnode.chlds = [];
-            for (var k=0;k<node.chlds.length;++k)
-               tnode.chlds.push(this.buildTreeNode(node.chlds[k]));
+            for (var k=0;k<node.chlds.length;++k) {
+               var chld = this.buildTreeNode(node.chlds[k], func);
+               if (chld) tnode.chlds.push(chld);
+            }
+            
+            if (tnode.chlds.length == 0)
+               delete tnode.chlds;
          }
          
          return tnode;
@@ -250,10 +273,35 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          if (!this.descr || !this.descr.fDesc) return;
          
          this.tree_nodes = [];
+         this.tree_cnt = 0;
          
          this.data.Nodes = [ this.buildTreeNode(0) ];
          
+         this.originalNodes = this.data.Nodes; 
+         
          this.model.refresh();
+      },
+      
+      selectTree: function(func) {
+         if (!this.originalNodes) return;
+
+         if (!func) {
+            this.data.Nodes = this.originalNodes;
+         } else {
+            this.tree_cnt = 0;
+            this.tree_nodes = [];
+            this.data.Nodes = [ this.buildTreeNode(0, func) ];
+         }
+         
+         if (!func || (this.tree_cnt > 99))
+            this.byId("treeTable").collapseAll();
+
+         this.model.refresh();
+         
+         console.log('counter', this.tree_cnt);
+         
+         if (func && (this.tree_cnt < 100))
+            this.byId("treeTable").expandToLevel(99);
       },
 
       OnWebsocketClosed: function() {
@@ -284,8 +332,16 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
       },
       
       onSearch : function(oEvt) {
-         var query = oEvt.getSource().getValue();
+         var query = oEvt.getSource().getValue(), func = null;
+         if (query)
+            func = function(node) {
+               if (!node || !node.name) return false;
+               return node.name.indexOf(query)==0;
+            }
+
          console.log('Got query', query);
+         
+         this.selectTree(func);
       }
    });
 });
