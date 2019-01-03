@@ -281,6 +281,11 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
       
       showUserURL : function(oEvent) {
          sap.m.URLHelper.redirect("https://github.com/alja/jsroot/blob/dev/eve7.md", true);
+      },
+      
+      onSearch : function(oEvt) {
+         var query = oEvt.getSource().getValue();
+         console.log('Got query', query);
       }
    });
 });
