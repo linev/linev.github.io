@@ -377,6 +377,10 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
             this.data.Nodes = this.originalNodes || null;
             this.model.refresh();
             this.byId("treeTable").expandToLevel(1);
+            
+            
+            if (this.geomControl && this.geomControl.geo_painter)
+               this.geomControl.geo_painter.changeGlobalTransparency();
          }
       }
    });
