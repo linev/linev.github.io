@@ -230,7 +230,6 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          }
       },
       
-      
       buildTreeNode: function(indx) {
          var tnode = this.tree_nodes[indx];
          if (tnode) return tnode;
@@ -238,7 +237,6 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          var node = this.clones.nodes[indx];
          
          this.tree_nodes[indx] = tnode = { title: node.name };
-         this.tree_cnt++;
          
          if (node.chlds) {
             tnode.chlds = [];
@@ -249,6 +247,8 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          return tnode;
       },
       
+      // here try to append only given stack to the tree
+      // used to build partial tree with visible objects
       appendStackToTree: function(stack) {
          var prnt = null, node = null;
          for (var i=-1;i<stack.length;++i) {
@@ -257,7 +257,6 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
             var tnode = this.tree_nodes[indx];
             if (!tnode) {
                this.tree_nodes[indx] = tnode = { title: node.name };
-               this.tree_cnt++;
             }
             
             if (prnt) {
@@ -273,7 +272,6 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          if (!this.descr || !this.descr.fDesc) return;
          
          this.tree_nodes = [];
-         this.tree_cnt = 0;
          
          this.data.Nodes = [ this.buildTreeNode(0) ];
          
@@ -287,7 +285,9 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          if (!this.originalNodes || !this.last_draw_msg) return;
 
          this.tree_nodes = [];
-         this.tree_cnt = 0;
+         
+         var nmatch = 0;
+         var matches = [];
          
          for (var k=0;k<this.last_draw_msg.length;++k) {
             var item = this.last_draw_msg[k];
@@ -295,12 +295,13 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
             var res = this.clones.ResolveStack(item.stack);
             
             if (func(res.node)) {
-               // console.log("Match stack", item.stack);
+               nmatch++;
+               matches.push(item.stack);
                this.appendStackToTree(item.stack); 
             }
          }
          
-         if (this.tree_cnt == 0) {
+         if (nmatch == 0) {
             this.data.Nodes = null;
             this.model.refresh();
          } else {
@@ -309,9 +310,33 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
 
             this.model.refresh();
          
-            if (this.tree_cnt < 100)
+            if (nmatch < 100)
                this.byId("treeTable").expandToLevel(99);
          }
+         
+         if (this.geomControl && this.geomControl.geo_painter) {
+            var p = this.geomControl.geo_painter; 
+            if ((nmatch>0) && (nmatch<100)) { 
+               var dflt = Math.max(p.options.transparency,0.98);
+               p.changeGlobalTransparency(function(node) {
+                  if (node.stack) 
+                     for (var n=0;n<matches.length;++n)
+                        if (node.stack.length == matches[n].length) {
+                           var same = true, test = matches[n];
+                           for (var k=0;k<test.length;++k) {
+                              if (node.stack[k] != test[k]) { 
+                                 same = false; break;
+                              }
+                           }
+                           if (same) return 0.;
+                        }
+                  return dflt;
+               });
+            } else {
+               p.changeGlobalTransparency();
+            }
+         }
+         
       },
 
       OnWebsocketClosed: function() {
@@ -348,6 +373,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
                return node.name.indexOf(query)==0;
             });
          } else {
+            this.byId("treeTable").collapseAll();
             this.data.Nodes = this.originalNodes || null;
             this.model.refresh();
             this.byId("treeTable").expandToLevel(1);
