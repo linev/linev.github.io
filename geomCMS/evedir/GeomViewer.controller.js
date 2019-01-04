@@ -117,6 +117,32 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          this.getView().byId("mainSplitter").addContentArea(this.geomControl);
       },
       
+      assignTableEvents: function() {
+         var oTable = this.getView().byId("treeTable");
+         var $Rows = oTable.$().find(".sapUiTableTr");
+         var pthis = this;
+         
+         $Rows.hover(function() {
+            pthis.onRowHover(oTable, $Rows.index(this), true);
+         }, function() {
+            pthis.onRowHover(oTable, $Rows.index(this), false);
+         });
+      },
+      
+      onRowHover: function(table, index, is_enter) {
+         var row = table.getRows()[index];
+         if (!row) return;
+
+         var ctxt = row.getBindingContext();
+         
+         if (!ctxt) return;
+         var path = ctxt.getPath(),
+             ttt = row.getBindingContext().getProperty(path);
+         
+         console.log('ROW path', path, 'title', ttt.title, 'has_drawing', ttt.has_drawing);
+      },
+      
+      
       /** Called when data comes via the websocket */
       OnWebsocketMsg: function(handle, msg, offset) {
 
@@ -236,7 +262,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
 
          var node = this.clones.nodes[indx];
          
-         this.tree_nodes[indx] = tnode = { title: node.name };
+         this.tree_nodes[indx] = tnode = { title: node.name, id: indx };
          
          if (node.chlds) {
             tnode.chlds = [];
@@ -256,7 +282,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
             node = this.clones.nodes[indx];
             var tnode = this.tree_nodes[indx];
             if (!tnode) {
-               this.tree_nodes[indx] = tnode = { title: node.name };
+               this.tree_nodes[indx] = tnode = { title: node.name, id: indx };
             }
             
             if (prnt) {
@@ -266,6 +292,8 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
             }
             prnt = tnode;
          }
+         
+         prnt.has_drawing = true;
       },
       
       buildTree: function() {
@@ -278,6 +306,8 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          this.originalNodes = this.data.Nodes; 
          
          this.model.refresh();
+         
+         this.assignTableEvents();
       },
       
       /// try to select only from visisble nodes - no need for server 
@@ -346,6 +376,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
       },
       
       onAfterRendering: function(){
+         console.log('on After Rendering');
       },
 
       onToolsMenuAction : function (oEvent) {
@@ -377,9 +408,10 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
             this.model.refresh();
             this.byId("treeTable").expandToLevel(1);
             
-            
             if (this.geomControl && this.geomControl.geo_painter)
                this.geomControl.geo_painter.changeGlobalTransparency();
+            
+            this.assignTableEvents();
          }
       }
    });
