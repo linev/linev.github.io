@@ -142,7 +142,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          
          if (ttt.has_drawing) {
             var stack = is_enter ? this.getRowStack(row) : null;
-            this.geomControl.geo_painter.HighlightMesh(null,0x00ff00,null,stack);
+            this.geomControl.geo_painter.HighlightMesh(null,0x00ff00,null,stack,true);
          }
       },
       
@@ -167,6 +167,21 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          }
          
          return this.geomControl.geo_clones.MakeStackByIds(ids);
+      },
+      
+      HighlightMesh: function(active_mesh, color, geo_object, geo_stack) {
+         if (this.last_geo_stack === geo_stack) return;
+         
+         this.last_geo_stack = geo_stack;
+         
+         var rows = this.getView().byId("treeTable").getRows();
+         
+         for (var i=0;i<rows.length;++i) {
+            var col = "";
+            if (geo_stack && JSROOT.GEO.IsSameStack(this.getRowStack(rows[i]), geo_stack))
+               col = "yellow";
+            rows[i].$().css("background-color", col);
+         }
       },
       
       /** Called when data comes via the websocket */
@@ -394,9 +409,14 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          if (window) window.close();
       },
       
-      onAfterRendering: function(){
+      onAfterRendering: function() {
+         
+         if (this.geomControl && this.geomControl.geo_painter)
+            this.geomControl.geo_painter.AddHighlightHandler(this);
+         
          console.log('on After Rendering');
       },
+      
 
       onToolsMenuAction : function (oEvent) {
 
