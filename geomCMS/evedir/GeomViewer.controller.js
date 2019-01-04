@@ -108,6 +108,11 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          this.geomControl = new eve.GeomDraw({color:"#f00"});
          
          this.creator = new JSROOT.EVE.EveElements();
+
+         // catch re-rendering of the table to assign handlers 
+         this.getView().byId("treeTable").addEventDelegate({
+            onAfterRendering: function() { this.assignRowHandlers(); }
+         }, this);
          
          //myControl.placeAt("content");
 
@@ -117,28 +122,18 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          this.getView().byId("mainSplitter").addContentArea(this.geomControl);
       },
       
-      assignTableEvents: function() {
-         var oTable = this.getView().byId("treeTable");
-         var $Rows = oTable.$().find(".sapUiTableTr");
-         var pthis = this;
-         
-         $Rows.hover(function() {
-            pthis.onRowHover(oTable, $Rows.index(this), true);
-         }, function() {
-            pthis.onRowHover(oTable, $Rows.index(this), false);
-         });
+      assignRowHandlers: function() {
+         var rows = this.getView().byId("treeTable").getRows();
+         for (var k=0;k<rows.length;++k) {
+            rows[k].$().hover(this.onRowHover.bind(this, rows[k], true), this.onRowHover.bind(this, rows[k], false));
+         }
       },
       
-      onRowHover: function(table, index, is_enter) {
-         var row = table.getRows()[index];
-         if (!row) return;
-
+      onRowHover: function(row, is_enter) {
          var ctxt = row.getBindingContext();
          if (!ctxt) return;
          var path = ctxt.getPath(),
              ttt = row.getBindingContext().getProperty(path);
-         
-         // console.log('ROW path', path, 'title', ttt.title, 'has_drawing', ttt.has_drawing);
          
          if (ttt.has_drawing) {
             var stack = is_enter ? this.getRowStack(row) : null;
@@ -347,8 +342,6 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          this.originalNodes = this.data.Nodes; 
          
          this.model.refresh();
-         
-         this.assignTableEvents();
       },
       
       /// try to select only from visisble nodes - no need for server 
@@ -449,8 +442,6 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
             
             if (this.geomControl && this.geomControl.geo_painter)
                this.geomControl.geo_painter.changeGlobalTransparency();
-            
-            this.assignTableEvents();
          }
       }
    });
