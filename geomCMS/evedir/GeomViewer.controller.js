@@ -286,8 +286,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
 
          this.tree_nodes = [];
          
-         var nmatch = 0;
-         var matches = [];
+         var nmatch = 0, matches = [];
          
          for (var k=0;k<this.last_draw_msg.length;++k) {
             var item = this.last_draw_msg[k];
@@ -317,7 +316,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          if (this.geomControl && this.geomControl.geo_painter) {
             var p = this.geomControl.geo_painter; 
             if ((nmatch>0) && (nmatch<100)) { 
-               var dflt = Math.max(p.options.transparency,0.98);
+               var dflt = Math.max(p.options.transparency, 0.98);
                p.changeGlobalTransparency(function(node) {
                   if (node.stack) 
                      for (var n=0;n<matches.length;++n)
