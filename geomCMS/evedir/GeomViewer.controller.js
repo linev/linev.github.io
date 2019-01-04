@@ -46,7 +46,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          this.geo_painter = JSROOT.Painter.CreateGeoPainter(this.getDomRef(), null, this.draw_options);
          
          if (this.geo_clones) 
-            this.geo_painter.assignClones(clones);
+            this.geo_painter.assignClones(this.geo_clones);
          
          if (this.geo_visisble) {
             this.geo_painter.prepareObjectDraw(this.geo_visisble,"__geom_viewer_selection__");
@@ -55,13 +55,13 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
       },
       
       assignClones: function(clones, drawopt) {
+         this.geo_clones = clones;
+         this.draw_options = drawopt;
+
          if (this.geo_painter) {
             this.geo_painter.options = this.geo_painter.decodeOptions(drawopt);
             this.geo_painter.assignClones(clones);
-         } else {
-            this.geo_clones = clones;
-            this.draw_options = drawopt;
-         }
+         } 
       },
       
       startDrawing: function(visible) {
@@ -134,14 +134,40 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          if (!row) return;
 
          var ctxt = row.getBindingContext();
-         
          if (!ctxt) return;
          var path = ctxt.getPath(),
              ttt = row.getBindingContext().getProperty(path);
          
-         console.log('ROW path', path, 'title', ttt.title, 'has_drawing', ttt.has_drawing);
+         // console.log('ROW path', path, 'title', ttt.title, 'has_drawing', ttt.has_drawing);
+         
+         if (ttt.has_drawing) {
+            var stack = is_enter ? this.getRowStack(row) : null;
+            this.geomControl.geo_painter.HighlightMesh(null,0x00ff00,null,stack);
+         }
       },
       
+      /** try to produce stack out of row path */
+      getRowStack: function(row) {
+         var ctxt = row.getBindingContext();
+         if (!ctxt) return;
+         
+         var path = ctxt.getPath(), lastpos = 0, ids = [];
+         
+         while (lastpos>=0) {
+            lastpos = path.indexOf("/chlds", lastpos+1);
+            
+            var ttt = ctxt.getProperty(path.substr(0,lastpos));
+            
+            if (!ttt || (ttt.id===undefined)) {
+               console.error('Fail to extract node id for path ', path.substr(0,lastpos));
+               return null;
+            }
+            
+            ids.push(ttt.id);
+         }
+         
+         return this.geomControl.geo_clones.MakeStackByIds(ids);
+      },
       
       /** Called when data comes via the websocket */
       OnWebsocketMsg: function(handle, msg, offset) {
@@ -350,15 +376,8 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
                p.changeGlobalTransparency(function(node) {
                   if (node.stack) 
                      for (var n=0;n<matches.length;++n)
-                        if (node.stack.length == matches[n].length) {
-                           var same = true, test = matches[n];
-                           for (var k=0;k<test.length;++k) {
-                              if (node.stack[k] != test[k]) { 
-                                 same = false; break;
-                              }
-                           }
-                           if (same) return 0.;
-                        }
+                        if (JSROOT.GEO.IsSameStack(node.stack, matches[n]))
+                           return 0;
                   return dflt;
                });
             } else {
