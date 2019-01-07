@@ -11,7 +11,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
 
       // the control API:
       metadata : {
-         properties : {           // setter and getter are created behind the scenes, incl. data binding and type validation
+         properties : { // setter and getter are created behind the scenes, incl. data binding and type validation
             "color" : { type: "sap.ui.core.CSSColor", defaultValue: "#fff" } // you can give a default value and more
          }
       },
@@ -21,11 +21,11 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          oRm.write("<div"); 
          oRm.writeControlData(oControl);  // writes the Control ID and enables event handling - important!
          // oRm.addStyle("background-color", oControl.getColor());  // write the color property; UI5 has validated it to be a valid CSS color
-         oRm.addStyle("width", "100%");  // write the color property; UI5 has validated it to be a valid CSS color
-         oRm.addStyle("height", "100%");  // write the color property; UI5 has validated it to be a valid CSS color
-         oRm.addStyle("overflow", "hidden");  // write the color property; UI5 has validated it to be a valid CSS color
+         oRm.addStyle("width", "100%");  
+         oRm.addStyle("height", "100%");  
+         oRm.addStyle("overflow", "hidden");  
          oRm.writeStyles();
-         oRm.addClass("myColorBox");      // add a CSS class for styles common to all control instances
+         //oRm.addClass("myColorBox");      // add a CSS class for styles common to all control instances
          oRm.writeClasses();              // this call writes the above class plus enables support for Square.addStyleClass(...)
          oRm.write(">"); 
          oRm.write("</div>"); // no text content to render; close the tag
@@ -80,11 +80,6 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          delete this.resize_tmout;
          if (this.geo_painter)
             this.geo_painter.CheckResize();
-      },
-
-      handleChange: function (oEvent) {
-         // var newColor = oEvent.getParameter("colorString");
-         // this.setColor(newColor);
       }
    });
 
@@ -130,21 +125,16 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
       },
       
       onRowHover: function(row, is_enter) {
-         var ctxt = row.getBindingContext();
-         if (!ctxt) return;
-         var path = ctxt.getPath(),
-             ttt = row.getBindingContext().getProperty(path);
+         // create stack and try highlight it if exists
+         var stack = is_enter ? this.getRowStack(row) : null;
          
-         if (ttt.has_drawing) {
-            var stack = is_enter ? this.getRowStack(row) : null;
-            this.geomControl.geo_painter.HighlightMesh(null,0x00ff00,null,stack,true);
-         }
+         this.geomControl.geo_painter.HighlightMesh(null, 0x00ff00, null, stack, true);
       },
       
       /** try to produce stack out of row path */
       getRowStack: function(row) {
          var ctxt = row.getBindingContext();
-         if (!ctxt) return;
+         if (!ctxt) return null;
          
          var path = ctxt.getPath(), lastpos = 0, ids = [];
          
@@ -289,6 +279,13 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
             
          } else if (msg.indexOf("DRAW:") == 0) {
             this.last_draw_msg = this.draw_msg = JSROOT.parse(msg.substr(5));
+         } else if (msg == "NOFOUND") {
+            this.waiting_search = false;
+            this.showFoundNodes([]); // show nofound
+            
+         } else if (msg.indexOf("FOUND:") == 0) {
+            this.found_msg = JSROOT.parse(msg.substr(6));
+            // next binary message is awaited
          }
       },
       
@@ -344,47 +341,56 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          this.model.refresh();
       },
       
-      /// try to select only from visisble nodes - no need for server 
-      selectDrawn: function(func) {
-         if (!this.originalNodes || !this.last_draw_msg) return;
-
-         this.tree_nodes = [];
+      /** search main drawn nodes for matches */ 
+      findMatchesFromDraw: function(func) {
+         var matches = [];
          
-         var nmatch = 0, matches = [];
-         
-         for (var k=0;k<this.last_draw_msg.length;++k) {
-            var item = this.last_draw_msg[k];
-            
-            var res = this.clones.ResolveStack(item.stack);
-            
-            if (func(res.node)) {
-               nmatch++;
-               matches.push(item.stack);
-               this.appendStackToTree(item.stack); 
+         if (this.last_draw_msg) 
+            for (var k=0;k<this.last_draw_msg.length;++k) {
+               var item = this.last_draw_msg[k];
+               var res = this.clones.ResolveStack(item.stack);
+               if (func(res.node)) 
+                  matches.push({ stack: item.stack });
             }
+         
+         return matches;
+      },
+      
+      /** try to select only from visisble nodes - no need for server */ 
+      showFoundNodes: function(matches) {
+         // fully reset search selection
+         if ((matches === null) || (matches === undefined)) {
+            this.byId("treeTable").collapseAll();
+            this.data.Nodes = this.originalNodes || null;
+            this.model.refresh();
+            this.byId("treeTable").expandToLevel(1);
+            
+            if (this.geomControl && this.geomControl.geo_painter)
+               this.geomControl.geo_painter.changeGlobalTransparency();
+            return;
          }
          
-         if (nmatch == 0) {
+         if (!matches || (matches.length == 0)) {
             this.data.Nodes = null;
             this.model.refresh();
          } else {
-         
+            this.tree_nodes = [];
+            for (var k=0;k<matches.length;++k) 
+               this.appendStackToTree(matches[k].stack);
             this.data.Nodes = [ this.tree_nodes[0] ];
-
             this.model.refresh();
-         
-            if (nmatch < 100)
+            if (matches.length < 100)
                this.byId("treeTable").expandToLevel(99);
          }
          
          if (this.geomControl && this.geomControl.geo_painter) {
             var p = this.geomControl.geo_painter; 
-            if ((nmatch>0) && (nmatch<100)) { 
+            if ((matches.length>0) && (matches.length<100)) { 
                var dflt = Math.max(p.options.transparency, 0.98);
                p.changeGlobalTransparency(function(node) {
                   if (node.stack) 
                      for (var n=0;n<matches.length;++n)
-                        if (JSROOT.GEO.IsSameStack(node.stack, matches[n]))
+                        if (JSROOT.GEO.IsSameStack(node.stack, matches[n].stack))
                            return 0;
                   return dflt;
                });
@@ -392,7 +398,6 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
                p.changeGlobalTransparency();
             }
          }
-         
       },
 
       OnWebsocketClosed: function() {
@@ -403,11 +408,8 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
       },
       
       onAfterRendering: function() {
-         
          if (this.geomControl && this.geomControl.geo_painter)
             this.geomControl.geo_painter.AddHighlightHandler(this);
-         
-         console.log('on After Rendering');
       },
       
 
@@ -428,20 +430,41 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          sap.m.URLHelper.redirect("https://github.com/alja/jsroot/blob/dev/eve7.md", true);
       },
       
+      /** Submit node search query to server */ 
+      submitSearchQuery: function(query, from_handler) {
+         
+         if (!from_handler) {
+            // do not submit immediately, but after very short timeout
+            // if user types very fast - only last selection will be shown
+            if (this.search_handler) clearTimeout(this.search_handler);
+            this.search_handler = setTimeout(this.submitSearchQuery.bind(this, query, true), 100);
+            return;
+         }
+         
+         delete this.search_handler;
+         
+         if (this.waiting_search) {
+            // do not submit next search query when prvious not yet proceed
+            this.next_search = query;
+            return;
+         }
+         
+         this.websocket.Send("SEARCH:" + query);
+         this.waiting_search = true;
+      },
+      
       onSearch : function(oEvt) {
-         var query = oEvt.getSource().getValue(), func = null;
-         if (query) {
-            this.selectDrawn(function(node) {
-               return node.name.indexOf(query)==0;
-            });
+         var query = oEvt.getSource().getValue();
+         if (this.websocket.kind != "file") {
+            this.submitSearchQuery(query);
+         } else if (query) {
+            this.showFoundNodes(
+               this.findMatchesFromDraw(function(node) {
+                  return node.name.indexOf(query)==0;
+               })
+            );
          } else {
-            this.byId("treeTable").collapseAll();
-            this.data.Nodes = this.originalNodes || null;
-            this.model.refresh();
-            this.byId("treeTable").expandToLevel(1);
-            
-            if (this.geomControl && this.geomControl.geo_painter)
-               this.geomControl.geo_painter.changeGlobalTransparency();
+            this.showFoundNodes(null);
          }
       }
    });
