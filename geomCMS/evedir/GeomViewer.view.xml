@@ -76,7 +76,7 @@
            <t:columns>
                <t:Column label="Description">
                    <t:template>
-                       <m:Text text="{title}" wrapping="false" />
+                       <m:Text text="{title}" wrapping="false"/>
                    </t:template>
                </t:Column>
            </t:columns>
