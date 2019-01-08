@@ -287,6 +287,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
             }
             
             this.clones = new JSROOT.GEO.ClonedNodes(null, nodes);
+            this.clones.name_prefix = this.clones.GetNodeName(0); 
             
             this.buildTree();
             
@@ -452,8 +453,59 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          }
       },
       
-      activateInTreeTable: function(items, force) {
-         if (force) console.log('activate items', items);
+      /** method called from geom painter when specific node need to be activated in the browser 
+       * Due to complex indexing in TreeTable it is not trivial to select special node */
+      activateInTreeTable: function(itemnames, force) {
+         if (!force || !itemnames) return; 
+            
+         var stack = this.clones.FindStackByName(itemnames[0]);
+         if (!stack) return;
+         
+         function test_match(st) {
+            if (!st || (st.length > stack.length)) return -1;
+            for (var k=0;k<stack.length;++k) {
+               if (k>=st.length) return k;
+               if (stack[k] !== st[k]) return -1; // either stack matches completely or not at all
+            }
+            return stack.length; 
+         }
+         
+         // now start searching items
+         
+         var tt = this.getView().byId("treeTable"),
+             rows = tt.getRows(), best_match = -1, best_row = 0;
+         
+         for (var i=0;i<rows.length;++i) {
+            
+            var rstack = this.getRowStack(rows[i]);
+            var match = test_match(rstack);
+            
+            if (match > best_match) {
+               best_match = match;
+               best_row = rows[i].getIndex();
+            }
+         }
+
+         // start from very beginning
+         if (best_match < 0) {
+            tt.collapseAll();
+            best_match = 0; 
+            best_row = 0;
+         }
+         
+         if (best_match < stack.length) {
+            var ii = best_row;
+            // item should remain as is, but all childs can be below limit
+            tt.expand(ii);
+            
+            while (best_match < stack.length) {
+               ii += stack[best_match++] + 1; // stack is index in child array, can use it here
+               if (ii > tt.getFirstVisibleRow() + tt.getVisibleRowCount()) {
+                  tt.setFirstVisibleRow(Math.max(0, ii - Math.round(tt.getVisibleRowCount()/2)));
+               }
+               tt.expand(ii);
+            }
+         }
       },
 
       onToolsMenuAction : function (oEvent) {
