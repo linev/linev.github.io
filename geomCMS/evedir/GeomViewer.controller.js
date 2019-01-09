@@ -357,6 +357,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
             
          } else if (msg.substr(0,5) == "DRAW:") {
             this.last_draw_msg = this.draw_msg = JSROOT.parse(msg.substr(5));
+            this.setNodesDrawProperties(this.draw_msg);
          } else if (msg.substr(0,6) == "FOUND:") {
             this.processSearchReply(msg, false); 
          } else if (msg.substr(0,6) == "SHAPE:") {
@@ -364,18 +365,18 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          }
       },
       
-      buildTreeNode: function(indx) {
-         var tnode = this.tree_nodes[indx];
+      buildTreeNode: function(cache, indx) {
+         var tnode = cache[indx];
          if (tnode) return tnode;
 
          var node = this.clones.nodes[indx];
          
-         this.tree_nodes[indx] = tnode = { title: node.name, id: indx, color: "white" };
+         cache[indx] = tnode = { title: node.name, id: indx, color: "white" };
          
          if (node.chlds && (node.chlds.length>0)) {
             tnode.chlds = [];
             for (var k=0;k<node.chlds.length;++k) 
-               tnode.chlds.push(this.buildTreeNode(node.chlds[k]));
+               tnode.chlds.push(this.buildTreeNode(cache, node.chlds[k]));
          }
          
          return tnode;
@@ -404,16 +405,29 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          prnt.color = "rgb(" + color + ")";
       },
       
+      /** Build complete tree of all existing nodes. 
+       * Produced structure can be very large, therefore later one should move this functionality to the server */
       buildTree: function() {
          if (!this.descr || !this.descr.fDesc) return;
          
-         this.tree_nodes = [];
-         
-         this.data.Nodes = [ this.buildTreeNode(0) ];
+         this.data.Nodes = [ this.buildTreeNode([], 0) ];
          
          this.originalNodes = this.data.Nodes; 
          
          this.model.refresh();
+      },
+      
+      /** Set draw properties of nodes which are displayed, currently only draw colors */
+      setNodesDrawProperties: function(draw_msg) {
+         if (!this.data.Nodes) return;
+         for (var k=0;k<draw_msg.length;++k) {
+            var item = draw_msg[k];
+            var dnode = this.data.Nodes[0];
+            for (var n=0;n<item.stack.length;++n)
+               dnode = dnode.chlds[item.stack[n]];
+            dnode.color = "rgb(" + item.color + ")";
+         }
+         this.model.refresh(); // refresh browser
       },
       
       /** search main drawn nodes for matches */ 
