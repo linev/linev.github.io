@@ -158,11 +158,13 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          
          var t = this.getView().byId("treeTable");
          
+         var vis_selected_handler = this.visibilitySelected.bind(this);
+         
          t.addColumn(new sap.ui.table.Column({
             label: "Description",
             template: new sap.ui.layout.HorizontalLayout({
                content: [
-                  new mCheckBox({ enabled: false, visible: true }),
+                  new mCheckBox({ enabled: true, visible: true, selected: "{node_visible}", select: vis_selected_handler }), 
                   new eve.ColorBox({color:"{color}", visible: "{color_visible}" }),
                   new mText({text:"{title}", wrapping: false })
                ]
@@ -180,6 +182,20 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          //new my.ColorBox({color:"green"}).placeAt("content");
          
          this.getView().byId("mainSplitter").addContentArea(this.geomControl);
+      },
+      
+      visibilitySelected: function(oEvent) {
+         var ctxt = oEvent.getSource().getBindingContext();
+         console.log('ctxt', ctxt.getPath(), oEvent.getParameter("selected"));
+         
+         var stack = this.getRowStack(oEvent.getSource());
+         if (!stack) return;
+
+         console.log('click stack',stack);
+
+         var msg = "VIS" + (oEvent.getParameter("selected") ? 1 : 0) + ":" + JSON.stringify(stack);
+         
+         this.websocket.Send(msg);
       },
       
       assignRowHandlers: function() {
@@ -234,6 +250,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          return this.geomControl.geo_clones.MakeStackByIds(ids);
       },
       
+      /** Callback from geo painter when mesh object is highlighted. Use for update of TreeTable */
       HighlightMesh: function(active_mesh, color, geo_object, geo_stack) {
          var rows = this.getView().byId("treeTable").getRows();
          
@@ -283,7 +300,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          }
       },
       
-      /** Called when data comes via the websocket */
+      /** Entry point for all data from server */
       OnWebsocketMsg: function(handle, msg, offset) {
 
          if (typeof msg != "string") {
@@ -304,60 +321,17 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
                this.processSearchReply("FOUND:BIN");
                
                delete this.found_msg;
+            } else {
+               console.error('not process binary data', msg ? msg.byteLength : 0)
             }
             
-            // console.log('ArrayBuffer size ',
-            // msg.byteLength, 'offset', offset);
             return;
          }
 
          console.log("msg len=", msg.length, " txt:", msg.substr(0,70), "...");
 
-         // this if first message
-         if (!this.descr) {
-            this.descr = JSROOT.parse(msg);
-            
-            // we need to calculate matrixes here
-            var nodes = this.descr.fDesc;
-            
-            for (var cnt = 0; cnt < nodes.length; ++cnt) {
-               var elem = nodes[cnt];
-               elem.kind = 2; // special element
-               var m = elem.matr;
-               delete elem.matr;
-               if (!m || !m.length) continue;
-               
-               if (m.length == 16) {
-                  elem.matrix = m;
-               } else {
-                  var nm = elem.matrix = new Array(16);
-                  for (var k=0;k<16;++k) nm[k] = 0;
-                  nm[0] = nm[5] = nm[10] = nm[15] = 1;
-               
-                  if (m.length == 3) {
-                     // translation martix
-                     nm[12] = m[0]; nm[13] = m[1]; nm[14] = m[2];
-                  } else if (m.length == 4) {
-                     // scale matrix
-                     nm[0] = m[0]; nm[5] = m[1]; nm[10] = m[2]; nm[15] = m[3];
-                  } else if (m.length == 9) {
-                     // rotation matrix
-                     nm[0] = m[0]; nm[4] = m[1]; nm[8]  = m[2]; 
-                     nm[1] = m[3]; nm[5] = m[4]; nm[9]  = m[5]; 
-                     nm[2] = m[6]; nm[6] = m[7]; nm[10] = m[8]; 
-                  } else {
-                     console.error('wrong number of elements in the matrix ' + m.length);
-                  }
-               }
-            }
-            
-            this.clones = new JSROOT.GEO.ClonedNodes(null, nodes);
-            this.clones.name_prefix = this.clones.GetNodeName(0); 
-            
-            this.buildTree();
-            
-            this.geomControl.assignClones(this.clones, this.descr.fDrawOptions);
-            
+         if (msg.substr(0,5) == "DESC:") {
+            this.parseDescription(msg.substr(5));
          } else if (msg.substr(0,5) == "DRAW:") {
             this.last_draw_msg = this.draw_msg = JSROOT.parse(msg.substr(5));
             this.setNodesDrawProperties(this.draw_msg);
@@ -368,13 +342,59 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          }
       },
       
+      /** Parse and format base geometry description, initialize hierarchy browser */
+      parseDescription: function(msg) {
+         this.descr = JSROOT.parse(msg);
+         
+         var nodes = this.descr.fDesc;
+
+         // we need to calculate matrixes here
+         for (var cnt = 0; cnt < nodes.length; ++cnt) {
+            var elem = nodes[cnt];
+            elem.kind = 2; // special element for geom viewer, used in TGeoPainter
+            var m = elem.matr;
+            delete elem.matr;
+            if (!m || !m.length) continue;
+            
+            if (m.length == 16) {
+               elem.matrix = m;
+            } else {
+               var nm = elem.matrix = new Array(16);
+               for (var k=0;k<16;++k) nm[k] = 0;
+               nm[0] = nm[5] = nm[10] = nm[15] = 1;
+            
+               if (m.length == 3) {
+                  // translation martix
+                  nm[12] = m[0]; nm[13] = m[1]; nm[14] = m[2];
+               } else if (m.length == 4) {
+                  // scale matrix
+                  nm[0] = m[0]; nm[5] = m[1]; nm[10] = m[2]; nm[15] = m[3];
+               } else if (m.length == 9) {
+                  // rotation matrix
+                  nm[0] = m[0]; nm[4] = m[1]; nm[8]  = m[2]; 
+                  nm[1] = m[3]; nm[5] = m[4]; nm[9]  = m[5]; 
+                  nm[2] = m[6]; nm[6] = m[7]; nm[10] = m[8]; 
+               } else {
+                  console.error('wrong number of elements in the matrix ' + m.length);
+               }
+            }
+         }
+         
+         this.clones = new JSROOT.GEO.ClonedNodes(null, nodes);
+         this.clones.name_prefix = this.clones.GetNodeName(0); 
+         
+         this.buildTree();
+         
+         this.geomControl.assignClones(this.clones, this.descr.fDrawOptions);
+      },
+      
       buildTreeNode: function(cache, indx) {
          var tnode = cache[indx];
          if (tnode) return tnode;
 
          var node = this.clones.nodes[indx];
          
-         cache[indx] = tnode = { title: node.name, id: indx, color_visible: false };
+         cache[indx] = tnode = { title: node.name, id: indx, color_visible: false, node_visible: node.vis != 0 };
          
          if (node.chlds && (node.chlds.length>0)) {
             tnode.chlds = [];
@@ -396,7 +416,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
             node = this.clones.nodes[indx];
             var tnode = tnodes[indx];
             if (!tnode)
-               tnodes[indx] = tnode = { title: node.name, id: indx, color_visible: false };
+               tnodes[indx] = tnode = { title: node.name, id: indx, color_visible: false, node_visible: true };
             
             if (prnt) {
                if (!prnt.chlds) prnt.chlds = [];
