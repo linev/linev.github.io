@@ -19,7 +19,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
 
       // the part creating the HTML:
       renderer : function(oRm, oControl) { // static function, so use the given "oControl" instance instead of "this" in the renderer function
-         if (oControl.getColor() == "lightblue") return;
+         if (oControl.getColor() == "white") return;
          
          oRm.write("<div"); 
          oRm.writeControlData(oControl);  // writes the Control ID and enables event handling - important!
@@ -29,8 +29,9 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          oRm.writeClasses();              // this call writes the above class plus enables support for Square.addStyleClass(...)
          oRm.write(">"); 
          oRm.write("</div>"); // no text content to render; close the tag
-      },
+      }
 
+/*      
       // an event handler:
       onclick : function(evt) {   // is called when the Control's area is clicked - no further event registration required
          sap.ui.require([
@@ -52,6 +53,8 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          // TODO: fire a "change" event, in case the application needs to react explicitly when the color has changed
          // but when the color is bound via data binding, it will be updated also without this event
       }
+*/      
+      
    });
    
    CoreControl.extend("eve.GeomDraw", { 
@@ -150,7 +153,6 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          this.geomControl = new eve.GeomDraw({color:"#f00"});
          
          this.creator = new JSROOT.EVE.EveElements();
-
          
          var t = this.getView().byId("treeTable");
          
@@ -368,13 +370,10 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
 
          var node = this.clones.nodes[indx];
          
-         this.tree_nodes[indx] = tnode = { title: node.name, id: indx, color: "green" };
-         
-         // if (indx<10) tnode.color = "lightblue";
+         this.tree_nodes[indx] = tnode = { title: node.name, id: indx, color: "white" };
          
          if (node.chlds && (node.chlds.length>0)) {
             tnode.chlds = [];
-            tnode.color = "lightblue";
             for (var k=0;k<node.chlds.length;++k) 
                tnode.chlds.push(this.buildTreeNode(node.chlds[k]));
          }
@@ -384,14 +383,14 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
       
       // here try to append only given stack to the tree
       // used to build partial tree with visible objects
-      appendStackToTree: function(tnodes, stack) {
+      appendStackToTree: function(tnodes, stack, color) {
          var prnt = null, node = null;
          for (var i=-1;i<stack.length;++i) {
             var indx = (i<0) ? 0 : node.chlds[stack[i]];
             node = this.clones.nodes[indx];
             var tnode = tnodes[indx];
             if (!tnode)
-               tnodes[indx] = tnode = { title: node.name, id: indx };
+               tnodes[indx] = tnode = { title: node.name, id: indx, color: "white" };
             
             if (prnt) {
                if (!prnt.chlds) prnt.chlds = [];
@@ -402,6 +401,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          }
          
          prnt.end_node = true;
+         prnt.color = "rgb(" + color + ")";
       },
       
       buildTree: function() {
@@ -425,7 +425,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
                var item = this.last_draw_msg[k];
                var res = this.clones.ResolveStack(item.stack);
                if (func(res.node)) 
-                  matches.push({ stack: item.stack });
+                  matches.push({ stack: item.stack, color: item.color });
             }
          
          return matches;
@@ -467,7 +467,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          } else {
             var nodes = [];
             for (var k=0;k<matches.length;++k) 
-               this.appendStackToTree(nodes, matches[k].stack);
+               this.appendStackToTree(nodes, matches[k].stack, matches[k].color);
             this.data.Nodes = [ nodes[0] ];
             this.model.refresh();
             if (matches.length < 100)
