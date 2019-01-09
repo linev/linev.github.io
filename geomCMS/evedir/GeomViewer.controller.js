@@ -377,6 +377,8 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
             tnode.chlds = [];
             for (var k=0;k<node.chlds.length;++k) 
                tnode.chlds.push(this.buildTreeNode(cache, node.chlds[k]));
+         } else {
+            tnode.end_node = true;
          }
          
          return tnode;
