@@ -108,8 +108,6 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          
          this.data = { Nodes: null };
          
-         this.descr = null; // description object from server 
-         
          this.model = new JSONModel(this.data);
          this.getView().setModel(this.model);
          
@@ -354,9 +352,9 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
       
       /** Parse and format base geometry description, initialize hierarchy browser */
       parseDescription: function(msg) {
-         this.descr = JSON.parse(msg);
+         var descr = JSON.parse(msg);
          
-         var nodes = this.descr.fDesc;
+         var nodes = descr.fDesc;
 
          // we need to calculate matrixes here
          for (var cnt = 0; cnt < nodes.length; ++cnt) 
@@ -365,7 +363,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          var clones = new JSROOT.GEO.ClonedNodes(null, nodes);
          clones.name_prefix = clones.GetNodeName(0); 
 
-         this.assignClones(clones, this.descr.fDrawOptions);
+         this.assignClones(clones, descr.fDrawOptions);
 
          this.buildTree();
       },
@@ -374,11 +372,11 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
       modifyDescription: function(msg) {
          var newitem = JSON.parse(msg);
          
-         if (!newitem || !this.descr.fDesc) return;
+         if (!newitem || !this.geo_clones) return;
          
          this.formatNodeElement(newitem);
          
-         var item = this.descr.fDesc[newitem.id];
+         var item = this.geo_clones.nodes[newitem.id];
          
          item.vis = newitem.vis;
          item.matrix = newitem.matrix;
@@ -437,7 +435,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
       /** Build complete tree of all existing nodes. 
        * Produced structure can be very large, therefore later one should move this functionality to the server */
       buildTree: function() {
-         if (!this.descr || !this.descr.fDesc) return;
+         if (!this.geo_clones) return;
          
          this.data.Nodes = [ this.buildTreeNode([], 0) ];
          
@@ -553,10 +551,16 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
       },
       
       onAfterRendering: function() {
-
+         if (this.geo_clones) this.createGeoPainter();
+      },
+      
+      createGeoPainter: function() {
          this.geo_painter = JSROOT.Painter.CreateGeoPainter(this.geomControl.getDomRef(), null, this.draw_options);
          this.geomControl.geo_painter = this.geo_painter; 
-         
+
+         this.geo_painter.AddHighlightHandler(this);
+         this.geo_painter.ActivateInBrowser = this.activateInTreeTable.bind(this);            
+
          if (this.geo_clones) 
             this.geo_painter.assignClones(this.geo_clones);
          
@@ -564,9 +568,6 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
             this.geo_painter.prepareObjectDraw(this.geo_visisble, "__geom_viewer_selection__");
             delete this.geo_visisble;
          }
-    
-         this.geo_painter.AddHighlightHandler(this);
-         this.geo_painter.ActivateInBrowser = this.activateInTreeTable.bind(this);            
       },
       
       assignClones: function(clones, drawopt) {
@@ -574,8 +575,10 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          this.draw_options = drawopt;
 
          if (this.geo_painter) {
-            this.geo_painter.options = this.geo_painter.decodeOptions(drawopt);
+            // this.geo_painter.options = this.geo_painter.decodeOptions(drawopt);
             this.geo_painter.assignClones(this.geo_clones);
+         } else {
+            this.createGeoPainter();
          } 
       },
       
@@ -736,14 +739,15 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          }
       },
 
+      /** Reload geometry description and base drawing, normally not required */
       onRealoadPress: function (oEvent) {
-         console.log('Press reload');
+         this.websocket.Send("RELOAD");
       },
       
+      /** Quit ROOT session */
       onQuitRootPress: function(oEvent) {
-         console.log('Press quit');
+         this.websocket.Send("QUIT_ROOT");
       }
-      
 
    });
    
