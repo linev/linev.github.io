@@ -284,28 +284,40 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
                this.appendNodes(this.append_msg);
                delete this.append_msg;
             } else {
-               console.error('not process binary data', msg ? msg.byteLength : 0)
+               console.error('not process binary data len=' + (msg ? msg.byteLength : 0))
             }
             
             return;
          }
+         
+         var mhdr = msg.substr(0,6);
+         msg = msg.substr(6);
 
-         console.log("msg len=", msg.length, " txt:", msg.substr(0,70), "...");
+         // console.log(mhdr, msg.length, msg.substr(0,70), "...");
 
-         if (msg.substr(0,6) == "DESCR:") {
-            this.parseDescription(msg.substr(6));
-         } else if (msg.substr(0,6) == "MODIF:") {
-            this.modifyDescription(msg.substr(6));
-         } else if (msg.substr(0,6) == "GDRAW:") {
-            this.last_draw_msg = this.draw_msg = JSROOT.parse(msg.substr(6)); // use JSROOT.parse while refs are used
+         switch (mhdr) {
+         case "DESCR:": 
+            this.parseDescription(msg); 
+            break;
+         case "MODIF:": 
+            this.modifyDescription(msg); 
+            break;
+         case "GDRAW:":
+            this.last_draw_msg = this.draw_msg = JSROOT.parse(msg); // use JSROOT.parse while refs are used
             this.setNodesDrawProperties(this.draw_msg);
-         } else if (msg.substr(0,6) == "APPND:") {
-            this.append_msg = JSROOT.parse(msg.substr(6)); // use JSROOT.parse while refs are used
+            break;
+         case "APPND:":
+            this.append_msg = JSROOT.parse(msg); // use JSROOT.parse while refs are used
             this.setNodesDrawProperties(this.append_msg);
-         } else if (msg.substr(0,6) == "FOUND:") {
-            this.processSearchReply(msg.substr(6), false); 
-         } else if (msg.substr(0,6) == "SHAPE:") {
-            this.processSearchReply(msg.substr(6), true);
+            break;
+         case "FOUND:": 
+            this.processSearchReply(msg, false);
+            break;
+         case "SHAPE:":
+            this.processSearchReply(msg, true);
+            break
+         default:
+            console.error('Non recognized msg ' + mhdr + ' len=' + msg.length);
          } 
       },
       
@@ -629,23 +641,6 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          }
       },
 
-      onToolsMenuAction : function (oEvent) {
-
-         var item = oEvent.getParameter("item");
-
-         switch (item.getText()) {
-            case "GED Editor": this.getView().byId("Summary").getController().toggleEditor(); break;
-         }
-      },
-      
-      showHelp : function(oEvent) {
-         alert("User support: root-webgui@cern.ch");
-      },
-      
-      showUserURL : function(oEvent) {
-         sap.m.URLHelper.redirect("https://github.com/alja/jsroot/blob/dev/eve7.md", true);
-      },
-      
       /** called when new portion of data received from server */
       processSearchReply: function(msg, is_shape) {
          // not waiting search - ignore any replies
@@ -739,7 +734,17 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          } else {
             this.showFoundNodes(null);
          }
+      },
+
+      onRealoadPress: function (oEvent) {
+         console.log('Press reload');
+      },
+      
+      onQuitRootPress: function(oEvent) {
+         console.log('Press quit');
       }
+      
+
    });
    
 });
