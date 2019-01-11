@@ -5,7 +5,7 @@
       <meta http-equiv="X-UA-Compatible" content="IE=edge">
       <title>Geometry viewer</title>
       <script type="text/javascript" src="https://jsroot.gsi.de/dev/scripts/JSRootCore.js"></script>
-      <!--  script type="text/javascript" src="../../jsroot/scripts/JSRootCore.js"></script-->
+      <!--script type="text/javascript" src="../../jsroot/scripts/JSRootCore.js"></script-->
       <style>
          html { height: 100%; }
          body { min-height: 100%; margin: 0; overflow: hidden }
@@ -17,7 +17,7 @@
             right: 0;
             padding: 1
          }
-         
+
          .eveColorBox {                  /* style the CSS class that has been written by the renderer method */
             display: inline-block;   /* enable squares to appear next to each other within one line */
             border: 1px solid white;   /* add some border, so the square can actually be seen */
@@ -29,7 +29,7 @@
             -moz-box-sizing: border-box; /* consider padding+border part of the width/height */
             box-sizing: border-box;
          }
-         
+
        </style>
 
    </head>
@@ -50,7 +50,7 @@
            new JSROOT.sap.ui.xmlview({
                id: "TopEveId",
                viewName: "eve.GeomViewer",
-               viewData: { conn_handle: handle, nobrowser: JSROOT.GetUrlOption('nobrowser')!==null }
+               viewData: { conn_handle: handle }
            }).placeAt("GeomDiv");
         }
 

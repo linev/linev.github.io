@@ -115,7 +115,9 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
 
          this.creator = new JSROOT.EVE.EveElements();
          
-         if (this.getView().getViewData().nobrowser) {
+         this.creator.useIndexAsIs = (JSROOT.GetUrlOption('useindx') !== null);
+         
+         if (JSROOT.GetUrlOption('nobrowser') !== null) {
             // remove complete area - plan geometry drawing
             this.getView().byId("mainSplitter").removeAllContentAreas();
          } else {
