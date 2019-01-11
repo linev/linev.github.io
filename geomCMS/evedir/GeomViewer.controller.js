@@ -115,25 +115,32 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
 
          this.creator = new JSROOT.EVE.EveElements();
          
-         var t = this.getView().byId("treeTable");
+         if (this.getView().getViewData().nobrowser) {
+            // remove complete area - plan geometry drawing
+            this.getView().byId("mainSplitter").removeAllContentAreas();
+         } else {
          
-         var vis_selected_handler = this.visibilitySelected.bind(this);
+            var t = this.getView().byId("treeTable");
          
-         t.addColumn(new sap.ui.table.Column({
-            label: "Description",
-            template: new sap.ui.layout.HorizontalLayout({
-               content: [
-                  new mCheckBox({ enabled: true, visible: true, selected: "{node_visible}", select: vis_selected_handler }), 
-                  new eve.ColorBox({color:"{color}", visible: "{color_visible}" }),
-                  new mText({text:"{title}", wrapping: false })
-               ]
-            })
-          }));
+            var vis_selected_handler = this.visibilitySelected.bind(this);
          
-         // catch re-rendering of the table to assign handlers 
-         t.addEventDelegate({
-            onAfterRendering: function() { this.assignRowHandlers(); }
-         }, this);
+            t.addColumn(new sap.ui.table.Column({
+               label: "Description",
+               template: new sap.ui.layout.HorizontalLayout({
+                  content: [
+                     new mCheckBox({ enabled: true, visible: true, selected: "{node_visible}", select: vis_selected_handler }), 
+                     new eve.ColorBox({color:"{color}", visible: "{color_visible}" }),
+                     new mText({text:"{title}", wrapping: false })
+                  ]
+               })
+             }));
+         
+            // catch re-rendering of the table to assign handlers 
+            t.addEventDelegate({
+               onAfterRendering: function() { this.assignRowHandlers(); }
+            }, this);
+         
+         } 
          
          // geometry painter 
          this.geomControl = new eve.GeomDraw({color:"#f00"});

@@ -5,7 +5,7 @@
       <meta http-equiv="X-UA-Compatible" content="IE=edge">
       <title>Geometry viewer</title>
       <script type="text/javascript" src="https://jsroot.gsi.de/dev/scripts/JSRootCore.js"></script>
-      <!-- script type="text/javascript" src="../../jsroot/scripts/JSRootCore.js"></script-->
+      <!--  script type="text/javascript" src="../../jsroot/scripts/JSRootCore.js"></script-->
       <style>
          html { height: 100%; }
          body { min-height: 100%; margin: 0; overflow: hidden }
@@ -50,7 +50,7 @@
            new JSROOT.sap.ui.xmlview({
                id: "TopEveId",
                viewName: "eve.GeomViewer",
-               viewData: { conn_handle: handle }
+               viewData: { conn_handle: handle, nobrowser: JSROOT.GetUrlOption('nobrowser')!==null }
            }).placeAt("GeomDiv");
         }
 
