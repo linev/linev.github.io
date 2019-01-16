@@ -98,16 +98,20 @@ sap.ui.define([
       /** returns container for 3d objects */
       getThreejsContainer: function(name) 
       {
-         if (!direct_threejs)
-            return this.geo_painter.getExtrasContainer("create", name);
+         var prnt = null;
          
-         for (var k=0;k<this.scene.children.length;++k)
-            if (this.scene.children[k]._eve_name === name) 
-               return this.scene.children[k];
+         if (!direct_threejs)
+            prnt = this.geo_painter.getExtrasContainer();
+         else
+            prnt = this.scene;
+         
+         for (var k=0;k<prnt.children.length;++k)
+            if (prnt.children[k]._eve_name === name) 
+               return prnt.children[k];
          
          var obj3d = new THREE.Object3D();
          obj3d._eve_name = name;
-         this.scene.add(obj3d);
+         prnt.add(obj3d);
          return obj3d;
       },
       
@@ -294,6 +298,7 @@ sap.ui.define([
       /// function called by GeoPainter, when mesh is highlighted
       /// forward message to the EveManager to redistribute event to all other drawings
       HighlightMesh: function(mesh, color, geo_object) {
+         
          if (this.last_highlight === geo_object) return;
          this.last_highlight = geo_object;
          this.mgr.ProcessHighlight(this, geo_object, geo_object ? 0 : 100);
