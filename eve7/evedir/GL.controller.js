@@ -227,9 +227,9 @@ sap.ui.define([
          
          if (direct_threejs) this.createThreejsRenderer();
 
-         if (this.create_scenes === undefined)
+         if (this.created_scenes === undefined)
          {
-            this.create_scenes = [];
+            this.created_scenes = [];
 
             // only when rendering completed - register for modify events
             var element = this.mgr.GetElement(this.elementid);
@@ -240,7 +240,7 @@ sap.ui.define([
                var scene = element.childs[k];
                this.mgr.Register(scene.fSceneId, this, "onElementChanged");
                
-               this.create_scenes.push(new JSROOT.EVE.EveScene(this.mgr, scene));
+               this.created_scenes.push(new JSROOT.EVE.EveScene(this.mgr, scene));
             }
          }
 
@@ -249,9 +249,9 @@ sap.ui.define([
          var anyextras = false;
          
          // loop over scene and check if render data exists
-         for (var k=0;k<this.create_scenes.length;++k)
+         for (var k=0;k<this.created_scenes.length;++k)
          {
-            if (this.create_scenes[k].hasRenderData()) anyextras = true;
+            if (this.created_scenes[k].hasRenderData()) anyextras = true;
          }
          
          if (anyextras) this.drawGeometry();
@@ -286,25 +286,18 @@ sap.ui.define([
             this.geo_painter.WhenReady(this.onGeomertyDrawn.bind(this));
          }
 
-         // now loop over all  scene and create three.js objects
-
-         // top scene element
-         var element = this.mgr.GetElement(this.elementid);
-
-         // loop over scene and add dependency
-         for (var k = 0; k < element.childs.length; ++k)
-         {
-            var scene_info = element.childs[k];
-            if ( ! scene_info) continue;
-            var scene = this.mgr.GetElement(scene_info.fSceneId);
-
-            if (scene && scene.childs)
-               this.create3DObjects(scene.childs, true);
-         }
+         // now loop over all  scenes and create three.js objects
+         var res3d = [];
+         for (var k=0;k<this.created_scenes.length;++k)
+            this.created_scenes[k].create3DObjects(res3d, true);
 
          // if geometry detected in the scenes, it will be used to display
 
          if (!direct_threejs) {
+            // loop over scene and add dependency
+            for (var k = 0; k < res3d.length; ++k)
+               this.geo_painter.addExtra(res3d[k]);
+            
             this.geo_painter.AssignObject(null);
 
             this.geo_painter.prepareObjectDraw(null); // and now start everything
@@ -319,6 +312,9 @@ sap.ui.define([
                this.geo_painter.Render3D();
             }
          } else {
+            for (var k = 0; k < res3d.length; ++k)
+               this.scene.add(res3d[k]);
+
             this.render();
          }
       },
@@ -378,45 +374,6 @@ sap.ui.define([
          }
       },
 
-      create3DObjects: function(arr, all_ancestor_children_visible)
-      {
-         if (!arr) return;
-
-         for (var k = 0; k < arr.length; ++k)
-         {
-            var elem = arr[k];
-            if (elem.render_data)
-            {
-               var fname = elem.render_data.rnr_func, obj3d = null;
-               if (!this.creator[fname])
-               {
-                  console.error("Function " + fname + " missing in creator");
-               }
-               else
-               {
-                  var obj3d = this.makeGLRepresentation(elem);
-                  if (obj3d)
-                  {
-                     // MT - should maintain hierarchy ????
-                     // Easier to remove ... but might need sub-class of
-                     // Object3D to separate "graphical" children and structural children.
-
-                     if (direct_threejs)
-                        this.scene.add(obj3d);
-                     else
-                        this.geo_painter.addExtra(obj3d);
-                     
-                     this.id2obj_map[elem.fElementId] = obj3d;
-
-                     obj3d.visible = elem.fRnrSelf && all_ancestor_children_visible;
-                     obj3d.all_ancestor_children_visible = all_ancestor_children_visible;
-                  }
-               }
-            }
-
-            this.create3DObjects(elem.childs, elem.fRnrChildren && all_ancestor_children_visible);
-         }
-      },
 
       update3DObjectsVisibility: function(arr, all_ancestor_children_visible)
       {
