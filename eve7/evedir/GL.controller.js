@@ -42,7 +42,7 @@ sap.ui.define([
 
          this.mgr.RegisterHighlight(this, "onElementHighlight");
 
-         JSROOT.AssertPrerequisites("geom;user:evedir/EveElements.js", this.onLoadScripts.bind(this));
+         JSROOT.AssertPrerequisites("geom;user:evedir/EveElements.js;evedir/EveScene.js", this.onLoadScripts.bind(this));
 
          // this.checkScences();
 
@@ -227,9 +227,9 @@ sap.ui.define([
          
          if (direct_threejs) this.createThreejsRenderer();
 
-         if (!this.registered_for_change)
+         if (this.create_scenes === undefined)
          {
-            this.registered_for_change = true;
+            this.create_scenes = [];
 
             // only when rendering completed - register for modify events
             var element = this.mgr.GetElement(this.elementid);
@@ -239,25 +239,22 @@ sap.ui.define([
             {
                var scene = element.childs[k];
                this.mgr.Register(scene.fSceneId, this, "onElementChanged");
+               
+               this.create_scenes.push(new JSROOT.EVE.EveScene(this.mgr, scene));
             }
          }
 
          // start drawing only when all scenes has childs
          // this is configured view
-         var element   = this.mgr.GetElement(this.elementid),
-             allok     = true,
-             anyextras = false;
-
-         // loop over scene and add dependency
-         for (var k=0;k<element.childs.length;++k)
+         var anyextras = false;
+         
+         // loop over scene and check if render data exists
+         for (var k=0;k<this.create_scenes.length;++k)
          {
-            var scene_info = element.childs[k];
-            if ( ! scene_info) { allok = false; break; }
-            var scene = this.mgr.GetElement(scene_info.fSceneId);
-            if (this.hasExtras(scene)) anyextras = true;
+            if (this.create_scenes[k].hasRenderData()) anyextras = true;
          }
-
-         if (allok && anyextras) this.drawGeometry();
+         
+         if (anyextras) this.drawGeometry();
          
          if (direct_threejs) this.render();
       },
