@@ -44,7 +44,7 @@ sap.ui.define([
 
          JSROOT.AssertPrerequisites("geom;user:evedir/EveElements.js;evedir/EveScene.js", this.onLoadScripts.bind(this));
 
-         // this.checkScences();
+         // this.checkScenes();
 
          this.id2obj_map = {};
       },
@@ -167,7 +167,7 @@ sap.ui.define([
          // only when scripts loaded, one could create objects
          this.creator = new JSROOT.EVE.EveElements();
          this.creator.useIndexAsIs = (JSROOT.GetUrlOption('useindx') !== null);
-         this.checkScences();
+         this.checkScenes();
       },
 
       onManagerUpdate: function()
@@ -186,7 +186,7 @@ sap.ui.define([
 
          this.elementid = found.fElementId;
          this.kind = (found.fName == "Default Viewer") ? "3D" : "2D";
-         this.checkScences();
+         this.checkScenes();
 
       },
 
@@ -196,18 +196,15 @@ sap.ui.define([
          if (this.mgr) this.mgr.Unregister(this);
       },
 
-      onElementChanged: function(id, element)
+      onSceneChanged: function(element, id)
       {
          if (direct_threejs) {
-            console.log("onElementChanged -- GRRR apparently still used", id, element);
+            console.log("onSceneChanged -- GRRR apparently still used", id, element);
             throw "GRRR";
             
          } else {
-            this.checkScences();
-            
+            this.checkScenes();
          }
-
-         // this.checkScences();
       },
 
       onAfterRendering: function()
@@ -218,10 +215,10 @@ sap.ui.define([
          // TODO: should be specified somehow in XML file
          this.getView().$().css("overflow", "hidden").css("width", "100%").css("height", "100%").parent().css("overflow", "hidden");
 
-         this.checkScences();
+         this.checkScenes();
       },
 
-      checkScences: function()
+      checkScenes: function()
       {
          if (!this._load_scripts || !this._render_html || !this.elementid) return;
          
@@ -238,7 +235,7 @@ sap.ui.define([
             for (var k=0;k<element.childs.length;++k)
             {
                var scene = element.childs[k];
-               this.mgr.Register(scene.fSceneId, this, "onElementChanged");
+               this.mgr.RegisterSceneReceiver(scene.fSceneId, this);
                
                this.created_scenes.push(new JSROOT.EVE.EveScene(this.mgr, scene));
             }
@@ -261,61 +258,64 @@ sap.ui.define([
 
       drawGeometry: function()
       {
-         if (!direct_threejs) {
-         
-            var options = "";
-            if (this.kind != "3D") options = "ortho_camera";
-
-            if (this.geo_painter) {
-
-               // when geo painter alreay exists - clear all our additional objects
-               this.geo_painter.clearExtras();
-
-               this.geo_painter.ResetReady();
-
-            } else {
-
-               // TODO: should be specified somehow in XML file
-               this.getView().$().css("overflow", "hidden").css("width", "100%").css("height", "100%");
-
-               this.geo_painter = JSROOT.Painter.CreateGeoPainter(this.getView().getDomRef(), null, options);
-            }
-
-            this.painter_ready = false;
-            // assign callback function - when needed
-            this.geo_painter.WhenReady(this.onGeomertyDrawn.bind(this));
-         }
-
          // now loop over all  scenes and create three.js objects
          var res3d = [];
          for (var k=0;k<this.created_scenes.length;++k)
             this.created_scenes[k].create3DObjects(res3d, true);
-
-         // if geometry detected in the scenes, it will be used to display
-
-         if (!direct_threejs) {
-            // loop over scene and add dependency
-            for (var k = 0; k < res3d.length; ++k)
-               this.geo_painter.addExtra(res3d[k]);
+         
+         
+         if (direct_threejs) {
+            // simple rendering
             
-            this.geo_painter.AssignObject(null);
-
-            this.geo_painter.prepareObjectDraw(null); // and now start everything
-
-            // AMT temporary here, should be set in camera instantiation time
-            if (this.geo_painter._camera.type == "OrthographicCamera") {
-               this.geo_painter._camera.left = -this.getView().$().width();
-               this.geo_painter._camera.right = this.getView().$().width();
-               this.geo_painter._camera.top = this.getView().$().height();
-               this.geo_painter._camera.bottom = -this.getView().$().height();
-               this.geo_painter._camera.updateProjectionMatrix();
-               this.geo_painter.Render3D();
-            }
-         } else {
+            // TODO: remove previous 3D objects
             for (var k = 0; k < res3d.length; ++k)
                this.scene.add(res3d[k]);
 
             this.render();
+            return;
+         }
+         
+         var options = "";
+         if (this.kind != "3D") options = "ortho_camera";
+
+         if (this.geo_painter) {
+
+            // when geo painter already exists - clear all our additional objects
+            this.geo_painter.clearExtras();
+
+            this.geo_painter.ResetReady();
+
+         } else {
+
+            // TODO: should be specified somehow in XML file
+            this.getView().$().css("overflow", "hidden").css("width", "100%").css("height", "100%");
+
+            this.geo_painter = JSROOT.Painter.CreateGeoPainter(this.getView().getDomRef(), null, options);
+         }
+
+         this.painter_ready = false;
+         // assign callback function - when needed
+         this.geo_painter.WhenReady(this.onGeomertyDrawn.bind(this));
+
+
+         // if geometry detected in the scenes, it will be used to display
+
+         // loop over scene and add dependency
+         for (var k = 0; k < res3d.length; ++k)
+            this.geo_painter.addExtra(res3d[k]);
+
+         this.geo_painter.AssignObject(null);
+
+         this.geo_painter.prepareObjectDraw(null); // and now start everything
+
+         // AMT temporary here, should be set in camera instantiation time
+         if (this.geo_painter._camera.type == "OrthographicCamera") {
+            this.geo_painter._camera.left = -this.getView().$().width();
+            this.geo_painter._camera.right = this.getView().$().width();
+            this.geo_painter._camera.top = this.getView().$().height();
+            this.geo_painter._camera.bottom = -this.getView().$().height();
+            this.geo_painter._camera.updateProjectionMatrix();
+            this.geo_painter.Render3D();
          }
       },
 

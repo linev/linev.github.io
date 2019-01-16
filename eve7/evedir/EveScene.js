@@ -27,6 +27,9 @@
       this.creator = new JSROOT.EVE.EveElements();
       this.creator.useIndexAsIs = (JSROOT.GetUrlOption('useindx') !== null);
       this.id2obj_map = [];
+      
+      // register ourself for scene events
+      this.mgr.RegisterSceneReceiver(scene.fSceneId, this);
    }
    
    EveScene.prototype.hasRenderData = function(elem)
