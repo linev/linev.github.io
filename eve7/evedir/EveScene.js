@@ -27,7 +27,7 @@
       this.viewer = viewer;
       this.creator = new JSROOT.EVE.EveElements();
       this.creator.useIndexAsIs = (JSROOT.GetUrlOption('useindx') !== null);
-      this.id2obj_map = [];
+      this.id2obj_map = {};
       
       // register ourself for scene events
       this.mgr.RegisterSceneReceiver(scene.fSceneId, this);
@@ -110,6 +110,24 @@
 
          this.create3DObjects(res3d, elem.fRnrChildren && all_ancestor_children_visible, elem);
       }
+   } 
+   
+   /** method insert all objects into three.js container */
+   EveScene.prototype.redrawScene = function()
+   {
+      if (!this.viewer) return;
+      
+      var res3d = [];
+      this.create3DObjects(res3d, true);
+      
+      var cont = this.viewer.getThreejsContainer("scene" + this.id);
+      while (cont.children.length > 0)
+         cont.remove(cont.children[0]);
+      
+      for (var k = 0; k < res3d.length; ++k)
+         cont.add(res3d[k]);
+      
+      this.viewer.render();
    }
    
    EveScene.prototype.getObj3D = function(elementId)
@@ -219,6 +237,13 @@
    }
    
    EveScene.prototype.endChanges = function() {
+   }
+   
+   EveScene.prototype.onSceneChanged = function(id)
+   {
+      console.log("scene changed", id);
+         
+      this.redrawScene();
    }
 
    JSROOT.EVE.EveScene = EveScene;

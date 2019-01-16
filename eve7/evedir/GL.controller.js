@@ -44,11 +44,7 @@ sap.ui.define([
 
          JSROOT.AssertPrerequisites("geom;user:evedir/EveElements.js;evedir/EveScene.js", this.onLoadScripts.bind(this));
 
-         // this.checkScenes();
-
-         this.id2obj_map = {};
       },
-      
 
       // MT-HAKA
       createThreejsRenderer: function()
@@ -100,9 +96,18 @@ sap.ui.define([
       },
 
       /** returns container for 3d objects */
-      getThreejsContainer: function() 
+      getThreejsContainer: function(name) 
       {
-         return this.scene || this.geo_painter.getExtrasContainer();
+         if (!direct_threejs)
+            return this.geo_painter.getExtrasContainer("create", name);
+         
+         for (var k=0;k<this.scene.children.length;++k)
+            if (this.scene.children[k]._eve_name === name) 
+               return this.scene.children[k];
+         
+         var obj3d = new THREE.Object3D();
+         obj3d._eve_name = name;
+         return obj3d;
       },
       
       // MT-HAKA
@@ -198,20 +203,6 @@ sap.ui.define([
          if (this.mgr) this.mgr.Unregister(this);
       },
 
-      onSceneChanged: function(id)
-      {
-         if (direct_threejs) {
-            console.log("onSceneChanged -- GRRR apparently still used", id);
-            throw "GRRR";
-            
-         } else {
-            
-            console.log("scene changed", id);
-            
-            this.checkScenes();
-         }
-      },
-
       onAfterRendering: function()
       {
 
@@ -257,26 +248,21 @@ sap.ui.define([
          }
          
          if (anyextras) this.drawGeometry();
-         
-         if (direct_threejs) this.render();
       },
 
       drawGeometry: function()
       {
          // now loop over all  scenes and create three.js objects
-         var res3d = [];
-         for (var k=0;k<this.created_scenes.length;++k)
-            this.created_scenes[k].create3DObjects(res3d, true);
-         
+         //var res3d = [];
+         //for (var k=0;k<this.created_scenes.length;++k)
+         //   this.created_scenes[k].create3DObjects(res3d, true);
          
          if (direct_threejs) {
             // simple rendering
             
-            // TODO: remove previous 3D objects
-            for (var k = 0; k < res3d.length; ++k)
-               this.scene.add(res3d[k]);
-
-            this.render();
+            for (var k=0;k<this.created_scenes.length;++k)
+               this.created_scenes[k].redrawScene();
+            
             return;
          }
          
@@ -306,8 +292,8 @@ sap.ui.define([
          // if geometry detected in the scenes, it will be used to display
 
          // loop over scene and add dependency
-         for (var k = 0; k < res3d.length; ++k)
-            this.geo_painter.addExtra(res3d[k]);
+         //for (var k = 0; k < res3d.length; ++k)
+         //   this.geo_painter.addExtra(res3d[k]);
 
          this.geo_painter.AssignObject(null);
 
@@ -325,9 +311,15 @@ sap.ui.define([
       },
 
       onGeomertyDrawn: function(painter) {
+         
          this.painter_ready = true;
          this.geo_painter._highlight_handlers = [ this ]; // register ourself for highlight handling
          this.last_highlight = null;
+         
+         for (var k=0;k<this.created_scenes.length;++k)
+            this.created_scenes[k].redrawScene();
+         
+         this.geo_painter.adjustCameraPosition(true);
       },
 
       /// function called by GeoPainter, when mesh is highlighted
