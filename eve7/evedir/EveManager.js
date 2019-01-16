@@ -200,7 +200,7 @@
    EveManager.prototype.ProcessModified = function(sceneid) {
       var elem = this.GetElement(sceneid);
       if (!elem || !elem.$modified) return;
-
+      
       this.callSceneReceivers(elem, "onSceneChanged", sceneid);
 
       delete elem.$modified;
@@ -383,7 +383,7 @@
       if (!ids) return;
 
       for (var n=0;n<ids.length;++n) {
-         var element = this.map[ids[n]];
+         var element = this.GetElement(ids[n]);
          if (!element) {
             console.log("try to delete non-existing element with id", ids[n]);
             continue;

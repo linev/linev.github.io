@@ -99,6 +99,12 @@ sap.ui.define([
          this.scene.add(plane);
       },
 
+      /** returns container for 3d objects */
+      getThreejsContainer: function() 
+      {
+         return this.scene || this.geo_painter.getExtrasContainer();
+      },
+      
       // MT-HAKA
       render: function()
       {
@@ -106,7 +112,6 @@ sap.ui.define([
             if (this.geo_painter) this.geo_painter.Render3D();
             return;
          }
-         
          
          console.log("render");
 
@@ -164,9 +169,6 @@ sap.ui.define([
       onLoadScripts: function()
       {
          this._load_scripts = true;
-         // only when scripts loaded, one could create objects
-         this.creator = new JSROOT.EVE.EveElements();
-         this.creator.useIndexAsIs = (JSROOT.GetUrlOption('useindx') !== null);
          this.checkScenes();
       },
 
@@ -196,13 +198,16 @@ sap.ui.define([
          if (this.mgr) this.mgr.Unregister(this);
       },
 
-      onSceneChanged: function(element, id)
+      onSceneChanged: function(id)
       {
          if (direct_threejs) {
-            console.log("onSceneChanged -- GRRR apparently still used", id, element);
+            console.log("onSceneChanged -- GRRR apparently still used", id);
             throw "GRRR";
             
          } else {
+            
+            console.log("scene changed", id);
+            
             this.checkScenes();
          }
       },
@@ -237,7 +242,7 @@ sap.ui.define([
                var scene = element.childs[k];
                this.mgr.RegisterSceneReceiver(scene.fSceneId, this);
                
-               this.created_scenes.push(new JSROOT.EVE.EveScene(this.mgr, scene));
+               this.created_scenes.push(new JSROOT.EVE.EveScene(this.mgr, scene, this));
             }
          }
 
@@ -348,64 +353,6 @@ sap.ui.define([
          this.geo_painter.HighlightMesh(null, null, masterid, null, true);
       },
 
-      makeGLRepresentation: function(elem)
-      {
-         if (!elem.render_data) return null;
-         var fname = elem.render_data.rnr_func;
-         var obj3d = this.creator[fname](elem, elem.render_data);
-         if (obj3d)
-         {
-            obj3d._typename = "THREE.Mesh";
-
-            // SL: this is just identifier for highlight, required to show items on other places, set in creator
-            // obj3d.geo_object = elem.fMasterId || elem.fElementId;
-            // obj3d.geo_name = elem.fName; // used for highlight
-
-            //AMT: reference needed in MIR callback
-            obj3d.eveId = elem.fElementId;
-
-            if (elem.render_data.matrix)
-            {
-               obj3d.matrixAutoUpdate = false;
-               obj3d.matrix.fromArray( elem.render_data.matrix );
-               obj3d.updateMatrixWorld(true);
-            }
-            return obj3d;
-         }
-      },
-
-
-      update3DObjectsVisibility: function(arr, all_ancestor_children_visible)
-      {
-         if (!arr) return;
-
-         for (var k = 0; k < arr.length; ++k)
-         {
-            var elem = arr[k];
-            if (elem.render_data)
-            {
-               var obj3d = this.getObj3D(elem.fElementId);
-               if (obj3d)
-               {
-                  obj3d.visible = elem.fRnrSelf && all_ancestor_children_visible;
-                  obj3d.all_ancestor_children_visible = all_ancestor_children_visible;
-               }
-            }
-
-            this.update3DObjectsVisibility(elem.childs, elem.fRnrChildren && all_ancestor_children_visible);
-         }
-      },
-
-      hasExtras: function(elem)
-      {
-         if (!elem) return false;
-         if (elem.render_data) return true;
-         if (elem.childs)
-            for (var k = 0; k < elem.childs.length; ++k)
-               if (this.hasExtras(elem.childs[k])) return true;
-         return false;
-      },
-
       onResize: function(event) {
          // use timeout
          // console.log("resize painter")
@@ -420,84 +367,8 @@ sap.ui.define([
          this.getView().$().css("overflow", "hidden").css("width", "100%").css("height", "100%");
          if (this.geo_painter)
             this.geo_painter.CheckResize();
-      },
-
-      colorChanged: function(el)
-      {
-         console.log("color change ", el.fElementId, el.fMainColor);
-
-         this.replaceElement(el);
-      },
-
-      replaceElement: function(el)
-      {
-         var obj3d = this.getObj3D(el.fElementId);
-         
-         var container = this.scene || this.geo_painter.getExtrasContainer();
-
-         container.remove(obj3d);
-
-         obj3d = this.makeGLRepresentation(el);
-
-         container.add(obj3d);
-         this.id2obj_map[el.fElementId] = obj3d;
-
-         this.render();
-      },
-
-      getObj3D : function(elementId)
-      {
-         if (this.id2obj_map[elementId] === undefined)
-            return null;
-         else
-            return this.id2obj_map[elementId];
-      },
-
-      visibilityChanged: function(el)
-      {
-         var obj3d = this.getObj3D( el.fElementId );
-
-         if (obj3d)
-         {
-            obj3d.visible = obj3d.all_ancestor_children_visible && el.fRnrSelf;
-         }
-
-         this.render();
-      },
-
-      visibilityChildrenChanged: function(el)
-      {
-         console.log("visibility children changed ", this.mgr, el);
-
-         if (el.childs)
-         {
-            // XXXX Overkill, but I don't have obj3d for all elements.
-            // Also, can do this traversal once for the whole update package,
-            // needs to be managed from EveManager.js.
-            // Or marked here and then recomputed before rendering (probably better).
-
-            var scene = this.mgr.GetElement(el.fSceneId);
-
-            this.update3DObjectsVisibility(scene.childs, true);
-
-            this.render();
-         }
-      },
-       elementAdded: function(el) {
-         var obj3d =  this.makeGLRepresentation(el);
-         if (obj3d) {
-            this.geo_painter.addExtra(obj3d);
-            this.geo_painter.getExtrasContainer().add(obj3d);
-         }
-           console.log("element added ", obj3d, el);
-         this.geo_painter.Render3D(-1);           
-      },
-      elementRemoved: function() {
-      },
-      beginChanges: function() {
-      },
-      endChanges: function() {
       }
+      
    });
 
 });

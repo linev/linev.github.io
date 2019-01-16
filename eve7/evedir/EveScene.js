@@ -19,11 +19,12 @@
 
    /// constructor, handle for REveScene class
    
-   function EveScene(mgr,scene)
+   function EveScene(mgr,scene,viewer)
    {
       this.mgr = mgr;
       this.scene = scene;
-      this.id = scene.fSceneId; 
+      this.id = scene.fSceneId;
+      this.viewer = viewer;
       this.creator = new JSROOT.EVE.EveElements();
       this.creator.useIndexAsIs = (JSROOT.GetUrlOption('useindx') !== null);
       this.id2obj_map = [];
@@ -109,6 +110,115 @@
 
          this.create3DObjects(res3d, elem.fRnrChildren && all_ancestor_children_visible, elem);
       }
+   }
+   
+   EveScene.prototype.getObj3D = function(elementId)
+   {
+      return this.id2obj_map[elementId];
+   }
+
+   EveScene.prototype.update3DObjectsVisibility = function(arr, all_ancestor_children_visible)
+   {
+      if (!arr) return;
+
+      for (var k = 0; k < arr.length; ++k)
+      {
+         var elem = arr[k];
+         if (elem.render_data)
+         {
+            var obj3d = this.getObj3D(elem.fElementId);
+            if (obj3d)
+            {
+               obj3d.visible = elem.fRnrSelf && all_ancestor_children_visible;
+               obj3d.all_ancestor_children_visible = all_ancestor_children_visible;
+            }
+         }
+
+         this.update3DObjectsVisibility(elem.childs, elem.fRnrChildren && all_ancestor_children_visible);
+      }
+   }
+   
+   EveScene.prototype.visibilityChildrenChanged = function(el)
+   {
+      console.log("visibility children changed ", this.mgr, el);
+
+      if (el.childs)
+      {
+         // XXXX Overkill, but I don't have obj3d for all elements.
+         // Also, can do this traversal once for the whole update package,
+         // needs to be managed from EveManager.js.
+         // Or marked here and then recomputed before rendering (probably better).
+
+         var scene = this.mgr.GetElement(el.fSceneId);
+
+         this.update3DObjectsVisibility(scene.childs, true);
+
+         if (this.viewer)
+            this.viewer.render();
+      }
+   }
+   
+   EveScene.prototype.colorChanged = function(el)
+   {
+      console.log("color change ", el.fElementId, el.fMainColor);
+
+      this.replaceElement(el);
+   }
+
+   EveScene.prototype.replaceElement = function(el)
+   {
+      if (!this.viewer) return;
+      
+      var obj3d = this.getObj3D(el.fElementId);
+      
+      var container = this.viewer.getThreejsContainer();
+
+      container.remove(obj3d);
+
+      obj3d = this.makeGLRepresentation(el);
+
+      container.add(obj3d);
+      
+      this.id2obj_map[el.fElementId] = obj3d;
+      
+      this.viewer.render();
+   }
+   
+   EveScene.prototype.elementAdded = function(el) {
+      if (!this.viewer) return;
+      
+      var obj3d =  this.makeGLRepresentation(el);
+      if (!obj3d) return;
+      
+      var container = this.viewer.getThreejsContainer();
+
+      container.add(obj3d);
+      console.log("element added ", el);
+      
+      this.viewer.render();
+   }
+   
+   EveScene.prototype.visibilityChanged = function(el)
+   {
+      var obj3d = this.getObj3D( el.fElementId );
+
+      if (obj3d)
+      {
+         obj3d.visible = obj3d.all_ancestor_children_visible && el.fRnrSelf;
+      }
+
+      if (this.viewer)
+         this.viewer.render();
+   }
+
+   
+   EveScene.prototype.elementRemoved = function() {
+   }
+   
+   EveScene.prototype.beginChanges = function() {
+   }
+   
+   EveScene.prototype.endChanges = function() {
    }
 
    JSROOT.EVE.EveScene = EveScene;
