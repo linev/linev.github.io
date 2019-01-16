@@ -43,15 +43,25 @@ sap.ui.define([
          
          this.mgr.RegisterUpdate(this, "setEveData");
       },
-      
+
+      findTable: function(holder) {
+         if ( holder.fRnrSelf && holder._typename == "ROOT::Experimental::REveDataTable" )
+            return holder;
+         
+         for (var i = 0; i < holder.childs.length; ++i)
+         {
+            return this.findTable(holder.childs[i]);
+         }
+            
+      },
       
       setEveData: function() {
          var element = this.mgr.GetElement(this.elementid);
          console.log("table ", element);
          for (var k=0;k<element.childs.length;++k) {
             var sceneInfo = element.childs[k];
-            var abc = this.mgr.GetElement(sceneInfo.fSceneId);
-            this.tableEveElement = abc.childs[0];
+            var scene = this.mgr.GetElement(sceneInfo.fSceneId);
+            this.tableEveElement = this.findTable(scene)
             this.setupTable(this.tableEveElement);
          }
       },
@@ -274,18 +284,20 @@ sap.ui.define([
          console.log("table element id ", pthis.tableEveElement.fElementId);
 
          var obj = {"mir" : mir, "fElementId" : pthis.tableEveElement.fElementId, "class" : pthis.tableEveElement._typename};
-         sap.ui.getCore().byId("TopEveId").getController().handle.Send(JSON.stringify(obj));
+         pthis.mgr.handle.Send(JSON.stringify(obj));
          console.log("MIR obj ", obj);
 
 
       },
 
-      replaceElement: function(el) {
+       replaceElement: function(el) {
+           console.log("REPLACE TABLE !!! ");
          this.setupTable( this.tableEveElement);
       },
 
 
-      elementAdded : function() {
+      elementAdded : function(el) {
+           this.setEveData();
       },
       elementRemoved: function() {
       },

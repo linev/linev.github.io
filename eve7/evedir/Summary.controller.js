@@ -119,6 +119,8 @@ sap.ui.define([
                _type   : "Color"
             }],
             "REveElementList" : [ {sub: ["REveElement"]}],
+            "REveGeoShape" : [ {sub: ["REveElement"]}, ],
+            "REveCompound" : [ {sub: ["REveElement"]}],
             "REvePointSet" : [
             {
                sub: ["REveElement" ]
@@ -126,24 +128,60 @@ sap.ui.define([
                name : "MarkerSize",
                _type   : "Number"
             }],
-            "REveJetCone" : [{sub: ["REveElement"]},{
+             "REveJetCone" : [
+            {
+               name : "RnrSelf",
+               _type   : "Bool"
+            }, {
+               name : "ConeColor",
+               member: "fMainColor",
+               srv  : "SetMainColorRGB",
+                _type   : "Color"
+            }, {
                name : "NDiv",
                _type   : "Number"
             }],
-            "REveTrack" : [ 
+            "REveDataCollection" : [{
+               name : "FilterExpr",
+                _type   : "String",
+                quote : 1
+            },{
+                name : "CollectionVisible",
+                member:"fRnrSelf",
+               _type   : "Bool"
+            }, {
+               name : "Collection Color",
+               member: "fMainColor",
+               srv  : "SetCollectionColorRGB",
+               _type   : "Color"
+           }],
+           "REveDataItem" : [{
+               name : "ItemColor",
+               member: "fMainColor",
+               srv: "SetItemColorRGB",
+               _type   : "Color"
+           },{
+               name : "ItemRnrSelf",
+               member: "fRnrSelf",
+               _type   : "Bool"
+           },{
+               name : "Filtered",
+               _type   : "Bool"
+           }],
+           "REveTrack" : [
             {
-               sub: ["REveElement"]
+               name : "RnrSelf",
+               _type   : "Bool"
+            }, {
+               name : "LineColor",
+               member: "fMainColor",
+               srv  : "SetMainColorRGB",
+               _type   : "Color"
             }, {
                name : "LineWidth",
                _type   : "Number"
             }],
-           "REveDataCollection" : [{
-               name : "Filter",
-               _type   : "String"
-            }],
-           "REveDataItem" : [{
-               name : "Filtered",
-               _type   : "Bool"
+           "REveDataGeoShape" : [{
             }]
          };
 
@@ -264,7 +302,7 @@ sap.ui.define([
             arrw.push(cgd[i]);
          }
 
-         for (var i=0; i< arrw.length; ++i) {
+          for (var i=0; i< arrw.length; ++i) {
             var parName = arrw[i].name;
 
             if (!arrw[i].member) {
@@ -433,7 +471,6 @@ sap.ui.define([
          var idx = path.substring(base.length);
          var customData =  oContext.oModel.oData["widgetlist"][idx].data;
          //console.log("model ",  oContext.oModel);
-         //console.log("custom data ", customData);
          var controller =  sap.ui.getCore().byId("TopEveId--Summary").getController();
          var widget;
          switch (customData._type) {
@@ -483,19 +520,20 @@ sap.ui.define([
             widget = new sap.ui.jsroot.EVEColorButton(sId, {
                //  text:"x",
                icon: "sap-icon://palette",
-               attrcolorXXX:  colVal,
 
                press: function () {
 
                   var oCPPop = new ColorPalettePopover( {
-                        defaultColor: "cyan",
+                      defaultColor: "cyan",
                         colors: ['gold','darkorange', 'indianred','rgb(102,51,0)', 'cyan',// 'magenta'
                                  'blue', 'lime', 'gray','slategray','rgb(204, 198, 170)',
                                  'white', 'black','red' , 'rgb(102,154,51)', 'rgb(200, 0, 200)'],
-                        colorSelect: controller.handleColorSelect.bind(controller),
+                        colorSelect: controller.handleColorSelect.bind(controller)
                    });
 
+                   
                    oCPPop.openBy(this);
+                   oCPPop.data("myData", customData);
                  }
             });
 
@@ -518,7 +556,8 @@ sap.ui.define([
       },
 
       handleColorSelect: function(event, data) {
-         var val = event.getParameters().value;
+          var val = event.getParameters().value;
+          var myData = event.getSource().data("myData");
 
          var rgb,
              regex = /rgb\((\d+)\,\s?(\d+)\,\s?(\d+)\)/,
@@ -546,18 +585,22 @@ sap.ui.define([
             rgb = rgb ? { r: parseInt(rgb[1], 16), g: parseInt(rgb[2], 16), b: parseInt(rgb[3], 16) } : null;
          }
 
-         // var mir =  "SetMainColorRGB(" + rgb.r + ", " + rgb.g +  ", " + rgb.b + ")";
-         var mir =  "SetMainColorRGB((UChar_t)" + rgb.r + ", (UChar_t)" + rgb.g +  ", (UChar_t)" + rgb.b + ")";
-         // var mir =  "SetMainColorRGB(" + String.fromCharCode(97 + rgb.r) + ", " + String.fromCharCode(97 + rgb.g) +  ", " + String.fromCharCode(97 + rgb.b) + ")";
+
+         var mir =  myData.srv + "((UChar_t)" + rgb.r + ", (UChar_t)" + rgb.g +  ", (UChar_t)" + rgb.b + ")";
+
          var obj = { "mir": mir, "fElementId": this.editorElement.fElementId, "class": this.editorElement._typename };
-         console.log("MIR color ", obj);
          this.mgr.handle.Send(JSON.stringify(obj));
       },
 
       sendMethodInvocationRequest: function(value, event) {
-         // console.log("on change !!!!!!", event.getSource().data("myData"));
+         console.log("on change !!!!!!", event.getSource().data("myData"));
+
+         if (event.getSource().data("myData").quote !== undefined ) {
+              value = "\"" + value + " \"";
+         }
          var mir =  event.getSource().data("myData").srv + "( " + value + " )";
-         // console.log("=====> ", mir);
+        
+         console.log("=====> ", mir);
          var obj = {"mir" : mir, "fElementId" : this.editorElement.fElementId, "class" : this.editorElement._typename};
 
          this.mgr.handle.Send(JSON.stringify(obj));
