@@ -6,7 +6,7 @@ sap.ui.define([
 
    "use strict";
    
-   var direct_threejs = 0;
+   var direct_threejs = false;
 
    return Controller.extend("eve.GL", {
 
@@ -56,7 +56,7 @@ sap.ui.define([
          if (!direct_threejs || this.renderer) return;
          
          this.scene      = new THREE.Scene();
-         this.camera     = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+         this.camera     = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 100000 );
          this.rot_center = new THREE.Vector3(0,0,0);
 
          // this.controls = new THREE.OrbitControls( this.camera );
