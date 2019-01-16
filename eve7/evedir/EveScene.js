@@ -189,7 +189,7 @@
       
       var obj3d = this.getObj3D(el.fElementId);
       
-      var container = this.viewer.getThreejsContainer();
+      var container = this.viewer.getThreejsContainer("scene" + this.id);
 
       container.remove(obj3d);
 
@@ -208,7 +208,7 @@
       var obj3d =  this.makeGLRepresentation(el);
       if (!obj3d) return;
       
-      var container = this.viewer.getThreejsContainer();
+      var container = this.viewer.getThreejsContainer("scene" + this.id);
 
       container.add(obj3d);
       console.log("element added ", el);

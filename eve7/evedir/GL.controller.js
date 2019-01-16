@@ -74,25 +74,25 @@ sap.ui.define([
 
          // -------
 
-         var sphere = new THREE.SphereGeometry( 0.1, 8, 8 );
+         // var sphere = new THREE.SphereGeometry( 0.1, 8, 8 );
          // var lamp = new THREE.DirectionalLight( 0xff5050, 0.5 );
          var lampR = new THREE.PointLight( 0xff5050, 0.7 );
-         lampR.add(new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: lampR.color } ) ));
+         // lampR.add(new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: lampR.color } ) ));
          lampR.position.set(2, 2, -2);
          this.scene.add( lampR );
 
          var lampG = new THREE.PointLight( 0x50ff50, 0.7 );
-         lampG.add(new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: lampG.color } ) ));
+         // lampG.add(new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: lampG.color } ) ));
          lampG.position.set(-2, 2, 2);
          this.scene.add( lampG );
 
          var lampB = new THREE.PointLight( 0x5050ff, 0.7 );
-         lampB.add(new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: lampB.color } ) ));
+         // lampB.add(new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: lampB.color } ) ));
          lampB.position.set(2, 2, 2);
          this.scene.add( lampB );
 
-         var plane = new THREE.GridHelper(20, 20, 0x80d080, 0x8080d0);
-         this.scene.add(plane);
+         //var plane = new THREE.GridHelper(20, 20, 0x80d080, 0x8080d0);
+         //this.scene.add(plane);
       },
 
       /** returns container for 3d objects */
@@ -107,6 +107,7 @@ sap.ui.define([
          
          var obj3d = new THREE.Object3D();
          obj3d._eve_name = name;
+         this.scene.add(obj3d);
          return obj3d;
       },
       
@@ -114,12 +115,16 @@ sap.ui.define([
       render: function()
       {
          if (!direct_threejs) {
-            if (this.geo_painter) this.geo_painter.Render3D();
+            if (this.geo_painter) {
+               if (!this.first_time_render) {
+                  this.first_time_render = true;
+                  this.geo_painter.adjustCameraPosition(true);
+               }
+               this.geo_painter.Render3D();
+            }
             return;
          }
          
-         console.log("render");
-
          if ( ! this.dom_registered)
          {
             this.getView().getDomRef().appendChild( this.renderer.domElement );
@@ -127,7 +132,7 @@ sap.ui.define([
             //this.controls = new THREE.OrbitControls( this.camera);
             this.controls = new THREE.OrbitControls( this.camera, this.getView().getDomRef() );
 
-            this.controls.addEventListener( 'change', this.onThreeChange.bind(this) );
+            this.controls.addEventListener( 'change', this.render.bind(this) );
 
             this.dom_registered = true;
 
@@ -149,7 +154,7 @@ sap.ui.define([
             console.log("scene bbox ", sbbox, ", camera_pos ", posV, ", look_at ", this.rot_center);
          }
 
-         console.log(this.camera);
+         // console.log(this.camera);
 
          //console.log(this.controls);
          //console.log(this.getView().getDomRef());
@@ -162,19 +167,10 @@ sap.ui.define([
          this.renderer.render( this.scene, this.camera );
       },
 
-      onThreeChange: function(etypetarget)
-      {
-         // console.log("THREE change ", etypetarget, event);
-
-         // XXXX update controller target to rot_center?
-
-         this.render();
-      },
-
       onLoadScripts: function()
       {
          this._load_scripts = true;
-         this.checkScenes();
+         this.checkViewReady();
       },
 
       onManagerUpdate: function()
@@ -193,7 +189,7 @@ sap.ui.define([
 
          this.elementid = found.fElementId;
          this.kind = (found.fName == "Default Viewer") ? "3D" : "2D";
-         this.checkScenes();
+         this.checkViewReady();
 
       },
 
@@ -211,93 +207,71 @@ sap.ui.define([
          // TODO: should be specified somehow in XML file
          this.getView().$().css("overflow", "hidden").css("width", "100%").css("height", "100%").parent().css("overflow", "hidden");
 
-         this.checkScenes();
+         this.checkViewReady();
       },
+      
+      createScenes: function()
+      {
+         if (this.created_scenes !== undefined) return;
+         this.created_scenes = [];
 
-      checkScenes: function()
+         // only when rendering completed - register for modify events
+         var element = this.mgr.GetElement(this.elementid);
+
+         // loop over scene and add dependency
+         for (var k=0;k<element.childs.length;++k)
+         {
+            var scene = element.childs[k];
+            this.mgr.RegisterSceneReceiver(scene.fSceneId, this);
+
+            this.created_scenes.push(new JSROOT.EVE.EveScene(this.mgr, scene, this));
+         }
+         
+      },
+      
+      redrawScenes: function() {
+         for (var k=0;k<this.created_scenes.length;++k)
+            this.created_scenes[k].redrawScene();
+      },
+      
+
+      /** checks if all initialization is performed */
+      checkViewReady: function()
       {
          if (!this._load_scripts || !this._render_html || !this.elementid) return;
          
-         if (direct_threejs) this.createThreejsRenderer();
-
-         if (this.created_scenes === undefined)
-         {
-            this.created_scenes = [];
-
-            // only when rendering completed - register for modify events
-            var element = this.mgr.GetElement(this.elementid);
-
-            // loop over scene and add dependency
-            for (var k=0;k<element.childs.length;++k)
-            {
-               var scene = element.childs[k];
-               this.mgr.RegisterSceneReceiver(scene.fSceneId, this);
-               
-               this.created_scenes.push(new JSROOT.EVE.EveScene(this.mgr, scene, this));
-            }
-         }
-
-         // start drawing only when all scenes has childs
-         // this is configured view
-         var anyextras = false;
-         
-         // loop over scene and check if render data exists
-         for (var k=0;k<this.created_scenes.length;++k)
-         {
-            if (this.created_scenes[k].hasRenderData()) anyextras = true;
-         }
-         
-         if (anyextras) this.drawGeometry();
-      },
-
-      drawGeometry: function()
-      {
-         // now loop over all  scenes and create three.js objects
-         //var res3d = [];
-         //for (var k=0;k<this.created_scenes.length;++k)
-         //   this.created_scenes[k].create3DObjects(res3d, true);
-         
          if (direct_threejs) {
-            // simple rendering
-            
-            for (var k=0;k<this.created_scenes.length;++k)
-               this.created_scenes[k].redrawScene();
-            
+            this.createThreejsRenderer();
+            this.createScenes();
+            this.redrawScenes();
             return;
          }
+         
+         if (this.geo_painter) {
+            this.redrawScenes();
+            return;
+         }
+
          
          var options = "";
          if (this.kind != "3D") options = "ortho_camera";
 
-         if (this.geo_painter) {
 
-            // when geo painter already exists - clear all our additional objects
-            this.geo_painter.clearExtras();
+         // TODO: should be specified somehow in XML file
+         this.getView().$().css("overflow", "hidden").css("width", "100%").css("height", "100%");
 
-            this.geo_painter.ResetReady();
-
-         } else {
-
-            // TODO: should be specified somehow in XML file
-            this.getView().$().css("overflow", "hidden").css("width", "100%").css("height", "100%");
-
-            this.geo_painter = JSROOT.Painter.CreateGeoPainter(this.getView().getDomRef(), null, options);
-         }
+         this.geo_painter = JSROOT.Painter.CreateGeoPainter(this.getView().getDomRef(), null, options);
 
          this.painter_ready = false;
          // assign callback function - when needed
-         this.geo_painter.WhenReady(this.onGeomertyDrawn.bind(this));
-
-
-         // if geometry detected in the scenes, it will be used to display
-
-         // loop over scene and add dependency
-         //for (var k = 0; k < res3d.length; ++k)
-         //   this.geo_painter.addExtra(res3d[k]);
+         this.geo_painter.WhenReady(this.onGeoPainterReady.bind(this));
 
          this.geo_painter.AssignObject(null);
 
          this.geo_painter.prepareObjectDraw(null); // and now start everything
+      },
+
+      onGeoPainterReady: function(painter) {
 
          // AMT temporary here, should be set in camera instantiation time
          if (this.geo_painter._camera.type == "OrthographicCamera") {
@@ -306,20 +280,15 @@ sap.ui.define([
             this.geo_painter._camera.top = this.getView().$().height();
             this.geo_painter._camera.bottom = -this.getView().$().height();
             this.geo_painter._camera.updateProjectionMatrix();
-            this.geo_painter.Render3D();
          }
-      },
-
-      onGeomertyDrawn: function(painter) {
          
          this.painter_ready = true;
          this.geo_painter._highlight_handlers = [ this ]; // register ourself for highlight handling
          this.last_highlight = null;
          
-         for (var k=0;k<this.created_scenes.length;++k)
-            this.created_scenes[k].redrawScene();
-         
-         this.geo_painter.adjustCameraPosition(true);
+         // create only when geo painter is ready
+         this.createScenes();
+         this.redrawScenes();
       },
 
       /// function called by GeoPainter, when mesh is highlighted
