@@ -422,12 +422,25 @@
    
    ////////////////////////////////////////////////////////////////////////////////////////////
    
-   function StraightLineSetControl(mesh) {
-      JSROOT.Painter.InteractiveControl.call(this);
+   function EveElemControl(mesh) {
+      // JSROOT.Painter.GeoDrawingControl.call(this);
       this.mesh = mesh;
    }
+
+   EveElemControl.prototype = Object.create(JSROOT.Painter.GeoDrawingControl.prototype);
+
+   EveElemControl.prototype.setHighlight = function(col, indx) {
+      // special hook here
+      JSROOT.Painter.GeoDrawingControl.prototype.setHighlight.call(this, col, indx);
+   }
+
+   ////////////////////////////////////////////////
    
-   StraightLineSetControl.prototype = Object.create(JSROOT.Painter.InteractiveControl.prototype);
+   function StraightLineSetControl(mesh) {
+      EveElemControl.call(this, mesh);
+   }
+   
+   StraightLineSetControl.prototype = Object.create(EveElemControl.prototype);
    
    StraightLineSetControl.prototype.cleanup = function() {
       if (!this.mesh) return;
