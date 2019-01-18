@@ -428,8 +428,8 @@
    
    StraightLineSetControl.prototype.cleanup = function() {
       if (!this.mesh) return;
-      delete this.mesh.is_selected;
-      this.createSpecial(null);
+      this.createSpecial("select");
+      this.createSpecial("highlight");
       delete this.mesh;
    }
 
@@ -447,30 +447,27 @@
       }
       m.select_col = col;
       m.select_indx = indx;
-      this.createSpecial(col, indx);
+      this.createSpecial("select", col, indx);
       return true;
    }
 
    StraightLineSetControl.prototype.setHighlight = function(col, indx) {
       var m = this.mesh;
       m.h_index = indx;
-      if (col)
-         this.createSpecial(col, indx);
-      else
-         this.createSpecial(m.select_col, m.select_indx);
+      this.createSpecial("highlight", col, indx);
    }
 
-   StraightLineSetControl.prototype.createSpecial = function(color, index) {
-      var m = this.mesh;
-      if (m.l_special) {
-         m.remove(m.l_special);
-         JSROOT.Painter.DisposeThreejsObject(m.l_special);
-         delete m.l_special;
+   StraightLineSetControl.prototype.createSpecial = function(prefix, color, index) {
+      var m = this.mesh, ll = prefix + "_l_special", mm = prefix + "_m_special";
+      if (m[ll]) {
+         m.remove(m[ll]);
+         JSROOT.Painter.DisposeThreejsObject(m[ll]);
+         delete m[ll];
       }
-      if (m.m_special) {
-         m.remove(m.m_special);
-         JSROOT.Painter.DisposeThreejsObject(m.m_special);
-         delete m.m_special;
+      if (m[mm]) {
+         m.remove(m[mm]);
+         JSROOT.Painter.DisposeThreejsObject(m[mm]);
+         delete m[mm];
       }
       
       if (!color) 
@@ -483,7 +480,7 @@
       var line = new THREE.LineSegments(geom, lineMaterial);
       m.add(line);
       line.jsroot_special = true; // special object, exclude from intersections
-      m.l_special = line;
+      m[ll] = line;
       var el = m.eve_el;
 
       if ((index % 2 == 0) && (index < el.fLinePlexSize*2)) {
@@ -505,7 +502,7 @@
             var mark = pnts.CreatePoints(color);
             m.add(mark);
             mark.jsroot_special = true; // special object, exclude from intersections
-            m.m_special = mark;
+            m[mm] = mark;
          }
       }
       
