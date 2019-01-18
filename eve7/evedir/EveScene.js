@@ -256,11 +256,24 @@
       this.mgr.invokeInOtherScenes(this, "setElementSelected", obj3d.mstrId, col, indx);
    }
    
+   /** interactive handler */
+   EveScene.prototype.processElementHighlighted = function(obj3d, col, indx) {
+      this.mgr.invokeInOtherScenes(this, "setElementHighlighted", obj3d.mstrId, col, indx);
+   }
+   
    /** function called by changes from server or by changes from other scenes */
    EveScene.prototype.setElementSelected = function(mstrid, col, indx) {
       var obj3d = this.getObj3D( mstrid, true );
       if (obj3d && obj3d.get_ctrl)
          if (obj3d.get_ctrl().setSelected(col, indx, true))
+            if (this.viewer) 
+               this.viewer.render();
+   }
+   
+   EveScene.prototype.setElementHighlighted = function(mstrid, col, indx) {
+      var obj3d = this.getObj3D( mstrid, true );
+      if (obj3d && obj3d.get_ctrl)
+         if (obj3d.get_ctrl().setHighlight(col, indx, true))
             if (this.viewer) 
                this.viewer.render();
    }

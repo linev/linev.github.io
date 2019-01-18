@@ -39,6 +39,8 @@
    EveElemControl.prototype.setHighlight = function(col, indx, non_recursive) {
       // special hook here
       JSROOT.Painter.GeoDrawingControl.prototype.setHighlight.call(this, col || this.mesh.select_col, indx);
+      if (!non_recursive) this.invokeSceneMethod("processElementHighlighted", col, indx);
+      return true;
    }
 
    EveElemControl.prototype.setSelected = function(col, indx, non_recursive) {
@@ -490,9 +492,11 @@
       return true;
    }
 
-   StraightLineSetControl.prototype.setHighlight = function(col, indx) {
+   StraightLineSetControl.prototype.setHighlight = function(col, indx, non_recursive) {
       this.mesh.h_index = indx;
       this.createSpecial("highlight", col, indx);
+      if (!non_recursive) this.invokeSceneMethod("processElementHighlighted", col, indx);
+      return true;
    }
    
    StraightLineSetControl.prototype.getHighlightIndex = function() { return this.mesh.h_index; }

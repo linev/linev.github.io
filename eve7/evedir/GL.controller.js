@@ -290,7 +290,7 @@ sap.ui.define([
          }
          
          this.painter_ready = true;
-         this.geo_painter._highlight_handlers = [ this ]; // register ourself for highlight handling
+         // this.geo_painter._highlight_handlers = [ this ]; // register ourself for highlight handling
          this.last_highlight = null;
          
          // create only when geo painter is ready
