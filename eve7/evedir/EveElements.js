@@ -77,6 +77,8 @@
       /// use points control to toggle highlight and selection
       // mesh.get_ctrl = function() { return new JSROOT.Painter.PointsControl(this); }
 
+      mesh.get_ctrl = function() { return new EveElemControl(this); }
+      
       mesh.highlightScale = 2;
       
       mesh.object = hit;

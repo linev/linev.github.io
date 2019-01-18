@@ -15,8 +15,6 @@
 
    "use strict";
    
-   console.log("loading EveScene.js");
-
    /// constructor, handle for REveScene class
    
    function EveScene(mgr,scene,viewer)

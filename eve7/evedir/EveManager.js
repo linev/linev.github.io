@@ -149,11 +149,6 @@
       this.RegisterReceiver("update", receiver, func_name);
    }
 
-   /** Register object with function, which is called when element is highlighted */
-   EveManager.prototype.RegisterHighlight = function(receiver, func_name) {
-      this.RegisterReceiver("highlight", receiver, func_name);
-   }
-
    /** Register object with function, which is called when manager structure is updated */
    EveManager.prototype.RegisterElementUpdate = function(receiver, func_name) {
       this.RegisterReceiver("elem_update", receiver, func_name);
@@ -179,14 +174,6 @@
       }
    }
 
-
-   /** Invoke highlight on all dependent views.
-    * One specifies element id and on/off state.
-    * If timeout configured, actual execution will be postponed on given time interval */
-
-   EveManager.prototype.ProcessHighlight = function(sender, masterid, masterindex, timeout) {
-      this.InvokeReceivers("highlight", sender, timeout, masterid, masterindex);
-   }
 
    /** Invoke Update on all dependent views.
     * If timeout configured, actual execution will be postponed on given time interval */
