@@ -27,7 +27,9 @@
       this.viewer = viewer;
       this.creator = new JSROOT.EVE.EveElements();
       this.creator.useIndexAsIs = (JSROOT.GetUrlOption('useindx') !== null);
-      this.id2obj_map = {};
+      this.id2obj_map = {}; // base on element id
+      this.mid2obj_map = {}; // base on master id
+      
       this.first_time = true;
       
       // register ourself for scene events
@@ -64,6 +66,7 @@
          
          //AMT: reference needed in MIR callback
          obj3d.eveId = elem.fElementId;
+         obj3d.mstrId = elem.fMasterId;
 
          if (elem.render_data.matrix)
          {
@@ -107,6 +110,7 @@
                   res3d.push(obj3d);
                   
                   this.id2obj_map[elem.fElementId] = obj3d;
+                  if (elem.fMasterId) this.mid2obj_map[elem.fMasterId] = obj3d;
 
                   obj3d.visible = elem.fRnrSelf && all_ancestor_children_visible;
                   obj3d.all_ancestor_children_visible = all_ancestor_children_visible;
@@ -139,9 +143,10 @@
       this.first_time = false;
    }
    
-   EveScene.prototype.getObj3D = function(elementId)
+   EveScene.prototype.getObj3D = function(elementId, is_master)
    {
-      return this.id2obj_map[elementId];
+      var map = is_master ? this.mid2obj_map : this.id2obj_map;
+      return map[elementId];
    }
 
    EveScene.prototype.update3DObjectsVisibility = function(arr, all_ancestor_children_visible)
@@ -189,6 +194,7 @@
       container.add(obj3d);
       
       this.id2obj_map[el.fElementId] = obj3d;
+      if (el.fMasterId) this.mid2obj_map[el.fMasterId] = obj3d;
       
       this.viewer.render();
    }
@@ -244,8 +250,25 @@
       }
    }
    
-   EveScene.prototype.setElementSelected = function(obj3d, col, indx) {
-      console.log("setElementSelected", obj3d.geo_object, col, indx);
+   EveScene.prototype.invokeInOtherScenes = function(fname, arg1, arg2, arg3) {
+      for (var i=0;i<this.mgr.scenes.length;++i) {
+         var sc = this.mgr.scenes[i];
+         if ((sc !== this) && (typeof sc[fname] == "function"))
+            sc[fname](arg1, arg2, arg3);
+      }
+   }
+   
+   /** interactive handler */
+   EveScene.prototype.processElementSelected = function(obj3d, col, indx) {
+      console.log("processElementSelected", obj3d.mstrId, obj3d.eveId, col, indx);
+      this.invokeInOtherScenes("setElementSelected", obj3d.mstrId, col, indx);
+   }
+   
+   /** function called by changes from server or by changes from other scenes */
+   EveScene.prototype.setElementSelected = function(mstrid, col, indx) {
+      var obj3d = this.getObj3D( mstrid, true );
+      if (obj3d && obj3d.get_ctrl)
+         obj3d.get_ctrl().setSelected(col, indx, true);
    }
    
    EveScene.prototype.elementRemoved = function() {

@@ -43,12 +43,12 @@
 
    EveElemControl.prototype.setSelected = function(col, indx, non_recursive) {
       var m = this.mesh;
-      if ((m.select_col == col) && (m.select_indx == indx)) { col = null; indx = undefined; }
+      if (!non_recursive && (m.select_col == col) && (m.select_indx == indx)) { col = null; indx = undefined; }
       m.select_col = col;
       m.select_indx = indx;
       // special hook here
       JSROOT.Painter.GeoDrawingControl.prototype.setHighlight.call(this, col, indx);
-      if (!non_recursive) this.invokeSceneMethod("setElementSelected", col, indx);
+      if (!non_recursive) this.invokeSceneMethod("processElementSelected", col, indx);
       return true;
    }
 
@@ -481,10 +481,10 @@
 
    StraightLineSetControl.prototype.setSelected = function(col, indx, non_recurive) {
       var m = this.mesh;
-      if ((m.select_col == col) && (m.select_indx == indx)) { col = null; indx = undefined; }
+      if (!non_recurive && (m.select_col == col) && (m.select_indx == indx)) { col = null; indx = undefined; }
       m.select_col = col;
       m.select_indx = indx;
-      if (!non_recurive) this.invokeSceneMethod("setElementSelected", col, indx);
+      if (!non_recurive) this.invokeSceneMethod("processElementSelected", col, indx);
      
       this.createSpecial("select", col, indx);
       return true;

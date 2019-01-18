@@ -29,6 +29,8 @@
       this.scene_changes = null;
 
       this.hrecv = []; // array of receivers of highlight messages
+      
+      this.scenes = [];  // list of scene objects
 
       this.EChangeBits = { "kCBColorSelection": 1, "kCBTransBBox": 2, "kCBObjProps": 4, "kCBVisibility": 8 };
    }

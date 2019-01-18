@@ -227,8 +227,11 @@ sap.ui.define([
          {
             var scene = element.childs[k];
             this.mgr.RegisterSceneReceiver(scene.fSceneId, this);
+            
+            var handler = new JSROOT.EVE.EveScene(this.mgr, scene, this);
 
-            this.created_scenes.push(new JSROOT.EVE.EveScene(this.mgr, scene, this));
+            this.created_scenes.push(handler);
+            this.mgr.scenes.push(handler);
          }
          
       },
