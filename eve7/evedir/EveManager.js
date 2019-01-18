@@ -44,11 +44,11 @@
       this.scenes.push(handler);
    }
 
-   EveManager.prototype.invokeInOtherScenes = function(scene, fname, arg1, arg2, arg3) {
+   EveManager.prototype.invokeInOtherScenes = function(scene, fname, arg1, arg2, arg3, arg4) {
       for (var i=0;i<this.scenes.length;++i) {
          var sc = this.scenes[i];
          if ((sc !== scene) && (typeof sc[fname] == "function"))
-            sc[fname](arg1, arg2, arg3);
+            sc[fname](arg1, arg2, arg3, arg4);
       }
    }
    
