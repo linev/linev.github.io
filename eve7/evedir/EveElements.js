@@ -423,8 +423,11 @@
    ////////////////////////////////////////////////////////////////////////////////////////////
    
    function StraightLineSetControl(mesh) {
+      JSROOT.Painter.InteractiveControl.call(this);
       this.mesh = mesh;
    }
+   
+   StraightLineSetControl.prototype = Object.create(JSROOT.Painter.InteractiveControl.prototype);
    
    StraightLineSetControl.prototype.cleanup = function() {
       if (!this.mesh) return;
@@ -452,10 +455,11 @@
    }
 
    StraightLineSetControl.prototype.setHighlight = function(col, indx) {
-      var m = this.mesh;
-      m.h_index = indx;
+      this.mesh.h_index = indx;
       this.createSpecial("highlight", col, indx);
    }
+   
+   StraightLineSetControl.prototype.getHighlightIndex = function() { return this.mesh.h_index; }
 
    StraightLineSetControl.prototype.createSpecial = function(prefix, color, index) {
       var m = this.mesh, ll = prefix + "_l_special", mm = prefix + "_m_special";
@@ -519,7 +523,7 @@
       var buf = new Float32Array(el.fLinePlexSize * 6);
       for (var i = 0; i < el.fLinePlexSize * 6; ++i)
          buf[i] = rnr_data.vtxBuff[i];
-      var lineMaterial = new THREE.LineBasicMaterial({ color: mainColor, linewidth: 2 });
+      var lineMaterial = new THREE.LineBasicMaterial({ color: mainColor, linewidth: 1 });
       
       var geom = new THREE.BufferGeometry();
       geom.addAttribute( 'position', new THREE.BufferAttribute( buf, 3 ) );
@@ -527,6 +531,7 @@
       obj3d.add(line);
       
       line.get_ctrl = function() { return new StraightLineSetControl(this.parent, true); }
+      
       line.geo_object = el.fElementId;
       line.geo_name = el.fName || "linesset";
       
