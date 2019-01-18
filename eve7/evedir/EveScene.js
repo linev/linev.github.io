@@ -60,6 +60,8 @@
          obj3d.geo_object = elem.fMasterId || elem.fElementId;
          obj3d.geo_name = elem.fName; // used for highlight
 
+         obj3d.scene = this; // required for get changes when highlight/selection is changed
+         
          //AMT: reference needed in MIR callback
          obj3d.eveId = elem.fElementId;
 
@@ -69,6 +71,7 @@
             obj3d.matrix.fromArray( elem.render_data.matrix );
             obj3d.updateMatrixWorld(true);
          }
+         
          return obj3d;
       }
    }
@@ -239,6 +242,10 @@
          if (this.viewer)
             this.viewer.render();
       }
+   }
+   
+   EveScene.prototype.setElementSelected = function(obj3d, col, indx) {
+      console.log("setElementSelected", obj3d.geo_object, col, indx);
    }
    
    EveScene.prototype.elementRemoved = function() {

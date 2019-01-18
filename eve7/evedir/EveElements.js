@@ -22,8 +22,42 @@
 
    "use strict";
 
-   var GL = { POINTS: 0, LINES: 1, LINE_LOOP: 2, LINE_STRIP: 3, TRIANGLES: 4 };
+   
+   function EveElemControl(mesh) {
+      // JSROOT.Painter.GeoDrawingControl.call(this);
+      this.mesh = mesh;
+   }
 
+   EveElemControl.prototype = Object.create(JSROOT.Painter.GeoDrawingControl.prototype);
+   
+   EveElemControl.prototype.invokeSceneMethod = function(fname, arg1, arg2) {
+      if (!this.mesh || !this.mesh.scene) return;
+      var s = this.mesh.scene;
+      if (typeof s[fname] == "function") s[fname](this.mesh, arg1, arg2);
+   }
+
+   EveElemControl.prototype.setHighlight = function(col, indx, non_recursive) {
+      // special hook here
+      JSROOT.Painter.GeoDrawingControl.prototype.setHighlight.call(this, col || this.mesh.select_col, indx);
+   }
+
+   EveElemControl.prototype.setSelected = function(col, indx, non_recursive) {
+      var m = this.mesh;
+      if ((m.select_col == col) && (m.select_indx == indx)) { col = null; indx = undefined; }
+      m.select_col = col;
+      m.select_indx = indx;
+      // special hook here
+      JSROOT.Painter.GeoDrawingControl.prototype.setHighlight.call(this, col, indx);
+      if (!non_recursive) this.invokeSceneMethod("setElementSelected", col, indx);
+      return true;
+   }
+
+   ////////////////////////////////////////////////
+   
+   
+   var GL = { POINTS: 0, LINES: 1, LINE_LOOP: 2, LINE_STRIP: 3, TRIANGLES: 4 };
+   
+   
    function EveElements()
    {
    }
@@ -103,6 +137,8 @@
       line.geo_name = track.fName;
       line.geo_object = track.fMasterId || track.fElementId;
       line.hightlightWidthScale = 2;
+      
+      line.get_ctrl = function() { return new EveElemControl(this); }
 
       return line;
    }
@@ -422,19 +458,6 @@
    
    ////////////////////////////////////////////////////////////////////////////////////////////
    
-   function EveElemControl(mesh) {
-      // JSROOT.Painter.GeoDrawingControl.call(this);
-      this.mesh = mesh;
-   }
-
-   EveElemControl.prototype = Object.create(JSROOT.Painter.GeoDrawingControl.prototype);
-
-   EveElemControl.prototype.setHighlight = function(col, indx) {
-      // special hook here
-      JSROOT.Painter.GeoDrawingControl.prototype.setHighlight.call(this, col, indx);
-   }
-
-   ////////////////////////////////////////////////
    
    function StraightLineSetControl(mesh) {
       EveElemControl.call(this, mesh);
@@ -456,13 +479,13 @@
 
    StraightLineSetControl.prototype.isSelected = function() { return !!this.mesh.select_col; }
 
-   StraightLineSetControl.prototype.setSelected = function(col, indx) {
+   StraightLineSetControl.prototype.setSelected = function(col, indx, non_recurive) {
       var m = this.mesh;
-      if ((m.select_col == col) && (m.select_indx == indx)) {
-         col = null; indx = undefined;
-      }
+      if ((m.select_col == col) && (m.select_indx == indx)) { col = null; indx = undefined; }
       m.select_col = col;
       m.select_indx = indx;
+      if (!non_recurive) this.invokeSceneMethod("setElementSelected", col, indx);
+     
       this.createSpecial("select", col, indx);
       return true;
    }
