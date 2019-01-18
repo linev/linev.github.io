@@ -343,7 +343,9 @@ sap.ui.define([
 
             var setcol = (col && mstrid && (mstrid == ttt.masterid)) ? "lightblue" : "";
 
-            item.$().css("background-color", setcol);
+            if (mstrid == ttt.masterid) ttt.sel_color = setcol;
+            
+            item.$().css("background-color", ttt.sel_color);
          }
       },
       
@@ -357,7 +359,7 @@ sap.ui.define([
 
             var setcol = (col && mstrid && (mstrid == ttt.masterid)) ? "yellow" : "";
 
-            item.$().css("background-color", setcol);
+            item.$().css("background-color", setcol || ttt.set_color);
          }
       },
 
