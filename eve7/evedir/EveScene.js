@@ -250,25 +250,19 @@
       }
    }
    
-   EveScene.prototype.invokeInOtherScenes = function(fname, arg1, arg2, arg3) {
-      for (var i=0;i<this.mgr.scenes.length;++i) {
-         var sc = this.mgr.scenes[i];
-         if ((sc !== this) && (typeof sc[fname] == "function"))
-            sc[fname](arg1, arg2, arg3);
-      }
-   }
-   
    /** interactive handler */
    EveScene.prototype.processElementSelected = function(obj3d, col, indx) {
-      console.log("processElementSelected", obj3d.mstrId, obj3d.eveId, col, indx);
-      this.invokeInOtherScenes("setElementSelected", obj3d.mstrId, col, indx);
+      // console.log("processElementSelected", obj3d.mstrId, obj3d.eveId, col, indx);
+      this.mgr.invokeInOtherScenes(this, "setElementSelected", obj3d.mstrId, col, indx);
    }
    
    /** function called by changes from server or by changes from other scenes */
    EveScene.prototype.setElementSelected = function(mstrid, col, indx) {
       var obj3d = this.getObj3D( mstrid, true );
       if (obj3d && obj3d.get_ctrl)
-         obj3d.get_ctrl().setSelected(col, indx, true);
+         if (obj3d.get_ctrl().setSelected(col, indx, true))
+            if (this.viewer) 
+               this.viewer.render();
    }
    
    EveScene.prototype.elementRemoved = function() {

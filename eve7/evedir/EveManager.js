@@ -39,7 +39,19 @@
    EveManager.prototype.GetElement = function(id) {
       return this.map[id];
    }
+   
+   EveManager.prototype.addSceneHandler = function(handler) {
+      this.scenes.push(handler);
+   }
 
+   EveManager.prototype.invokeInOtherScenes = function(scene, fname, arg1, arg2, arg3) {
+      for (var i=0;i<this.scenes.length;++i) {
+         var sc = this.scenes[i];
+         if ((sc !== scene) && (typeof sc[fname] == "function"))
+            sc[fname](arg1, arg2, arg3);
+      }
+   }
+   
    /** Attach websocket handle to manager, all communication runs through manager */
    EveManager.prototype.UseConnection = function(handle) {
       this.handle = handle;

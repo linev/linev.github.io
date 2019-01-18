@@ -231,7 +231,7 @@ sap.ui.define([
             var handler = new JSROOT.EVE.EveScene(this.mgr, scene, this);
 
             this.created_scenes.push(handler);
-            this.mgr.scenes.push(handler);
+            this.mgr.addSceneHandler(handler);
          }
          
       },
