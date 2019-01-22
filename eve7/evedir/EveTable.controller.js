@@ -133,7 +133,7 @@ sap.ui.define([
          if (this.mgr) this.mgr.Unregister(this);
       },
 
-      onSceneChanged: function(element, id) {
+      onSceneCreate: function(element, id) {
          console.log("!!!CHANGED", id);
 
          this.setEveData();
@@ -289,8 +289,8 @@ sap.ui.define([
 
 
       },
-
-       replaceElement: function(el) {
+/*
+     replaceElement: function(el) {
            console.log("REPLACE TABLE !!! ");
          this.setupTable( this.tableEveElement);
       },
@@ -305,6 +305,16 @@ sap.ui.define([
 
       beginChanges : function() {
       },
+*/
+      
+
+      sceneElementChange : function(msg)
+      {
+        // AMT for the moment always recreate table in endChanges
+        // var el = this.mgr.GetElement(msg.fElementId);
+        // this[msg.tag](el);
+      },
+
       endChanges : function() {
          console.log("table controller endchanges ",this.tableEveElement );
          this.setEveData();

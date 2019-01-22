@@ -68,7 +68,7 @@
       if (typeof msg != "string") {
          // console.log('ArrayBuffer size ',
          // msg.byteLength, 'offset', offset);
-         this.UpdateBinary(msg, offset);
+         this.ImportSceneBinary(msg, offset);
 
          return;
       }
@@ -83,11 +83,11 @@
 
       } else if (resp && resp[0] && resp[0].content == "REveScene::StreamElements") {
 
-         this.Update(resp);
+         this.ImportSceneJson(resp);
 
       } else if (resp && resp.header && resp.header.content == "ElementsRepresentaionChanges") {
 
-         this.SceneChanged(resp);
+         this.ImportSceneChangeJson(resp);
 
       }
    }
@@ -189,7 +189,7 @@
    }
 
    // mark object and all its parents as modified
-   EveManager.prototype.MarkModified = function(id) {
+   EveManager.prototype.MarkSceneRrecreate = function(id) {
       while (id) {
          var elem = this.GetElement(id);
          if (!elem) return;
@@ -198,26 +198,16 @@
       }
    }
 
-   EveManager.prototype.ProcessModified = function(sceneid) {
+   EveManager.prototype.ProcessSceneCreate = function(sceneid) {
       var elem = this.GetElement(sceneid);
       if (!elem || !elem.$modified) return;
       
-      this.callSceneReceivers(elem, "onSceneChanged", sceneid);
+      this.callSceneReceivers(elem, "onSceneCreate", sceneid);
 
       delete elem.$modified;
    }
 
-   EveManager.prototype.ProcessData = function(arr) {
-      if (!arr) return;
-
-      if (arr[0].content == "REveScene::StreamElements")
-         return this.Update(arr);
-
-      if (arr[0].content == "REveManager::DestroyElementsOf")
-         return this.DestroyElements(arr);
-   }
-
-   EveManager.prototype.Update = function(arr)
+   EveManager.prototype.ImportSceneJson = function(arr)
    {
       this.last_json = null;
       // console.log("JSON", arr[0]);
@@ -257,18 +247,18 @@
             obj = this.map[elem.fElementId] = elem;
          }
 
-         this.MarkModified(elem.fElementId);
+         this.MarkSceneRrecreate(elem.fElementId);
       }
 
       if (arr[0].fTotalBinarySize == 0) {
          console.log("scenemodified ", this.map[arr[0].fSceneId])
-         this.ProcessModified(arr[0].fSceneId);
+         this.ProcessSceneCreate(arr[0].fSceneId);
       }
 
       this.ProcessUpdate(300);
    }
 
-   EveManager.prototype.SceneChanged = function(msg) {
+   EveManager.prototype.ImportSceneChangeJson = function(msg) {
       var arr = msg.arr;
       this.last_json = null;
       this.scene_changes = msg;
@@ -293,14 +283,14 @@
               this.last_json.push(arr[i]);
 
       } else {
-         this.PostProcessSceneChanges();
+         this.CompleteSceneChanges();
       }
    }
 
    //______________________________________________________________________________
 
 
-   EveManager.prototype.PostProcessSceneChanges = function()
+   EveManager.prototype.CompleteSceneChanges = function()
    {
       if (!this.scene_changes) return;
 
@@ -319,33 +309,34 @@
          if (n < nModified )
          {
             var obj = this.map[em.fElementId];
-
+            var tag = "changeBit";
             if (em.changeBit & this.EChangeBits.kCBVisibility)
             {
                if (obj.fRnrSelf != em.fRnrSelf) {
                   obj.fRnrSelf = em.fRnrSelf;
-                  this.callSceneReceivers(scene, "visibilityChanged", obj);
+                  tag = "visibilityChanged";
                }
                if (obj.fRnrChildren != em.fRnrChildren) {
                   obj.fRnrChildren = em.fRnrChildren;
-                  this.callSceneReceivers(scene, "visibilityChildrenChanged", obj);
+                  tag = "visibilityChildrenChanged";
                }
             }
 
             if (em.changeBit & this.EChangeBits.kCBColorSelection) {
                delete em.render_data;
                JSROOT.extend(obj, em);
-               this.callSceneReceivers(scene, "colorChanged", obj);
+               tag = "colorChanged";
             }
 
             if (em.changeBit & this.EChangeBits.kCBObjProps) {
                delete obj.render_data;
                jQuery.extend(obj, em);
-               this.callSceneReceivers(scene, "replaceElement", obj);
+               tag = "replaceElement";
             }
 
             // rename updateGED to checkGED???
-            this.InvokeReceivers("elem_update", null, 0, em.fElementId);
+            em.tag = tag;
+            this.callSceneReceivers(scene, "sceneElementChange", em);
          }
          else
          {
@@ -356,15 +347,15 @@
                parent.childs = [];
 
             parent.childs.push(em);
-            this.callSceneReceivers(scene, "elementAdded", em);
+            em.tag = "elementAdded";
+            this.callSceneReceivers(scene, "sceneElementChange", em);
          }
+         this.InvokeReceivers("elem_update", null, 0, em.fElementId);
       }
 
-      this.callSceneReceivers(scene, "endChanges");
 
       var treeRebuild = header.removedElements.length || (arr.length != nModified );
-
-      if (treeRebuild) this.ProcessUpdate(300);
+      this.callSceneReceivers(scene, "endChanges", treeRebuild);
    },
 
    EveManager.prototype.DeleteChildsOf = function(elem) {
@@ -392,7 +383,7 @@
 
          this.DeleteChildsOf(element);
          element.$modified = true;
-         this.ProcessModified(ids[n]);
+         this.ProcessScenCreate(ids[n]);
       }
 
       // this.ignore_all = true;
@@ -411,7 +402,7 @@
       }
    }
 
-   EveManager.prototype.UpdateBinary = function(rawdata, offset) {
+   EveManager.prototype.ImportSceneBinary = function(rawdata, offset) {
 
       if (!this.last_json || !rawdata || !rawdata.byteLength) return;
 
@@ -458,9 +449,9 @@
          console.error('Raw data decoding error - length mismatch', lastoff, rawdata.byteLength);
 
       if (this.scene_changes)
-         this.PostProcessSceneChanges();
+         this.CompleteSceneChanges();
       else
-         this.ProcessModified(arr[0].fSceneId);
+         this.ProcessSceneCreate(arr[0].fSceneId);
    }
 
    JSROOT.EVE.EveManager = EveManager;
