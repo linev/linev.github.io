@@ -31,29 +31,33 @@
    EveElemControl.prototype = Object.create(JSROOT.Painter.GeoDrawingControl.prototype);
    
    EveElemControl.prototype.invokeSceneMethod = function(fname, arg1, arg2) {
-      if (!this.mesh || !this.mesh.scene) return;
+      if (!this.mesh) return false;
       var s = this.mesh.scene;
-      if (typeof s[fname] == "function") s[fname](this.mesh, arg1, arg2);
+      if (s && (typeof s[fname] == "function")) 
+         return s[fname](this.mesh, arg1, arg2, this.evnt);
+      return false;
    }
 
-   EveElemControl.prototype.setHighlight = function(col, indx, non_recursive) {
+   EveElemControl.prototype.setHighlight = function(col, indx) {
       // special hook here
-      JSROOT.Painter.GeoDrawingControl.prototype.setHighlight.call(this, col || this.mesh.select_col, indx);
-      if (!non_recursive) this.invokeSceneMethod("processElementHighlighted", col, indx);
-      return true;
+      if (this.invokeSceneMethod("processElementHighlighted", col, indx)) 
+         return true;
+      // should not be used, keep as fallback
+      return this.drawSpecial(col || this.mesh.select_col, indx);
    }
 
-   EveElemControl.prototype.setSelected = function(col, indx, non_recursive) {
+   EveElemControl.prototype.setSelected = function(col, indx) {
+      if (this.invokeSceneMethod("processElementSelected", col, indx))
+         return true;
+      // should not be used, keep as fallback
       var m = this.mesh;
-      if (!non_recursive && (m.select_col == col) && (m.select_indx == indx)) { col = null; indx = undefined; }
+      if ((m.select_col == col) && (m.select_indx == indx)) { col = null; indx = undefined; }
       m.select_col = col;
       m.select_indx = indx;
       // special hook here
-      JSROOT.Painter.GeoDrawingControl.prototype.setHighlight.call(this, col, indx);
-      if (!non_recursive) this.invokeSceneMethod("processElementSelected", col, indx);
-      return true;
+      return this.drawSpecial(col, indx);
    }
-
+   
    ////////////////////////////////////////////////
    
    
@@ -503,7 +507,12 @@
 
    StraightLineSetControl.prototype.isSelected = function() { return !!this.mesh.select_col; }
 
-   StraightLineSetControl.prototype.setSelected = function(col, indx, non_recurive) {
+   StraightLineSetControl.prototype.setSelected = function(col, indx) {
+      if (this.invokeSceneMethod("processElementSelected", col, indx)) 
+         return true;
+      
+      // just fallback code - should not be used      if (!non_recursive) 
+
       var m = this.mesh;
       if (!non_recurive) { 
          if (this.evnt && this.evnt.ctrlKey) {
@@ -522,42 +531,51 @@
       
       m.select_col = col;
       m.select_indx = indx;
-      if (!non_recurive) this.invokeSceneMethod("processElementSelected", col, indx);
      
-      this.createSpecial("select", col, indx);
-      return true;
+      return this.drawSpecial(col, indx);
    }
 
-   StraightLineSetControl.prototype.setHighlight = function(col, indx, non_recursive) {
+   StraightLineSetControl.prototype.setHighlight = function(col, indx) {
+      if (this.invokeSceneMethod("processElementHighlighted", col, indx)) 
+         return true;
+      
       this.mesh.h_index = indx;
-      this.createSpecial("highlight", col, indx);
-      if (!non_recursive) this.invokeSceneMethod("processElementHighlighted", col, indx);
-      return true;
+      return this.drawSpecial(col, indx);
    }
    
-   StraightLineSetControl.prototype.getHighlightIndex = function() { return this.mesh.h_index; }
+   StraightLineSetControl.prototype.checkHighlightIndex = function(indx) { 
+      if (this.scene)
+         return this.invokeSceneMethod("processCheckHighlight", indx);
+      
+      return true; // means index is different 
+   }
 
-   StraightLineSetControl.prototype.createSpecial = function(prefix, color, index) {
-      var m = this.mesh, ll = prefix + "_l_special", mm = prefix + "_m_special";
+   StraightLineSetControl.prototype.drawSpecial = function(color, index) {
+      var m = this.mesh, ll = "l_special", mm = "m_special", did_change = false;
       if (m[ll]) {
          m.remove(m[ll]);
          JSROOT.Painter.DisposeThreejsObject(m[ll]);
          delete m[ll];
+         did_change = true;
       }
       if (m[mm]) {
          m.remove(m[mm]);
          JSROOT.Painter.DisposeThreejsObject(m[mm]);
          delete m[mm];
+         did_change = true;
       }
       
       if (!color) 
-         return;
+         return did_change;
+      
+      if (typeof index == "number") index = [ index ]; else
+      if (!index) index = [];
 
       var geom = new THREE.BufferGeometry();
       geom.addAttribute( 'position', m.children[0].geometry.getAttribute("position") );
-      if (typeof index == "number") {
-         geom.setDrawRange(index, 2);
-      } else {
+      if (index.length == 1) {
+         geom.setDrawRange(index[0], 2);
+      } else if (index.length > 1) {
          var idcs = [];
          for (var i = 0; i < index.length; ++i)
             idcs.push(index[i], index[i]+1);
@@ -568,31 +586,34 @@
       m.add(line);
       line.jsroot_special = true; // special object, exclude from intersections
       m[ll] = line;
-      var el = m.eve_el;
+      var el = m.eve_el, mindx = []
 
-      if ((index % 2 == 0) && (index < el.fLinePlexSize*2)) {
-         var lineid = m.eve_indx[index/2], mindx = [];
-         
-         for (var k = 0; k < el.fMarkerPlexSize; ++k ) {
-            if (m.eve_indx[ k + el.fLinePlexSize] == lineid) mindx.push(k);
-         }
-         
-         if (mindx.length > 0) {
-            var pnts = new JSROOT.Painter.PointsCreator(mindx.length, true, 5);
-
-            var arr = m.children[1].geometry.getAttribute("position").array;
+      for (var i = 0; i < index.length; ++i) {
+         if ((index[i] % 2 == 0) && (index[i] < el.fLinePlexSize*2)) {
+            var lineid = m.eve_indx[index[i]/2];
             
-            for (var i = 0; i < mindx.length; ++i) {
-               var p = mindx[i]*3;
-               pnts.AddPoint(arr[p], arr[p+1], arr[p+2] );
+            for (var k = 0; k < el.fMarkerPlexSize; ++k ) {
+               if (m.eve_indx[ k + el.fLinePlexSize] == lineid) mindx.push(k);
             }
-            var mark = pnts.CreatePoints(color);
-            m.add(mark);
-            mark.jsroot_special = true; // special object, exclude from intersections
-            m[mm] = mark;
          }
       }
+         
+      if (mindx.length > 0) {
+         var pnts = new JSROOT.Painter.PointsCreator(mindx.length, true, 5);
+
+         var arr = m.children[1].geometry.getAttribute("position").array;
+
+         for (var i = 0; i < mindx.length; ++i) {
+            var p = mindx[i]*3;
+            pnts.AddPoint(arr[p], arr[p+1], arr[p+2] );
+         }
+         var mark = pnts.CreatePoints(color);
+         m.add(mark);
+         mark.jsroot_special = true; // special object, exclude from intersections
+         m[mm] = mark;
+      }
       
+      return true;
    }
 
    EveElements.prototype.makeStraightLineSet = function(el, rnr_data)
