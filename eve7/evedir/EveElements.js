@@ -37,6 +37,8 @@
          return s[fname](this.mesh, arg1, arg2, this.evnt);
       return false;
    }
+   
+   EveElemControl.prototype.separateDraw = false;
 
    EveElemControl.prototype.setHighlight = function(col, indx) {
       // special hook here
@@ -493,10 +495,12 @@
    
    StraightLineSetControl.prototype = Object.create(EveElemControl.prototype);
    
+   EveElemControl.prototype.separateDraw = true;
+   
    StraightLineSetControl.prototype.cleanup = function() {
       if (!this.mesh) return;
-      this.createSpecial("select");
-      this.createSpecial("highlight");
+      this.drawSpecial(null, undefined, "h");
+      this.drawSpecial(null, undefined, "s");
       delete this.mesh;
    }
 
@@ -505,13 +509,13 @@
       return intersect.index;
    }
 
-   StraightLineSetControl.prototype.isSelected = function() { return !!this.mesh.select_col; }
-
    StraightLineSetControl.prototype.setSelected = function(col, indx) {
       if (this.invokeSceneMethod("processElementSelected", col, indx)) 
          return true;
       
-      // just fallback code - should not be used      if (!non_recursive) 
+      // old code - should not be used now
+      
+      console.error("never come here");
 
       var m = this.mesh;
       if (!non_recurive) { 
@@ -532,7 +536,7 @@
       m.select_col = col;
       m.select_indx = indx;
      
-      return this.drawSpecial(col, indx);
+      return this.drawSpecial(col, indx, "s");
    }
 
    StraightLineSetControl.prototype.setHighlight = function(col, indx) {
@@ -540,18 +544,20 @@
          return true;
       
       this.mesh.h_index = indx;
-      return this.drawSpecial(col, indx);
+      return this.drawSpecial(col, indx, "h");
    }
    
    StraightLineSetControl.prototype.checkHighlightIndex = function(indx) { 
-      if (this.scene)
+      if (this.mesh && this.mesh.scene)
          return this.invokeSceneMethod("processCheckHighlight", indx);
       
       return true; // means index is different 
    }
 
-   StraightLineSetControl.prototype.drawSpecial = function(color, index) {
-      var m = this.mesh, ll = "l_special", mm = "m_special", did_change = false;
+   StraightLineSetControl.prototype.drawSpecial = function(color, index, prefix) {
+      if (!prefix) prefix = "s";
+      
+      var m = this.mesh, ll = prefix +"l_special", mm = prefix+"m_special", did_change = false;
       if (m[ll]) {
          m.remove(m[ll]);
          JSROOT.Painter.DisposeThreejsObject(m[ll]);
@@ -653,6 +659,7 @@
       
       obj3d.eve_el = el;
       obj3d.eve_indx = rnr_data.idxBuff;
+      obj3d.get_ctrl = function() { return new StraightLineSetControl(this); }
       
       return obj3d;
    }

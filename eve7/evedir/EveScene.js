@@ -290,11 +290,12 @@
    
    /** interactive handler */
    EveScene.prototype.processElementHighlighted = function(obj3d, col, indx, evnt) {
+      var id = obj3d.mstrId;
+      // id = obj3d.eveId;
+      
+      this.setElementHighlighted(id, col, indx, true);
 
-      this.setElementHighlighted(obj3d.mstrId, col, indx, true);
-
-      // console.log("processElementHigh", obj3d.mstrId, obj3d.eveId, col, indx);
-      this.mgr.invokeInOtherScenes(this, "setElementHighlighted", obj3d.mstrId, col, indx);
+      this.mgr.invokeInOtherScenes(this, "setElementHighlighted", id, col, indx);
 
       // when true returns, controller will not try to render itself
       return true;
@@ -302,8 +303,13 @@
    
    /** returns true if highlight index is differs from current */
    EveScene.prototype.processCheckHighlight = function(obj3d, indx) {
-      // TODO: make precise checks when requires
-      return (indx !== undefined); 
+      var id = obj3d.mstrId;
+      // id = obj3d.eveId;
+      
+      if (!this.highlight || (this.highlight.id != id)) return true;
+      
+      // TODO: make precise checks with all combinations
+      return (indx !== this.highlight.indx); 
    }
    
    /** function called by changes from server or by changes from other scenes */
@@ -318,7 +324,7 @@
    EveScene.prototype.setElementHighlighted = function(mstrid, col, indx, from_interactive) {
       
       // check if other element was highlighted at same time - redraw it
-      if (this.highlight && this.highlight.id != mstrid) {
+      if (this.highlight && (this.highlight.id != mstrid)) {
          delete this.highlight;
          this.drawSpecial(mstrid);
       }
@@ -333,22 +339,26 @@
    
    EveScene.prototype.drawSpecial = function(mstrid, prefer_highlight) {
       var obj3d = this.getObj3D( mstrid, true );
-      if (!obj3d) obj3d = this.getObj3D( mstrid );
+      if (!obj3d || !obj3d.get_ctrl) obj3d = this.getObj3D( mstrid );
       if (!obj3d || !obj3d.get_ctrl) return false;
 
       var h1 = this.highlight && (this.highlight.id == mstrid) ? this.highlight : null;
       var h2 = this.selected[mstrid];
+      var ctrl = obj3d.get_ctrl(); 
       
-      var h = prefer_highlight ? h1 || h2 : h2 || h1;
-      
-      if (!h) h = { col: null, indx: undefined };
-      
-      if (obj3d.get_ctrl().drawSpecial(h.col, h.indx)) {
-         if (this.viewer) 
-            this.viewer.render();
-         return true;
+      var did_change = false;
+
+      if (ctrl.separateDraw) {
+         ctrl.drawSpecial(h2 ? h2.col : null, h2 ? h2.indx : undefined, "s");
+         ctrl.drawSpecial(h1 ? h1.col : null, h1 ? h1.indx : undefined, "h");
+      } else {
+         var h = prefer_highlight ? (h1 || h2) : (h2 || h1);
+         did_change = ctrl.drawSpecial(h ? h.col : null, h ? h.indx : undefined);
       }
-      return false;
+      
+      if (did_change && this.viewer) 
+         this.viewer.render();
+      return did_change;
    }
    
    EveScene.prototype.elementRemoved = function() {
