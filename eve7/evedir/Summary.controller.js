@@ -501,7 +501,7 @@ sap.ui.define([
          var idx = path.substring(base.length);
          var customData =  oContext.oModel.oData["widgetlist"][idx].data;
          var controller = this; 
-         var widget;
+         var widget = null;
          
          switch (customData._type) {
 
@@ -531,7 +531,7 @@ sap.ui.define([
 
          case "Color":
             var colVal = oContext.oModel.oData["widgetlist"][idx].value;
-            var model = this.getView().getModel("colors");
+            // var model = this.getView().getModel("colors");
             //   model["mainColor"] = colVal;
             //  console.log("col value ", colVal, JSROOT.Painter.root_colors[colVal]);
             widget = new EVEColorButton(sId, {
@@ -559,7 +559,7 @@ sap.ui.define([
             break;
          }
 
-         widget.data("myData", customData);
+         if (widget) widget.data("myData", customData);
 
          var label = new sap.m.Text(sId + "label", { text: { path: "ged>name" } });
          label.setWidth(this.maxLabelLength +"ex");
