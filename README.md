@@ -12,4 +12,6 @@ These are different test web pages with use of OpenUI
  
 [Only WebGL in Eve7](eve7/?view=Default)
 
+[Lines set](lines/) 
+
 [Geometry viewer](geomCMS/)
