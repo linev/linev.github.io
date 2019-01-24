@@ -495,7 +495,7 @@
    
    StraightLineSetControl.prototype = Object.create(EveElemControl.prototype);
    
-   EveElemControl.prototype.separateDraw = true;
+   StraightLineSetControl.prototype.separateDraw = true;
    
    StraightLineSetControl.prototype.cleanup = function() {
       if (!this.mesh) return;

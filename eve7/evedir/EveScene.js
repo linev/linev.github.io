@@ -350,7 +350,7 @@
 
       if (ctrl.separateDraw) {
          var p2 = "s", p1 = "h";
-         if (!prefer_highlight) { var h = h1; h1 = h2; h2 = h; p2 = "h", p1 = "s"; }
+         if (!prefer_highlight) { var h = h1; h1 = h2; h2 = h; p2 = "h"; p1 = "s"; }
          if (ctrl.drawSpecial(h2 ? h2.col : null, h2 ? h2.indx : undefined, p2)) did_change = true;
          if (ctrl.drawSpecial(h1 ? h1.col : null, h1 ? h1.indx : undefined, p1)) did_change = true;
       } else {
