@@ -2,33 +2,31 @@ sap.ui.define([
    'sap/ui/core/mvc/Controller',
    "sap/ui/model/json/JSONModel",
    "sap/m/Button",
-   "sap/m/ButtonRenderer",
    "sap/m/ColorPalettePopover",
    "sap/m/StandardTreeItem"
-], function(Controller, JSONModel, Button, ButtonRenderer, ColorPalettePopover, StandardTreeItem) {
+], function(Controller, JSONModel, Button, ColorPalettePopover, StandardTreeItem) {
    "use strict";
 
-   var currentColor = "rgb(100, 0, 0)"
-
    var EVEColorButton = Button.extend("sap.ui.jsroot.EVEColorButton", {
-      renderer: ButtonRenderer.render,
+      // when default value not specified - openui tries to load custom
+      renderer: {}, // ButtonRenderer.render, 
 
-      init: function() {
-         // svg images are always loaded without @2
-         this.addEventDelegate({
-            onAfterRendering: function() {
-               this._setColor();
-               //$("span").children().css('color', currentColor);
-            }
-         }, this);
+      metadata: {
+         properties: {
+            background: 'string'
+         }
+      },
+      
+      onAfterRendering: function() {
+         this.$().children().css("background-color", this.getBackground());
       }
+      
    });
 
-   EVEColorButton.prototype._setColor = function() {
-      this.$().children().css('background-color', this.data("attrcolor"));
-   }
-   
    var EveSummaryTreeItem = StandardTreeItem.extend('sap.ui.jsroot.EveSummaryTreeItem', {
+      // when default value not specified - openui tries to load custom
+      renderer: {},
+      
       metadata: {
          properties: {
             background: 'string'
@@ -37,9 +35,8 @@ sap.ui.define([
 
       onAfterRendering: function() {
          this.$().css("background-color", this.getBackground());
-      },
-
-      renderer: {}
+      }
+     
    });
 
    return Controller.extend("eve.Summary", {
@@ -505,10 +502,11 @@ sap.ui.define([
          //console.log("model ",  oContext.oModel);
          var controller =  sap.ui.getCore().byId("TopEveId--Summary").getController();
          var widget;
+         
          switch (customData._type) {
 
          case "Number":
-            var widget = new sap.m.Input(sId, {
+            widget = new sap.m.Input(sId, {
                value: {
                   path: "ged>value"
                },
@@ -520,7 +518,7 @@ sap.ui.define([
             break;
 
          case "String":
-            var widget = new sap.m.Input(sId, {
+            widget = new sap.m.Input(sId, {
                value: {
                   path: "ged>value"
                },
@@ -545,32 +543,31 @@ sap.ui.define([
 
          case "Color":
             var colVal = oContext.oModel.oData["widgetlist"][idx].value;
-            currentColor=colVal;
             var model = controller.getView().getModel("colors");
             //   model["mainColor"] = colVal;
             //  console.log("col value ", colVal, JSROOT.Painter.root_colors[colVal]);
-            widget = new sap.ui.jsroot.EVEColorButton(sId, {
-               //  text:"x",
+            widget = new EVEColorButton(sId, {
                icon: "sap-icon://palette",
+               background: colVal,
 
                press: function () {
-
+                  var colButton = this;
                   var oCPPop = new ColorPalettePopover( {
                       defaultColor: "cyan",
-                        colors: ['gold','darkorange', 'indianred','rgb(102,51,0)', 'cyan',// 'magenta'
-                                 'blue', 'lime', 'gray','slategray','rgb(204, 198, 170)',
-                                 'white', 'black','red' , 'rgb(102,154,51)', 'rgb(200, 0, 200)'],
-                        colorSelect: controller.handleColorSelect.bind(controller)
+                       colors: ['gold','darkorange', 'indianred','rgb(102,51,0)', 'cyan',// 'magenta'
+                                'blue', 'lime', 'gray','slategray','rgb(204, 198, 170)',
+                                'white', 'black','red' , 'rgb(102,154,51)', 'rgb(200, 0, 200)'],
+                       colorSelect: function(event) {
+                          colButton.setBackground(event.getParameters().value);
+                          controller.handleColorSelect(event);
+                       }
                    });
-
                    
-                   oCPPop.openBy(this);
+                   oCPPop.openBy(colButton);
                    oCPPop.data("myData", customData);
                  }
             });
 
-            widget.data("attrcolor", colVal);
-//            model.attachPropertyChange({ "bla": "ddd"}, controller.colorChange, controller);
             break;
          }
 
@@ -580,14 +577,14 @@ sap.ui.define([
          var ll =  controller.maxLabelLength;
          label.setWidth(ll +"ex");
          label.addStyleClass("sapUiTinyMargin");
-         var HL= new sap.ui.layout.HorizontalLayout({
+         var HL = new sap.ui.layout.HorizontalLayout({
             content : [label, widget]
          });
 
          return HL;
       },
 
-      handleColorSelect: function(event, data) {
+      handleColorSelect: function(event) {
           var val = event.getParameters().value;
           var myData = event.getSource().data("myData");
 
@@ -619,7 +616,6 @@ sap.ui.define([
 
 
          var mir =  myData.srv + "((UChar_t)" + rgb.r + ", (UChar_t)" + rgb.g +  ", (UChar_t)" + rgb.b + ")";
-
          var obj = { "mir": mir, "fElementId": this.editorElement.fElementId, "class": this.editorElement._typename };
          this.mgr.handle.Send(JSON.stringify(obj));
       },
