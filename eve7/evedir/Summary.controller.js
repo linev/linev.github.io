@@ -1,45 +1,14 @@
-sap.m.StandardTreeItem.extend('MySuperDuperTreeItem', {
-   metadata: {
-      properties: {
-         myStuff: 'string',
-         status: 'string'
-      }
-   },
-
-   onAfterRendering: function() {
-      return;
-      if (sap.m.StandardTreeItem.prototype.onAfterRendering) {
-         sap.m.StandardTreeItem.prototype.onAfterRendering.apply(this, arguments);
-      }
-
-      var oi = this.getMetadata();
-      console.log("superduper metadata ", oi);
-      console.log("superduper this ", this);
-      console.log("superduper this query ", this.$());
-
-      //   this.$().css({ "font-size": "0.95rem"});
-      //    $(".sapMTreeItemBase").css({ "font-size": "0.65rem"});
-
-      this.$().removeClass("sapMTreeItemBase");
-      this.$().addClass("eveTreeItem");
-   },
-
-   renderer: {}
-});
-
-
 sap.ui.define([
    'sap/ui/core/mvc/Controller',
    "sap/ui/model/json/JSONModel",
    "sap/m/Button",
    "sap/m/ButtonRenderer",
    "sap/m/ColorPalettePopover",
-], function(Controller, JSONModel, Button, ButtonRenderer, ColorPalettePopover) {
+   "sap/m/StandardTreeItem"
+], function(Controller, JSONModel, Button, ButtonRenderer, ColorPalettePopover, StandardTreeItem) {
    "use strict";
 
    var currentColor = "rgb(100, 0, 0)"
-  // var currentColorId =;
-
 
    var EVEColorButton = Button.extend("sap.ui.jsroot.EVEColorButton", {
       renderer: ButtonRenderer.render,
@@ -53,12 +22,25 @@ sap.ui.define([
             }
          }, this);
       }
-
    });
 
    EVEColorButton.prototype._setColor = function() {
       this.$().children().css('background-color', this.data("attrcolor"));
    }
+   
+   var EveSummaryTreeItem = StandardTreeItem.extend('sap.ui.jsroot.EveSummaryTreeItem', {
+      metadata: {
+         properties: {
+            background: 'string'
+         }
+      },
+
+      onAfterRendering: function() {
+         // this.$().css("background-color", this.getBackground());
+      },
+
+      renderer: {}
+   });
 
    return Controller.extend("eve.Summary", {
 
@@ -84,23 +66,23 @@ sap.ui.define([
             oModel.setSizeLimit(10000);
             this.getView().setModel(oModel, "treeModel");
 
-            var oStandardTreeItemTemplate = new MySuperDuperTreeItem({
+            var oItemTemplate = new EveSummaryTreeItem({
                title: "{treeModel>fName}",
                visible: "{treeModel>fVisible}",
                type: "{treeModel>fType}",
-               highlight: "{treeModel>fHighlight}"
-               // highlight: "{treeModel>fHighlight}"
+               highlight: "{treeModel>fHighlight}",
+               background: "{treeModel>fBackground}"
             });
-            oStandardTreeItemTemplate.attachDetailPress({}, this.onDetailPress, this);
-            oStandardTreeItemTemplate.attachBrowserEvent("mouseenter", this.onMouseEnter, this);
-            oStandardTreeItemTemplate.attachBrowserEvent("mouseleave", this.onMouseLeave, this);
+            oItemTemplate.attachDetailPress({}, this.onDetailPress, this);
+            oItemTemplate.attachBrowserEvent("mouseenter", this.onMouseEnter, this);
+            oItemTemplate.attachBrowserEvent("mouseleave", this.onMouseLeave, this);
             /*
               var oDataTemplate = new sap.ui.core.CustomData({
               key:"eveElement"
               });
               oDataTemplate.bindProperty("value", "answer");
             */
-            oTree.bindItems("treeModel>/", oStandardTreeItemTemplate);
+            oTree.bindItems("treeModel>/", oItemTemplate);
          }
 
          this.oModelGED = new JSONModel({ "widgetlist" : []});
@@ -335,15 +317,28 @@ sap.ui.define([
          this.getView().getModel("ged").setData({"widgetlist":modelw});
       },
       
+      /** Selection of element in the other editors */
       setElementSelected: function(mstrid, col, indx, from_interactive) {
          if (!from_interactive) 
             this.selected[mstrid] = { id: mstrid, col: col, indx: indx };
 
-         this.iterateTreeModel(function(elem) {
+         var model = this.getView().getModel("treeModel");
+         
+         this.iterateTreeModel(model.getData(), function(elem) {
             if (elem.masterid == mstrid) elem.fHighlight = (col && mstrid) ? "Information" : "None";
          });
          
-         this.getView().getModel("treeModel").refresh();
+         model.refresh();
+      },
+      
+      iterateTreeModel: function(data, func) {
+         if (!data) return;
+         
+         for (var k=0;k<data.length;++k) {
+            func(data[k]);
+            if (data[k].childs)
+               this.iterateTreeModel(data[k].childs, func);
+         }
       },
       
       setElementHighlighted: function(mstrid, col, indx) {
@@ -359,18 +354,6 @@ sap.ui.define([
             if (!h_col && ttt.sel_color) h_col = ttt.sel_color;
 
             item.$().css("background-color", h_col);
-         }
-      },
-      
-      iterateTreeModel: function(func,data) {
-         if (data === undefined)
-            data = this.getView().getModel("treeModel").getData();
-         if (!data) return;
-         
-         for (var k=0;k<data.length;++k) {
-            func(data[k]);
-            if (data[k].childs)
-               this.iterateTreeModel(func, data[k].childs);
          }
       },
       
@@ -719,7 +702,7 @@ sap.ui.define([
          for (var n=0;n<src.length;++n) {
             var elem = src[n];
 
-            var newelem = { fName: elem.fName, id: elem.fElementId, fHighlight: "None" };
+            var newelem = { fName: elem.fName, id: elem.fElementId, fHighlight: "None", fBackground: "" };
 
             if (this.canEdit(elem))
                newelem.fType = "DetailAndActive";
