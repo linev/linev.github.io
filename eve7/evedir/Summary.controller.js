@@ -3,8 +3,10 @@ sap.ui.define([
    "sap/ui/model/json/JSONModel",
    "sap/m/Button",
    "sap/m/ColorPalettePopover",
-   "sap/m/StandardTreeItem"
-], function(Controller, JSONModel, Button, ColorPalettePopover, StandardTreeItem) {
+   "sap/m/StandardTreeItem",
+   "sap/m/Input",
+   "sap/m/CheckBox"
+], function(Controller, JSONModel, Button, ColorPalettePopover, StandardTreeItem, mInput, mCheckBox) {
    "use strict";
 
    var EVEColorButton = Button.extend("sap.ui.jsroot.EVEColorButton", {
@@ -489,8 +491,7 @@ sap.ui.define([
          gedFrame.destroyContent();
          this.makeDataForGED(this.editorElement);
          // console.log("going to bind >>> ", this.getView().getModel("ged"));
-         var hl = this.gedFactory;
-         gedFrame.bindAggregation("content", "ged>/widgetlist"  , hl );
+         gedFrame.bindAggregation("content", "ged>/widgetlist",  this.gedFactory.bind(this) );
       },
 
       gedFactory:function(sId, oContext) {
@@ -499,51 +500,38 @@ sap.ui.define([
          var path = oContext.getPath();
          var idx = path.substring(base.length);
          var customData =  oContext.oModel.oData["widgetlist"][idx].data;
-         //console.log("model ",  oContext.oModel);
-         var controller =  sap.ui.getCore().byId("TopEveId--Summary").getController();
+         var controller = this; 
          var widget;
          
          switch (customData._type) {
 
          case "Number":
-            widget = new sap.m.Input(sId, {
-               value: {
-                  path: "ged>value"
-               },
-               change: function(event) {
-                  controller.sendMethodInvocationRequest(event.getParameter("value"), event);
-               }
+            widget = new mInput(sId, {
+               value: { path: "ged>value" },
+               change: this.sendMethodInvocationRequest.bind(this, "Number")
             });
             widget.setType(sap.m.InputType.Number);
             break;
 
          case "String":
-            widget = new sap.m.Input(sId, {
-               value: {
-                  path: "ged>value"
-               },
-               change: function(event) {
-                  controller.sendMethodInvocationRequest(event.getParameter("value"), event);
-               }
+            widget = new mInput(sId, {
+               value: { path: "ged>value" },
+               change: this.sendMethodInvocationRequest.bind(this, "String")
 
             });
             widget.setType(sap.m.InputType.String);
             widget.setWidth("250px"); // AMT this should be handled differently
             break;
          case "Bool":
-            widget = new sap.m.CheckBox(sId, {
-               selected: {
-                  path: "ged>value",
-               },
-               select: function(event) {
-                  controller.sendMethodInvocationRequest(event.getSource().getSelected(), event);
-               }
+            widget = new mCheckBox(sId, {
+               selected: { path: "ged>value" },
+               select: this.sendMethodInvocationRequest.bind(this, "Bool")
             });
             break;
 
          case "Color":
             var colVal = oContext.oModel.oData["widgetlist"][idx].value;
-            var model = controller.getView().getModel("colors");
+            var model = this.getView().getModel("colors");
             //   model["mainColor"] = colVal;
             //  console.log("col value ", colVal, JSROOT.Painter.root_colors[colVal]);
             widget = new EVEColorButton(sId, {
@@ -573,9 +561,8 @@ sap.ui.define([
 
          widget.data("myData", customData);
 
-         var label = new sap.m.Text(sId + "label", { text:{ path: "ged>name"}});
-         var ll =  controller.maxLabelLength;
-         label.setWidth(ll +"ex");
+         var label = new sap.m.Text(sId + "label", { text: { path: "ged>name" } });
+         label.setWidth(this.maxLabelLength +"ex");
          label.addStyleClass("sapUiTinyMargin");
          var HL = new sap.ui.layout.HorizontalLayout({
             content : [label, widget]
@@ -620,7 +607,10 @@ sap.ui.define([
          this.mgr.handle.Send(JSON.stringify(obj));
       },
 
-      sendMethodInvocationRequest: function(value, event) {
+      sendMethodInvocationRequest: function(kind, event) {
+         
+         var value = (kind == "Bool") ? event.getSource().getSelected() : event.getParameter("value");
+         
          console.log("on change !!!!!!", event.getSource().data("myData"));
 
          if (event.getSource().data("myData").quote !== undefined ) {
@@ -668,8 +658,7 @@ sap.ui.define([
             gedFrame.destroyContent();
             this.makeDataForGED(this.editorElement);
             // console.log("going to bind >>> ", this.getView().getModel("ged"));
-            var hl = this.gedFactory;
-            gedFrame.bindAggregation("content", "ged>/widgetlist"  , hl );
+            gedFrame.bindAggregation("content", "ged>/widgetlist", this.gedFactory.bind(this) );
          }
       },
       
