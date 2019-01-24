@@ -36,7 +36,7 @@ sap.ui.define([
       },
 
       onAfterRendering: function() {
-         // this.$().css("background-color", this.getBackground());
+         this.$().css("background-color", this.getBackground());
       },
 
       renderer: {}
@@ -342,6 +342,15 @@ sap.ui.define([
       },
       
       setElementHighlighted: function(mstrid, col, indx) {
+         var model = this.getView().getModel("treeModel");
+         
+         this.iterateTreeModel(model.getData(), function(elem) {
+            if (elem.masterid == mstrid) elem.fBackground = (col && mstrid) ? "yellow" : "";
+         });
+         
+         model.refresh();
+         
+         /*
          var items = this.getView().byId("tree").getItems();
          
          for (var n = 0; n<items.length;++n) {
@@ -355,7 +364,25 @@ sap.ui.define([
 
             item.$().css("background-color", h_col);
          }
+         */
       },
+      
+      onItemPressed: function(oEvent) {
+         var model = oEvent.getParameter("listItem").getBindingContext("treeModel"),
+             path =  model.getPath(),
+             ttt = model.getProperty(path);
+
+         if (!ttt || (ttt.childs !== undefined) || !ttt.masterid) return;
+
+         var sel_color = ttt.fHighlight == "None" ? "blue" : "";
+         
+         this.setElementSelected(ttt.masterid, sel_color, undefined);
+         
+         this.mgr.invokeInOtherScenes(this, "setElementSelected", ttt.masterid, sel_color, undefined);
+         
+         // var obj = this.mgr.GetElement(ttt.id);
+      },
+
       
       onToggleOpenState: function(oEvent) {
       },
@@ -480,20 +507,6 @@ sap.ui.define([
          // console.log("going to bind >>> ", this.getView().getModel("ged"));
          var hl = this.gedFactory;
          gedFrame.bindAggregation("content", "ged>/widgetlist"  , hl );
-      },
-
-      onItemPressed: function(oEvent) {
-         var path =  oEvent.getParameter("listItem").getBindingContext("treeModel").getPath();
-         // console.log("path XXX ", oEvent.getParameter("listItem").getBindingContext("treeModel").getProperty(path) );
-         var ttt = oEvent.getParameter("listItem").getBindingContext("treeModel").getProperty(path);
-
-         console.log('path', path, ttt, oEvent);
-
-         if (!ttt) return;
-
-         var obj = this.mgr.GetElement(ttt.id);
-
-         console.log('Press', obj);
       },
 
       gedFactory:function(sId, oContext) {
