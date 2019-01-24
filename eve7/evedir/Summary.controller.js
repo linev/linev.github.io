@@ -88,6 +88,7 @@ sap.ui.define([
                title: "{treeModel>fName}",
                visible: "{treeModel>fVisible}",
                type: "{treeModel>fType}",
+               highlight: "{treeModel>fHighlight}"
                // highlight: "{treeModel>fHighlight}"
             });
             oStandardTreeItemTemplate.attachDetailPress({}, this.onDetailPress, this);
@@ -337,20 +338,12 @@ sap.ui.define([
       setElementSelected: function(mstrid, col, indx, from_interactive) {
          if (!from_interactive) 
             this.selected[mstrid] = { id: mstrid, col: col, indx: indx };
+
+         this.iterateTreeModel(function(elem) {
+            if (elem.masterid == mstrid) elem.fHighlight = (col && mstrid) ? "Information" : "None";
+         });
          
-         var items = this.getView().byId("tree").getItems();
-         for (var n = 0; n<items.length;++n) {
-            var item = items[n],
-                ctxt = item.getBindingContext("treeModel"),
-                path = ctxt.getPath(),
-                ttt = item.getBindingContext("treeModel").getProperty(path);
-
-            var setcol = (col && mstrid && (mstrid == ttt.masterid)) ? "lightblue" : "";
-
-            if (mstrid == ttt.masterid) ttt.sel_color = setcol;
-            
-            item.$().css("background-color", ttt.sel_color);
-         }
+         this.getView().getModel("treeModel").refresh();
       },
       
       setElementHighlighted: function(mstrid, col, indx) {
@@ -362,11 +355,26 @@ sap.ui.define([
                 path = ctxt.getPath(),
                 ttt = item.getBindingContext("treeModel").getProperty(path);
 
-            var setcol = (col && mstrid && (mstrid == ttt.masterid)) ? "yellow" : "";
-            if (!setcol && ttt.sel_color) setcol = ttt.sel_color;
+            var h_col = (col && mstrid && (mstrid == ttt.masterid)) ? "yellow" : "";
+            if (!h_col && ttt.sel_color) h_col = ttt.sel_color;
 
-            item.$().css("background-color", setcol);
+            item.$().css("background-color", h_col);
          }
+      },
+      
+      iterateTreeModel: function(func,data) {
+         if (data === undefined)
+            data = this.getView().getModel("treeModel").getData();
+         if (!data) return;
+         
+         for (var k=0;k<data.length;++k) {
+            func(data[k]);
+            if (data[k].childs)
+               this.iterateTreeModel(func, data[k].childs);
+         }
+      },
+      
+      onToggleOpenState: function(oEvent) {
       },
 
       onMouseEnter: function(oEvent) {
@@ -711,7 +719,7 @@ sap.ui.define([
          for (var n=0;n<src.length;++n) {
             var elem = src[n];
 
-            var newelem = { fName: elem.fName, id: elem.fElementId };
+            var newelem = { fName: elem.fName, id: elem.fElementId, fHighlight: "None" };
 
             if (this.canEdit(elem))
                newelem.fType = "DetailAndActive";
