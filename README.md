@@ -15,3 +15,6 @@ These are different test web pages with use of OpenUI
 [Lines set](lines/) 
 
 [Geometry viewer](geomCMS/)
+
+[TCanvas example](canvas6/)
+
