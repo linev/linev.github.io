@@ -9,6 +9,8 @@ sap.ui.define([
 	"use strict";
 	var arr = [];
 	var paths = [];
+	var rows = [];
+
 	var CController = Controller.extend("sap.m.sample.SplitApp.C", {
 
 		onInit: function(){
@@ -19,7 +21,11 @@ sap.ui.define([
 			});
 
 			var oModel = new JSONModel(jQuery.sap.getModulePath("sap.m.sample.SplitApp", "/Tree.json"));
-			this.getView().setModel(oModel);
+			var aModel = new sap.ui.model.json.JSONModel(arr);
+			this.getView().setModel(oModel, "oModel");
+			this.getView().setModel(aModel, "aModel");
+			var oTable = this.byId("TreeTableBasic");
+			oTable.setSelectionBehavior(sap.ui.table.SelectionBehavior.RowOnly);
 		},
 
 		onOrientationChange: function(oEvent) {
@@ -53,44 +59,50 @@ sap.ui.define([
 
 		onToggle: function(oEvent) {
 
-			var lItem = oEvent.getParameters().itemContext.sPath;
-			var nodes = this.getView().getModel().getProperty(lItem);
-			//console.log(nodes);
-			var sNode = this.getView().getModel().getProperty(lItem).title;
-			var oBreadCrumbs = this.byId("bread");
+			var oModel = this.getView().getModel("oModel").getData();
+			var lItem = oEvent.getParameters().rowContext.sPath;
+			var rowIndex = oEvent.getParameters().rowIndex;
+
+			var nodes = this.getView().getModel("oModel").getProperty(lItem);
+			var sNode = this.getView().getModel("oModel").getProperty(lItem).title;
 
 			if(!(paths.includes(lItem))){
 				arr.push(sNode);
+				rows.push(sNode, rowIndex);
 			}
 			else{
 				var index = arr.indexOf(sNode);
 				paths.length = index+1;
 				arr.length = index+1;
 			}
-			
+
 			paths.push(lItem);
-			
-			var test = oBreadCrumbs.getCurrentLocationText();
-			oBreadCrumbs.removeAllLinks();
-			for(var i=0; i<arr.length; i++){
-				if(i == arr.length -1){
-					oBreadCrumbs.setCurrentLocationText(arr[i]);
-				}
-				else{
-					var link = new sap.m.Link({
-						text: arr[i],
-						press: this.generateLinks, sNode
-					});
-					oBreadCrumbs.addLink(link);
-				}
-				
-			}
+			//console.log(paths)
+			this.getView().getModel("aModel").setData(arr);
+			//console.log("name " + arr);	
 
    		},
 
-   		generateLinks : function(sNode)
-   		{	
-   			console.log(sNode);
+   		tryOne: function(oEvent) {
+
+   			var oModel = this.getView().getModel("oModel").getData();
+   			var oValue = oEvent.getSource().getText();
+
+   			for(var i = 0; i < arr.length; i++){
+   				if(arr[i] == oValue){
+   					arr.splice(i);
+   					this.getView().getModel("aModel").setData(arr);
+   				}
+   			}
+
+   			for(var i = 0; i < rows.length; i++){
+   				if(rows[i] == oValue){
+   					var rowIndex = rows[i+1];
+   				}
+   			}
+
+   			var oTreeTable = this.byId("TreeTableBasic");
+			oTreeTable.collapse(rowIndex);
    		}
 
 
