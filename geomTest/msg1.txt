@@ -1,0 +1,1 @@
+GDRAW:[{"nodeid":1,"stack":[0],"color":"0,255,255","opacity":1,"ri":{"rnr_offset":0,"rnr_func":"","vert_size":720,"norm_size":1440,"index_size":1442}}]
