@@ -1,16 +1,43 @@
 sap.ui.define([
    'sap/ui/jsroot/GuiPanelController',
    'sap/ui/model/json/JSONModel',
-   'sap/ui/core/Fragment'
-], function (GuiPanelController, JSONModel) {
+   'sap/ui/core/Fragment',
+   'sap/ui/unified/ColorPickerPopover',
+   'sap/m/MessageBox',
+   'sap/m/MessageToast',
+   'sap/m/Button'
+], function (GuiPanelController, JSONModel, ColorPickerPopover, MessageBox, MessageToast, Button) {
    
    "use strict";
+
+   return sap.ui.core.Control.extend("Button", { // call the new Control type "my.ColorBox" and let it inherit from sap.ui.core.Control
+
+            // the control API:
+            metadata : {
+               properties : {           // setter and getter are created behind the scenes, incl. data binding and type validation
+                  "color" : {type: "sap.ui.core.CSSColor", defaultValue: "#fff"} // you can give a default value and more
+               }
+            },
+
+            // the part creating the HTML:
+            renderer : function(oRm, oControl) { // static function, so use the given "oControl" instance instead of "this" in the renderer function
+               oRm.write("<div"); 
+               oRm.writeControlData(oControl);  // writes the Control ID and enables event handling - important!
+               oRm.addStyle("background-color", oControl.getColor());  // write the color property; UI5 has validated it to be a valid CSS color
+               oRm.writeStyles();
+               oRm.addClass("myColorBox");      // add a CSS class for styles common to all control instances
+               oRm.writeClasses();              // this call writes the above class plus enables support for Square.addStyleClass(...)
+               oRm.write(">"); 
+               oRm.write("</div>"); // no text content to render; close the tag
+            },
+         });
 
    return GuiPanelController.extend("localapp.controller.SimpleFitPanel",{
 
          //function called from GuiPanelController
       onPanelInit : function() {
          var id = this.getView().getId();
+         this.inputId = "";
          var opText = this.getView().byId("OperationText");
          var data = {
                //fDataSet:[ { fId:"1", fSet: "----" } ],
@@ -21,9 +48,31 @@ sap.ui.define([
                fRange: [-4,4]
          };
          this.getView().setModel(new JSONModel(data));
-         this._data = data;  
+         this._data = data; 
+         var myControl = new Button({color:"#f00"});
+
+         // var style = document.createElement("style");
+         // document.head.appendChild(style);
+         // style.type = "text/css";
+         // style.innerHTML = "";
+         // var oDUmmy = new sap.ui.core.Control();
+         // sap.ui.core.Control.prototype.changeColor = function(oColor){
+         //    style.innerHTML = style.innerHTML + '.' + oColor + '{background-color:' + oColor + ' !important;}';
+         //    this.addStyleClass(oColor);
+         //  }
+         // sap.ui.core.Control.prototype.addCustomStyle = function(oClassName,oStyle){
+         //    style.innerHTML = style.innerHTML + '.' + oClassName + '{' + oStyle + ' !important;}';
+         //    this.addStyleClass(oClassName);
+         // }
+
+         // var oButton = this.getView().byId("test");
+         // oButton.changeColor("red"); // change the color of the button
+
+ 
          
       },
+
+
 
       // Assign the new JSONModel to data      
       OnWebsocketMsg: function(handle, msg){
@@ -153,6 +202,26 @@ sap.ui.define([
       //Cancel Button on Set Parameters Dialog Box
       onCancel: function(oEvent){
          oEvent.getSource().close();
+      },
+
+      colorPicker: function (oEvent) {
+         this.inputId = oEvent.getSource().getId();
+         if (!this.oColorPickerPopover) {
+            this.oColorPickerPopover = new sap.ui.unified.ColorPickerPopover({
+               colorString: "blue",
+               mode: sap.ui.unified.ColorPickerMode.HSL,
+               change: this.handleChange.bind(this)
+            });
+         }
+         this.oColorPickerPopover.openBy(oEvent.getSource());
+      },
+
+      handleChange: function (oEvent) {
+         var oView = this.getView();
+         //oView.byId(this.inputId).setValue(oEvent.getParameter("colorString"));
+         this.inputId = "";
+         var color = oEvent.getParameter("colorString");
+         MessageToast.show("Chosen color string: " + color);
       },
 
    });
