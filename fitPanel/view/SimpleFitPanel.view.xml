@@ -98,9 +98,9 @@
 					                <Input id="MinS" type="Number" enabled="{= ${/fFixS} !== true}" value="{/fMinS}"/>
 
 					                <Title level="H5" text="Set Range"/>
-					                <!-- <RangeSlider id="setRangeC" showAdvancedTooltip="true" range="{/fRangeC}" min="{/fMinC}" max="{/fMaxC}" step="{/fStep}" width="100%" showHandleTooltip="false" inputAsTooltips="true" class="sapUiLargeMarginBottom" enabled="{= ${/fFixC} !== true}"/>
-					                <RangeSlider id="setRangeM" showAdvancedTooltip="true" range="{/fRange}" min="{/fMinM}" max="{/fMaxM}" step="{/fStep}" width="100%" showHandleTooltip="false" inputAsTooltips="true" class="sapUiLargeMarginBottom" enabled="{= ${/fFixM} !== true}"/>
-					                <RangeSlider id="setRangeS" showAdvancedTooltip="true" range="{/fRange}" min="{/fMinS}" max="{/fMaxS}" step="{/fStep}" width="100%" showHandleTooltip="false" inputAsTooltips="true" class="sapUiLargeMarginBottom" enabled="{= ${/fFixS} !== true}"/> -->
+					                <!-- <RangeSlider id="setRangeC" showAdvancedTooltip="true" range="{/fRangeC}" min="{/fMinC}" max="{/fMaxC}" step="{/fStep}" width="100%" showHandleTooltip="false" inputsAsTooltips="true" class="sapUiLargeMarginBottom" enabled="{= ${/fFixC} !== true}"/>
+					                <RangeSlider id="setRangeM" showAdvancedTooltip="true" range="{/fRange}" min="{/fMinM}" max="{/fMaxM}" step="{/fStep}" width="100%" showHandleTooltip="false" inputsAsTooltips="true" class="sapUiLargeMarginBottom" enabled="{= ${/fFixM} !== true}"/>
+					                <RangeSlider id="setRangeS" showAdvancedTooltip="true" range="{/fRange}" min="{/fMinS}" max="{/fMaxS}" step="{/fStep}" width="100%" showHandleTooltip="false" inputsAsTooltips="true" class="sapUiLargeMarginBottom" enabled="{= ${/fFixS} !== true}"/> -->
 
 
 
@@ -183,7 +183,7 @@
 								<Title level="H4" text="Draw Options"/>
 								<CheckBox text="SAME" selected="{/fSame}"/>	
 								<CheckBox text="No Drawing" selected ="{/fNoDrawing}"/>
-								<RangeSlider id="Slider" showAdvancedTooltip="true" range="{/fRange}" min="{/fMinRange}" max="{/fMaxRange}" step="{/fStep}" width="100%" showHandleTooltip="false" inputAsTooltips="true" class="sapUiLargeMarginBottom">
+								<RangeSlider id="Slider" showAdvancedTooltip="true" range="{/fRange}" min="{/fMinRange}" max="{/fMaxRange}" step="{/fStep}" width="100%" showHandleTooltip="false" inputsAsTooltips="true" class="sapUiLargeMarginBottom">
 									<layoutData>
 										<l:GridData span="L3 M4 S8"/>
 									</layoutData>

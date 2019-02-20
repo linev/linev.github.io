@@ -1,7 +1,6 @@
 sap.ui.define([
    'sap/ui/jsroot/GuiPanelController',
    'sap/ui/model/json/JSONModel',
-   'sap/ui/core/Fragment',
    'sap/ui/unified/ColorPickerPopover',
    'sap/m/MessageBox',
    'sap/m/MessageToast',
