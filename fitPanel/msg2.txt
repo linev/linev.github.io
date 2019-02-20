@@ -3,22 +3,18 @@ MODEL:{
   "fDataSet" : [{
     "_typename" : "ComboBoxItem",
     "fId" : "1",
-    "fSet" : "No Selection"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "2",
     "fSet" : "TH1F::hpx"
   }, {
     "_typename" : "ComboBoxItem",
-    "fId" : "3",
+    "fId" : "2",
     "fSet" : "TH2F::hpxhpy"
   }, {
     "_typename" : "ComboBoxItem",
-    "fId" : "4",
+    "fId" : "3",
     "fSet" : "TProfile::hprof"
   }, {
     "_typename" : "ComboBoxItem",
-    "fId" : "5",
+    "fId" : "4",
     "fSet" : "TNtuple::ntuple"
   }],
   "fSelectDataId" : "2",
@@ -35,13 +31,63 @@ MODEL:{
   "fMethod" : [{
     "_typename" : "ComboBoxItem",
     "fId" : "1",
-    "fSet" : "Chi-square"
+    "fSet" : "Linear Chi-square"
   }, {
     "_typename" : "ComboBoxItem",
     "fId" : "2",
+    "fSet" : "Non-Linear Chi-square"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "3",
+    "fSet" : "Linear Chi-square with Robust"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "4",
     "fSet" : "Binned Likelihood"
   }],
   "fSelectMethodId" : "1",
+  "fContourPar1" : [{
+    "_typename" : "ComboBoxItem",
+    "fId" : "1",
+    "fSet" : "Coeff0"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "2",
+    "fSet" : "Coeff1"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "3",
+    "fSet" : "Coeff3"
+  }],
+  "fContourPar1Id" : "1",
+  "fContourPar2" : [{
+    "_typename" : "ComboBoxItem",
+    "fId" : "1",
+    "fSet" : "Coeff0"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "2",
+    "fSet" : "Coeff1"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "3",
+    "fSet" : "Coeff3"
+  }],
+  "fContourPar2Id" : "2",
+  "fScanPar" : [{
+    "_typename" : "ComboBoxItem",
+    "fId" : "1",
+    "fSet" : "Coeff0"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "2",
+    "fSet" : "Coeff1"
+  }, {
+    "_typename" : "ComboBoxItem",
+    "fId" : "3",
+    "fSet" : "Coeff3"
+  }],
+  "fScanParId" : "1",
   "fRealFunc" : "",
   "fOption" : "",
   "fFuncChange" : "",
@@ -359,7 +405,6 @@ MODEL:{
   "fMaxRange" : 4,
   "fStep" : 0.08,
   "fRange" : [-4, 4],
-  "fOperation" : 0,
   "fFitOptions" : 3,
   "fLinear" : false,
   "fRobust" : false,
@@ -368,11 +413,10 @@ MODEL:{
   "fTypeId" : 0,
   "fFuncChangeInt" : 0,
   "fIntegral" : false,
-  "fBestErrors" : false,
+  "fMinusErrors" : false,
   "fWeights" : false,
   "fBins" : false,
   "fUseRange" : false,
-  "fImproveFit" : false,
   "fAddList" : false,
   "fUseGradient" : false,
   "fSame" : false,
