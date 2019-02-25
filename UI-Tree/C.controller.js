@@ -57,6 +57,23 @@ sap.ui.define([
 			return result;
 		},
 
+		onPressMaster2: function() {
+			this.getSplitAppObj().to(this.createId("master2"));
+		},
+
+		onPressMaster3: function() {
+			this.getSplitAppObj().to(this.createId("master3"));
+		},
+
+		onPressMasterBack: function() {
+			console.log("This " + this)
+			this.getSplitAppObj().backMaster();
+		},
+
+		hideMaster: function() {
+				this.getSplitAppObj().hideMaster();
+			},
+
 		onToggle: function(oEvent) {
 
 			var oModel = this.getView().getModel("oModel").getData();
@@ -65,6 +82,9 @@ sap.ui.define([
 
 			var nodes = this.getView().getModel("oModel").getProperty(lItem);
 			var sNode = this.getView().getModel("oModel").getProperty(lItem).title;
+			var app = this.getView().byId("SplitAppDemo");
+
+			//console.log("App" + app);
 
 			if(!(paths.includes(lItem))){
 				arr.push(sNode);
@@ -76,11 +96,35 @@ sap.ui.define([
 				arr.length = index+1;
 			}
 
+			//console.log(rowIndex)
 			paths.push(lItem);
 			//console.log(paths)
 			this.getView().getModel("aModel").setData(arr);
-			//console.log("name " + arr);	
+			//console.log("name " + arr);
+			
+				var page = new sap.m.Page({
+					title: sNode,
+					showNavButton: true,
+					navButtonPress: function(){
+						app.backDetail();
+					},
+					headerContent: [
+						new sap.m.Button({
+							icon : "sap-icon://menu",
+							press: function() {
+								app.showMaster();
+							}
+						})
+					]
 
+				});
+				
+
+			app.addDetailPage(page);
+			app.toDetail(page);
+			
+
+			//console.log("Page " + page);
    		},
 
    		tryOne: function(oEvent) {

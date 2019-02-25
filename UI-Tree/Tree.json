@@ -51,6 +51,17 @@
 	},
 	{
 		"title": "Node2",
-		"ref": "sap-icon://customer-financial-fact-sheet"
+		"ref": "sap-icon://customer-financial-fact-sheet",
+		"nodes" : [
+			{
+				"title": "Node2-1",
+			 	"ref": "sap"
+			},
+
+			{
+				"title": "Node2-2",
+				"ref": "saptest"
+			}
+		]
 	}
 ]

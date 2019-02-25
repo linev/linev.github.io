@@ -5,36 +5,29 @@
 	xmlns:m="sap.m"
     xmlns:u="sap.ui.unified"
     xmlns:core="sap.ui.core"
-	xmlns="sap.ui.table">
-	<m:SplitApp id="SplitAppDemo" initialDetail="detail" initialMaster="master" orientationChange="onOrientationChange">
+	xmlns="sap.ui.table"
+	xmlns:l="sap.ui.codeeditor">
+	<m:SplitApp id="SplitAppDemo" initialMaster="master1" orientationChange="onOrientationChange">
+		<!-- Detail Pages -->
 		<m:detailPages>
 			<m:Page id="detail" title="Detail 1" class="sapUiStdPage">
 				<m:content>
-					<m:Label text="Detail page 1" />
-					<m:Button text="Go to Detail page2" press="onPressDetailBack" />
-					
+					<l:CodeEditor value='\{"English": "Hello World!", "French":"Bonjour monde!", "German":"Hallo Welt!", "Italian":"Ciao mondo", "Spanish":"Hola mundo"}' height="500px" type="json"/>
 				</m:content>
 			</m:Page>
 			<m:Page id="detailDetail" title="Change Tree Style" class="sapUiStdPage" showNavButton="true"
-				navButtonText="Back" navButtonPress="onPressNavToDetail">
+				navButtonText="Back" navButtonPress="onPressDetailBack">
 				<m:content>
-					<m:VBox class="sapUiSmallMargin">
-						<m:Label text="This is Detail Page2" />
-						<m:Text text="Here you could change the Split Application mode. After the mode change, resize the browser window to see the difference in the master form behaviour." />
-						<m:RadioButtonGroup columns="1" width="500px" class="sapUiMediumMarginBottom" select="onPressModeBtn">
-							<m:buttons>
-								<m:RadioButton id="RB1-1" text="show/hide" selected="true" custom:splitAppMode="ShowHideMode" />
-								<m:RadioButton id="RB1-2" text="stretch/compress" custom:splitAppMode="StretchCompressMode" />
-								<m:RadioButton id="RB1-3" text="hide" custom:splitAppMode="HideMode" />
-								<m:RadioButton id="RB1-4" text="popover" custom:splitAppMode="PopoverMode" />
-							</m:buttons>
-						</m:RadioButtonGroup>
-					</m:VBox>
+					
 				</m:content>
 			</m:Page>
 		</m:detailPages>
+<!-- 		Master Pages -->
 		<m:masterPages>
-			<m:Page id="master" title="Master 1" icon="sap-icon://action" class="sapUiStdPage">
+			<m:Page id="master1" title="Master 1" icon="sap-icon://action" class="sapUiStdPage" mode="popover">
+				<m:headerContent>
+					<m:Button text="Hide" press="hideMaster"></m:Button>
+				</m:headerContent>
 				<m:content>
 					<TreeTable
 		                    id="TreeTableBasic"
@@ -42,8 +35,7 @@
 		                    selectionMode="MultiToggle"
 		                    enableSelectAll="false"
 		                    ariaLabelledBy="title"
-		                    toggleOpenState="onToggle"
-		                    press="onPressNavToDetail">
+		                    toggleOpenState="onToggle">
 		                <extension>
 		                    <m:Breadcrumbs id="bread" links="{path: 'aModel>/'}">
 		                        <m:Link id="link" text="{aModel>}" press="tryOne"/>
@@ -57,7 +49,36 @@
 		                        </template>
 		                    </Column>
 		                </columns>
-           		 	</TreeTable>	
+           		 	</TreeTable>
+           		 	<m:Button text="Go to Master Page 2" press="onPressMaster2" />
+				</m:content>
+			</m:Page>
+			<m:Page id="master2" title="Master 2" showNavButton="true" navButtonPress="onPressMasterBack">
+				<m:headerContent>
+					<m:Button text="Hide" press="hideMaster"></m:Button>
+				</m:headerContent>
+				<m:content>
+					<m:VBox class="sapUiSmallMargin">
+						<m:Label text="This is Detail Page2" />
+						<m:Text text="Here you could change the Split Application mode. After the mode change, resize the browser window to see the difference in the master form behaviour." />
+						<!-- <m:RadioButtonGroup columns="1" width="500px" class="sapUiMediumMarginBottom" select="onPressModeBtn">
+							<m:buttons>
+								<m:RadioButton id="RB1-4" text="popover" custom:splitAppMode="PopoverMode" selected="true" />
+								<m:RadioButton id="RB1-1" text="show/hide" custom:splitAppMode="ShowHideMode" />
+								<m:RadioButton id="RB1-2" text="stretch/compress" custom:splitAppMode="StretchCompressMode" />
+								<m:RadioButton id="RB1-3" text="hide" custom:splitAppMode="HideMode" />
+							</m:buttons>
+						</m:RadioButtonGroup> -->
+						<m:Button text="Go to Master Page 3" press="onPressMaster3"/>
+					</m:VBox>
+				</m:content>
+			</m:Page>
+			<m:Page id="master3" title="Master 3" showNavButton="true" navButtonPress="onPressMasterBack">
+				<m:headerContent>
+					<m:Button text="Hide" press="hideMaster"></m:Button>
+				</m:headerContent>
+				<m:content>
+					<m:Text text="This is the master page 3. With the back button, we should be able to navigate to Master Page 2 and then to Master Page 1"/>
 				</m:content>
 			</m:Page>
 		</m:masterPages>
