@@ -25,7 +25,8 @@ sap.ui.define([
 			this.getView().setModel(oModel, "oModel");
 			this.getView().setModel(aModel, "aModel");
 			var oTable = this.byId("TreeTableBasic");
-			oTable.setSelectionBehavior(sap.ui.table.SelectionBehavior.RowOnly);
+			//oTable.setSelectionBehavior(sap.ui.table.SelectionBehavior.RowOnly);
+
 		},
 
 		onOrientationChange: function(oEvent) {
@@ -43,9 +44,10 @@ sap.ui.define([
 		},
 
 		onPressModeBtn : function(oEvent) {
-			var sSplitAppMode = oEvent.getSource().getSelectedButton().getCustomData()[0].getValue();
 
+			var sSplitAppMode = oEvent.getSource().getSelectedButton().getCustomData()[0].getValue();
 			this.getSplitAppObj().setMode(sSplitAppMode);
+
 			MessageToast.show("Split Container mode is changed to: " + sSplitAppMode, {duration: 5000});
 		},
 

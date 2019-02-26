@@ -7,7 +7,7 @@
     xmlns:core="sap.ui.core"
 	xmlns="sap.ui.table"
 	xmlns:l="sap.ui.codeeditor">
-	<m:SplitApp id="SplitAppDemo" initialMaster="master1" orientationChange="onOrientationChange">
+	<m:SplitApp id="SplitAppDemo" initialMaster="master1" orientationChange="onOrientationChange" mode="PopoverMode">
 		<!-- Detail Pages -->
 		<m:detailPages>
 			<m:Page id="detail" title="Detail 1" class="sapUiStdPage">
@@ -24,7 +24,7 @@
 		</m:detailPages>
 <!-- 		Master Pages -->
 		<m:masterPages>
-			<m:Page id="master1" title="Master 1" icon="sap-icon://action" class="sapUiStdPage" mode="popover">
+			<m:Page id="master1" title="Master 1" icon="sap-icon://action" class="sapUiStdPage" >
 				<m:headerContent>
 					<m:Button text="Hide" press="hideMaster"></m:Button>
 				</m:headerContent>
@@ -61,14 +61,14 @@
 					<m:VBox class="sapUiSmallMargin">
 						<m:Label text="This is Detail Page2" />
 						<m:Text text="Here you could change the Split Application mode. After the mode change, resize the browser window to see the difference in the master form behaviour." />
-						<!-- <m:RadioButtonGroup columns="1" width="500px" class="sapUiMediumMarginBottom" select="onPressModeBtn">
+						<m:RadioButtonGroup columns="1" width="500px" class="sapUiMediumMarginBottom" select="onPressModeBtn">
 							<m:buttons>
-								<m:RadioButton id="RB1-4" text="popover" custom:splitAppMode="PopoverMode" selected="true" />
-								<m:RadioButton id="RB1-1" text="show/hide" custom:splitAppMode="ShowHideMode" />
-								<m:RadioButton id="RB1-2" text="stretch/compress" custom:splitAppMode="StretchCompressMode" />
-								<m:RadioButton id="RB1-3" text="hide" custom:splitAppMode="HideMode" />
+								<m:RadioButton id="RB1-1" text="popover" custom:splitAppMode="PopoverMode" />
+								<m:RadioButton id="RB1-2" text="show/hide" custom:splitAppMode="ShowHideMode" />
+								<m:RadioButton id="RB1-3" text="stretch/compress" custom:splitAppMode="StretchCompressMode" />
+								<m:RadioButton id="RB1-4" text="hide" custom:splitAppMode="HideMode" />
 							</m:buttons>
-						</m:RadioButtonGroup> -->
+						</m:RadioButtonGroup>
 						<m:Button text="Go to Master Page 3" press="onPressMaster3"/>
 					</m:VBox>
 				</m:content>
