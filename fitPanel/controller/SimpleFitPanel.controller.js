@@ -147,6 +147,10 @@ sap.ui.define([
          this.byId("selectedOpText").setText(func);
        },
 
+       operationTextChange: function(oEvent) {
+         var newValue = oEvent.getParameter("value");
+         this.byId("selectedOpText").setText(newValue);
+       },
 
       //change the combo box in Minimization Tab --- Method depending on Radio Buttons values
       selectRB: function(){
