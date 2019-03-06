@@ -7,8 +7,13 @@
 	xmlns="sap.m"
 	xmlns:l="sap.ui.layout"
 	controllerName="localapp.controller.SimpleFitPanel">
-	<Page id="simplefitpanel_page" title="Simple Fit Panel" showHeader="false">
-		<VBox class="sapUiSizeCompact sapUiBody fitPanelStyle">
+	<!-- <html:style>
+      .mySuperRedButton {
+         color: red;
+      }
+   </html:style> -->
+	<Page id="simplefitpanel_page" title="Simple Fit Panel" showHeader="true">
+		<VBox class="sapUiSizeCompact sapUiBody">
 			<!-- What kind of form? -->
 			<l:Grid
 				class="sapUiSizeCompact"
@@ -44,7 +49,7 @@
 							<l:GridData span="L4 M3 S3" />
 						</layoutData> 
 			        </ComboBox>
-					<TextArea id="OperationText" width="90%" height="30px" value=" " valueLiveUpdate="{/fOpTextUpdate}" liveChange="operationTextChange">
+					<TextArea id="OperationText" width="100%" height="30px" value=" " valueLiveUpdate="{/fOpTextUpdate}" liveChange="operationTextChange">
 						<layoutData>
 							<l:GridData span="L4 M6 S10"/>
 						</layoutData>
@@ -65,7 +70,7 @@
 							<l:GridData span="L4 M6 S6"/>
 						</layoutData>
 					</Button> -->
-					<Panel expandable="true" expanded="false" headerText="Set Parameters" width="auto" class="sapUiSizeCompact">
+					<Panel expandable="true" expanded="false" headerText="Set Parameters" width="auto" class="sapUiResponsiveMargin">
 						<content>
 							<l:Grid
 				            class="sapUiSizeCompact"
@@ -126,10 +131,10 @@
 			<IconTabBar id="Gen-Min">
 		    <!-- General Item (Compact)-->
 		    	<items>
-		    		<IconTabFilter text="General" class="fitPanelStyle">
+		    		<IconTabFilter text="General">
 						<!-- ComboBox for Method -->
 						<l:Grid
-							class="tabSpace sapUiSizeCompact"
+							class="sapUiSizeCompact"
 							vSpacing="0"
 							defaultSpan="L4 M6 S10">
 							<l:content>
@@ -179,14 +184,14 @@
 							</l:content>
 						</l:Grid>
 						<l:Grid
-							class="sapUiSizeCompact"
+							class="sapUiSizeCompact myAppTest"
 							vSpacing="0"
 							defaultSpan="L3 M4 S10">
-							<l:content >
+							<l:content>
 								<Title level="H4" text="Draw Options"/>
 								<CheckBox text="SAME" selected="{/fSame}"/>	
 								<CheckBox text="No Drawing" selected ="{/fNoDrawing}"/>
-								<RangeSlider id="Slider" showAdvancedTooltip="true" range="{/fRange}" min="{/fMinRange}" max="{/fMaxRange}" step="{/fStep}" width="100%" showHandleTooltip="false" inputsAsTooltips="true" class="sapUiLargeMarginBottom fitPanelStyle">
+								<RangeSlider id="Slider" showAdvancedTooltip="true" range="{/fRange}" min="{/fMinRange}" max="{/fMaxRange}" step="{/fStep}" width="100%" showHandleTooltip="false" inputsAsTooltips="true" class="sapUiLargeMarginBottom">
 									<layoutData>
 										<l:GridData span="L3 M4 S8"/>
 									</layoutData>
@@ -199,7 +204,7 @@
 							</l:content>
 						</l:Grid>
 		    		</IconTabFilter>
-		    		<IconTabFilter text="Minimization" class="fitPanelStyle">
+		    		<IconTabFilter text="Minimization">
 		    		<!-- Minimization Item -->
 			    		<l:Grid
 			    			class="sapUiSizeCompact"
@@ -359,7 +364,7 @@
 								</Panel>
 							</l:content>
 						</l:Grid>
-		    		</IconTabFilter>	
+		    		</IconTabFilter>
 		    	</items>
 		    </IconTabBar>
 		    <Toolbar>

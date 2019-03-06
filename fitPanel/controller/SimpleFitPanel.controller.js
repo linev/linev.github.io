@@ -1,35 +1,13 @@
 sap.ui.define([
-   'sap/ui/jsroot/GuiPanelController',
+   'rootui5/panel/Controller',
    'sap/ui/model/json/JSONModel',
    'sap/ui/unified/ColorPickerPopover',
    'sap/m/MessageBox',
    'sap/m/MessageToast',
    'sap/m/Button'
 ], function (GuiPanelController, JSONModel, ColorPickerPopover, MessageBox, MessageToast, Button) {
-   
+
    "use strict";
-
-//    return sap.ui.core.Control.extend("Button", { // call the new Control type "my.ColorBox" and let it inherit from sap.ui.core.Control
-
-//             // the control API:
-//             metadata : {
-//                properties : {           // setter and getter are created behind the scenes, incl. data binding and type validation
-//                   "color" : {type: "sap.ui.core.CSSColor", defaultValue: "#fff"} // you can give a default value and more
-//                }
-//             },
-
-//             // the part creating the HTML:
-//             renderer : function(oRm, oControl) { // static function, so use the given "oControl" instance instead of "this" in the renderer function
-//                oRm.write("<div"); 
-//                oRm.writeControlData(oControl);  // writes the Control ID and enables event handling - important!
-//                oRm.addStyle("background-color", oControl.getColor());  // write the color property; UI5 has validated it to be a valid CSS color
-//                oRm.writeStyles();
-//                oRm.addClass("myColorBox");      // add a CSS class for styles common to all control instances
-//                oRm.writeClasses();              // this call writes the above class plus enables support for Square.addStyleClass(...)
-//                oRm.write(">"); 
-//                oRm.write("</div>"); // no text content to render; close the tag
-//             },
-//          });
 
    return GuiPanelController.extend("localapp.controller.SimpleFitPanel",{
 
@@ -48,7 +26,7 @@ sap.ui.define([
          };
          this.getView().setModel(new JSONModel(data));
          this._data = data; 
-         var myControl = new Button({color:"#f00"});
+         var myControl = new Button({ color: "#f00" });
 
          // var style = document.createElement("style");
          // document.head.appendChild(style);
@@ -67,8 +45,7 @@ sap.ui.define([
          // var oButton = this.getView().byId("test");
          // oButton.changeColor("red"); // change the color of the button
 
- 
-         
+
       },
 
 
@@ -85,22 +62,23 @@ sap.ui.define([
                this._data = data;
 
                this.copyModel = JSROOT.extend({},data);
-            }     
+            }
          }
 
 
          else {
          }
-         
+
 
       },
 
       //Fitting Button
       doFit: function() {
-         
+
          //Data is a new model. With getValue() we select the value of the parameter specified from id
          var data = this.getView().getModel().getData();
-         var func = this.getView().byId("TypeXY").getValue();
+         //var func = this.getView().byId("TypeXY").getValue();
+         var func = this.getView().byId("selectedOpText").getText();
          //We pass the value from func to C++ fRealFunc
          data.fRealFunc = func;
 
@@ -124,14 +102,13 @@ sap.ui.define([
 
       resetPanel: function(oEvent){
 
-        
          if(!this.copyModel) return;
 
          JSROOT.extend(this._data, this.copyModel);
          this.getView().getModel().updateBindings();
          return;
       },
-     
+
      //Change the input text field. When a function is seleced, it appears on the text input field and
      //on the text area.
        onTypeXYChange: function(){
@@ -147,10 +124,11 @@ sap.ui.define([
          this.byId("selectedOpText").setText(func);
        },
 
-       operationTextChange: function(oEvent) {
+        operationTextChange: function(oEvent) {
          var newValue = oEvent.getParameter("value");
          this.byId("selectedOpText").setText(newValue);
        },
+
 
       //change the combo box in Minimization Tab --- Method depending on Radio Buttons values
       selectRB: function(){
