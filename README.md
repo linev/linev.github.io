@@ -10,7 +10,7 @@ These are different test web pages with use of OpenUI
 
 [Eve7 demo](eve7/) 
  
-[Only WebGL in Eve7](eve7/?view=Default)
+[Only WebGL in Eve7](eve7/#/view/Default)
 
 [Lines set](lines/) 
 
