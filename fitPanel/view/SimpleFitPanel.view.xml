@@ -7,13 +7,8 @@
 	xmlns="sap.m"
 	xmlns:l="sap.ui.layout"
 	controllerName="localapp.controller.SimpleFitPanel">
-	<!-- <html:style>
-      .mySuperRedButton {
-         color: red;
-      }
-   </html:style> -->
-	<Page id="simplefitpanel_page" title="Simple Fit Panel" showHeader="true">
-		<VBox class="sapUiSizeCompact sapUiBody">
+	<Page id="simplefitpanel_page" title="Simple Fit Panel" showHeader="false">
+		<VBox class="sapUiSizeCompact sapUiBody fitPanelStyle">
 			<!-- What kind of form? -->
 			<l:Grid
 				class="sapUiSizeCompact"
@@ -70,7 +65,7 @@
 							<l:GridData span="L4 M6 S6"/>
 						</layoutData>
 					</Button> -->
-					<Panel expandable="true" expanded="false" headerText="Set Parameters" width="auto" class="sapUiResponsiveMargin">
+					<Panel expandable="true" expanded="false" headerText="Set Parameters" width="auto" class="sapUiNoMargin">
 						<content>
 							<l:Grid
 				            class="sapUiSizeCompact"
@@ -191,7 +186,7 @@
 								<Title level="H4" text="Draw Options"/>
 								<CheckBox text="SAME" selected="{/fSame}"/>	
 								<CheckBox text="No Drawing" selected ="{/fNoDrawing}"/>
-								<RangeSlider id="Slider" showAdvancedTooltip="true" range="{/fRange}" min="{/fMinRange}" max="{/fMaxRange}" step="{/fStep}" width="100%" showHandleTooltip="false" inputsAsTooltips="true" class="sapUiLargeMarginBottom">
+								<RangeSlider id="Slider" showAdvancedTooltip="true" range="{/fRange}" min="{/fMinRange}" max="{/fMaxRange}" step="{/fStep}" width="100%" showHandleTooltip="false" inputsAsTooltips="true" class="sapUiSmallMarginBottom">
 									<layoutData>
 										<l:GridData span="L3 M4 S8"/>
 									</layoutData>
@@ -305,7 +300,7 @@
 																	<l:GridData span="L2 M2 S3"/>
 																</layoutData>
 															</Text>
-															<Button press="colorPicker" icon="sap-icon://color-fill">
+															<Button press="colorPicker" id="colorContour">
 																<layoutData>
 																	<l:GridData span="L2 M2 S3"/>
 																</layoutData>
@@ -315,10 +310,6 @@
 																	<l:GridData span="L2 M2 S3"/>
 																</layoutData>
 															</CheckBox>
-															<!-- <Input id="test"
-																type="text"
-																showValueHelp="true"
-																valueHelpRequest="colorPicker"/> -->
 														</l:content>
 													</l:Grid>
 												</IconTabFilter>
@@ -354,7 +345,7 @@
 															<Text text="Confidence Level:"/>
 															<StepInput value="0.95" min="0.01" max="100" step="0.01" editable="true" displayValuePrecision="2"/>
 															<Text text="Fill Colour:"/>
-															<Button press="colorPicker" icon="sap-icon://color-fill"/>
+															<Button press="colorPicker" id="colorConf"/>
 														</l:content>
 													</l:Grid>
 												</IconTabFilter>
@@ -372,7 +363,6 @@
 		    	<Button text="Reset" press="resetPanel"/>
 		    	<Button text="Back"/>
 		    	<Button text="Close" press="closePanel"/>
-		    	<Button id="color"/>
 	    	</Toolbar>
 		</VBox>
 	</Page>

@@ -1,25 +1,22 @@
-/*.fitPanelStyle .mySuperRedButton {
-         background-color: red;
-      }*/
-.fitPanelStyle .sapMITBHead {
-	margin: 0;
-}
-
-.fitPanelStyle .sapUiMedia-Std-Phone .sapMITBHead {
+.sapMITBHead {
 	margin: 0 !important;
 }
 
-.fitPanelStyle .sapMPanelHdr {
-	font-size: 1rem;
-	height: 1.8rem;
-	line-height: 1.8rem;
+.sapUiMedia-Std-Phone .sapMITBHead {
+	margin: 0 !important;
 }
 
-.fitPanelStyle .sapMPanelExpandableIcon {
-	font-size: 0.9rem;
+.sapMPanelHdr {
+	font-size: 1rem !important;
+	height: 1.8rem !important;
+	line-height: 1.8rem !important;
 }
 
-.fitPanelStyle .sapUiLargeMarginBottom {
+.sapMPanelExpandableIcon {
+	font-size: 0.9rem !important;
+}
+
+.sapUiLargeMarginBottom {
 	margin-bottom: 1.3rem !important;
 }
 

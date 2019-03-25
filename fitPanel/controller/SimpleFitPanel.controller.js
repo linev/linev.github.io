@@ -197,12 +197,23 @@ sap.ui.define([
          this.oColorPickerPopover.openBy(oEvent.getSource());
       },
 
+
       handleChange: function (oEvent) {
          var oView = this.getView();
          //oView.byId(this.inputId).setValue(oEvent.getParameter("colorString"));
          this.inputId = "";
          var color = oEvent.getParameter("colorString");
-         MessageToast.show("Chosen color string: " + color);
+         var oButtonContour = this.getView().byId("colorContour");
+         var oButtonInnerContour = oButtonContour.$().find('.sapMBtnInner');
+         oButtonInnerContour.css('background',color);
+         oButtonInnerContour.css('color','#FFFFFF');
+         oButtonInnerContour.css('text-shadow','1px 1px 2px #333333');
+
+         var oButtonConf = this.getView().byId("colorConf");
+         var oButtonInnerConf = oButtonConf.$().find('.sapMBtnInner');
+         oButtonInnerConf.css('background',color);
+         oButtonInnerConf.css('color','#FFFFFF');
+         oButtonInnerConf.css('text-shadow','1px 1px 2px #333333');
       },
 
    });
