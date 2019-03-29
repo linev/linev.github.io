@@ -42,7 +42,7 @@
 
         function InitUI(handle) {
 
-           sap.ui.loader.config({ rootui5: "../rootui5/" });
+           sap.ui.loader.config({ paths: { rootui5: "../rootui5/" } });
 
            sap.ui.require(["sap/ui/core/mvc/XMLView"], function(XMLView) {
               XMLView.create({
