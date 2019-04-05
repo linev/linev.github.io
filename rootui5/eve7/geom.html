@@ -50,8 +50,22 @@
               }).then(function(oView) {
                  oView.placeAt("GeomDiv");
               });
-
            });
+
+//           sap.ui.require(["sap/ui/core/ComponentContainer"], function(ComponentContainer) {
+//               new ComponentContainer({
+//                  name: "rootui5.geom",
+//                  manifest: true,
+//                  async: true,
+//                  settings: {
+//                     componentData: {
+//                        conn_handle: handle
+//                     }
+//                  },
+//                  height: "100%"
+//               }).placeAt("GeomDiv")
+//            });
+
         }
 
         if (JSROOT.GetUrlOption('nogl')!==null) JSROOT.gStyle.NoWebGL = true;

@@ -1,14 +1,15 @@
-sap.ui.define(['sap/ui/core/mvc/Controller',
+sap.ui.define(['sap/ui/core/Component',
+               'sap/ui/core/mvc/Controller',
                'sap/ui/core/Control',
-               'sap/ui/model/json/JSONModel',
                'sap/m/Text',
                'sap/m/CheckBox',
                'sap/ui/layout/Splitter',
                "sap/ui/core/ResizeHandler",
                "sap/ui/layout/HorizontalLayout",
-               "sap/ui/table/Column"
-],function(Controller, CoreControl, JSONModel, mText, mCheckBox, Splitter, ResizeHandler,
-           HorizontalLayout, tableColumn) {
+               "sap/ui/table/Column",
+               "rootui5/eve7/model/BrowserModel"
+],function(Component, Controller, CoreControl, mText, mCheckBox, Splitter, ResizeHandler,
+           HorizontalLayout, tableColumn, BrowserModel) {
 
    "use strict";
 
@@ -61,7 +62,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
 
    });
 
-   CoreControl.extend("eve.GeomDraw", {
+   var GeomDraw = CoreControl.extend("rootui5.eve7.controller.GeomDraw", {
 
       metadata : {
          properties : {           // setter and getter are created behind the scenes, incl. data binding and type validation
@@ -109,10 +110,13 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
     *    - REveGeomDrawing object delivered from the server
     * Only after all this stages are completed, one could start to analyze  */
 
-   return Controller.extend("rootui5.eve7.controller.GeomViewer", {
+   return Controller.extend("rootui5.geom.controller.GeomViewer", {
       onInit: function () {
 
          this.websocket = this.getView().getViewData().conn_handle;
+
+         // this is code for the Components.js
+         // this.websocket = Component.getOwnerComponentFor(this.getView()).getComponentData().conn_handle;
 
          this.websocket.SetReceiver(this);
          this.websocket.Connect();
@@ -122,32 +126,32 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          // if true, most operations are performed locally without involving server
          this.standalone = this.websocket.kind == "file";
 
-         this.data = { Nodes: null };
-
-         this.model = new JSONModel(this.data);
-         this.getView().setModel(this.model);
-
-         // PART 2: instantiate Control and place it onto the page
-
          if (JSROOT.GetUrlOption('nobrowser') !== null) {
             // remove complete area - plain geometry drawing
             this.getView().byId("mainSplitter").removeAllContentAreas();
          } else {
 
+            // create model only for browser - no need for anybody else
+            this.model = new BrowserModel();
+
             var t = this.getView().byId("treeTable");
 
+            t.setModel(this.model);
+
             var vis_selected_handler = this.visibilitySelected.bind(this);
+
+            this.model.assignTreeTable(t);
 
             t.addColumn(new tableColumn({
                label: "Description",
                template: new HorizontalLayout({
                   content: [
-                     new mCheckBox({ enabled: true, visible: true, selected: "{node_visible}", select: vis_selected_handler }),
-                     new geomColorBox({color:"{color}", visible: "{color_visible}" }),
-                     new mText({text:"{title}", wrapping: false })
+                     //new mCheckBox({ enabled: true, visible: true, selected: "{node_visible}", select: vis_selected_handler }),
+                     //new geomColorBox({color:"{color}", visible: "{color_visible}"}),
+                     new mText({text:"{name}", wrapping: false })
                   ]
                })
-             }));
+            }));
 
             // catch re-rendering of the table to assign handlers
             t.addEventDelegate({
@@ -157,7 +161,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          }
 
          // placeholder for geometry painter
-         this.geomControl = new eve.GeomDraw({color:"#f00"});
+         this.geomControl = new GeomDraw({color:"#f00"});
          this.getView().byId("mainSplitter").addContentArea(this.geomControl);
 
          JSROOT.AssertPrerequisites("geom", function() {
@@ -190,34 +194,31 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          }
       },
 
-      /** function called then mouse-hover event over the row is invoked
-       * Used to highlight correspondent volume on geometry drawing
-       */
+      /** @brief function called then mouse-hover event over the row is invoked
+       * @desc Used to highlight correspondent volume on geometry drawing */
       onRowHover: function(row, is_enter) {
          // property of current entry, not used now
          var ctxt = row.getBindingContext(),
              prop = ctxt ? ctxt.getProperty(ctxt.getPath()) : null;
 
-         var ids = (is_enter && prop && prop.end_node) ? this.getRowIds(row) : null;
-
          if (!this.standalone) {
-            var req = ids ? JSON.stringify(ids) : "OFF";
+            var req = is_enter && prop && prop.fullpath && prop.isLeaf ? prop.fullpath : "OFF";
             // avoid multiple time submitting same request
             if (this._last_hover_req === req) return;
             this._last_hover_req = req;
             return this.websocket.Send("HOVER:" + req);
          }
 
-         // remember current element with hover stack
-         this._hover_stack = this.geo_clones.MakeStackByIds(ids);
+         if (this.geo_painter && this.geo_clones) {
+            var fullpath = "";
 
-         if (!this.geo_painter) return;
+            if (prop && prop.fullpath && is_enter)
+               fullpath = prop.fullpath.substr(1, prop.fullpath.length-2);
 
-         var found_mesh = this.geo_painter.HighlightMesh(null, 0x00ff00, null, undefined, this._hover_stack, true);
-
-         // request given stack
-         if (this._hover_stack && !found_mesh)
-            this.submitSearchQuery(this._hover_stack, true);
+            // remember current element with hover stack
+            this._hover_stack = fullpath ? this.geo_clones.FindStackByName(fullpath) : null;
+            this.geo_painter.HighlightMesh(null, 0x00ff00, null, undefined, this._hover_stack, true);
+         }
       },
 
       /** Return nodeid for the row */
@@ -235,7 +236,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          var path = ctxt.getPath(), lastpos = 0, ids = [];
 
          while (lastpos>=0) {
-            lastpos = path.indexOf("/chlds", lastpos+1);
+            lastpos = path.indexOf("/childs", lastpos+1);
 
             var ttt = ctxt.getProperty(path.substr(0,lastpos));
 
@@ -266,44 +267,36 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
             return this.websocket.Send("HIGHL:" + req);
          }
 
+         var hpath = "---";
+
+         if (this.geo_clones && geo_stack) {
+            var info = this.geo_clones.ResolveStack(geo_stack);
+            if (info && info.name) hpath = "/" + info.name + "/";
+         }
+
+         this.highlighRowWithPath(hpath);
+      },
+
+      highlighRowWithPath: function(path) {
          var rows = this.getView().byId("treeTable").getRows(), best_cmp = 0, best_indx = 0;
 
          for (var i=0;i<rows.length;++i) {
             rows[i].$().css("background-color", "");
-            if (geo_stack) {
-               var cmp = JSROOT.GEO.CompareStacks(geo_stack, this.getRowStack(rows[i]));
-               if (cmp > best_cmp) { best_cmp = cmp; best_indx = i; }
+            if (path !== "OFF") {
+               var ctxt = rows[i].getBindingContext(),
+                   prop = ctxt ? ctxt.getProperty(ctxt.getPath()) : null,
+                   cmp = 0;
+
+               if (prop && prop.fullpath) {
+                  if (prop.fullpath == path) cmp = 1000; else
+                  if (path.indexOf(prop.fullpath) == 0) cmp = prop.fullpath.length;
+                  if (cmp > best_cmp) { best_cmp = cmp; best_indx = i; }
+               }
             }
          }
 
          if (best_cmp > 0)
-            rows[best_indx].$().css("background-color", best_cmp == geo_stack.length ? "yellow" : "lightgrey");
-      },
-
-      /** compare row ids which id to be selected */
-      compareIds: function(rowids, hids) {
-         if (!rowids || !hids) return 0;
-         var len = Math.min(rowids.length, hids.length);
-         for (var k=0;k<len;++k)
-            if (rowids[k] !== hids[k])
-               return k-1;
-         return len;
-      },
-
-      highlighRowWithIds: function(hids) {
-         var rows = this.getView().byId("treeTable").getRows(), best_cmp = 0, best_indx = 0;
-
-         for (var i=0;i<rows.length;++i) {
-            rows[i].$().css("background-color", "");
-            if (hids) {
-               var rowids = this.getRowIds(rows[i]);
-               var cmp = this.compareIds(rowids, hids);
-               if (cmp > best_cmp) { best_cmp = cmp; best_indx = i; }
-            }
-         }
-
-         if (best_cmp > 0)
-            rows[best_indx].$().css("background-color", best_cmp == hids.length ? "yellow" : "lightgrey");
+            rows[best_indx].$().css("background-color", best_cmp == 1000 ? "yellow" : "lightgrey");
       },
 
       createGeoPainter: function(drawopt) {
@@ -453,10 +446,13 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
       OnWebsocketOpened: function(handle) {
          this.isConnected = true;
 
+         if (this.model)
+            this.model.sendFirstRequest(this.websocket);
+
          // when connection established, checked if we can submit requested
          this.checkRequestMsg();
-      },
 
+      },
 
       OnWebsocketClosed: function() {
          // when connection closed, close panel as well
@@ -478,7 +474,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          var mhdr = msg.substr(0,6);
          msg = msg.substr(6);
 
-         console.log(mhdr, msg.length, msg.substr(0,70), "...");
+         // console.log(mhdr, msg.length, msg.substr(0,70), "...");
 
          switch (mhdr) {
          case "DESCR:":  // browser hierarchy
@@ -487,8 +483,12 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          case "FESCR:":  // searching hierarchy
             this.parseDescription(msg, false);
             break;
+         case "BREPL:":   // browser reply
+            if (this.model)
+               this.model.processResponse(JSON.parse(msg));
+            break;
          case "FOUND:":  // text message for found query
-            this.showFoundNodes(msg);
+            this.showTextInBrowser(msg);
             this.paintFoundNodes(null); // nothing can be shown
             break;
          case "MODIF:":
@@ -505,13 +505,11 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
             break;
          case "HOVER:":
             this._hover_stack = (msg == "OFF") ? null : JSON.parse(msg);
-            this.geo_painter.HighlightMesh(null, 0x00ff00, null, undefined, this._hover_stack, true);
+            if (this.geo_painter)
+               this.geo_painter.HighlightMesh(null, 0x00ff00, null, undefined, this._hover_stack, true);
             break;
          case "HIGHL:":
-            this.highlighRowWithIds((msg == "OFF") ? null : JSON.parse(msg));
-            break;
-         case "SHAPE:":
-            // this.processSearchReply(msg, true);
+            this.highlighRowWithPath(msg);
             break;
          default:
             console.error('Non recognized msg ' + mhdr + ' len=' + msg.length);
@@ -553,11 +551,19 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
        * Used only to initialize hierarchy browser with full Tree,
        * later should be done differently */
       parseDescription: function(msg, is_original) {
-         var descr = JSON.parse(msg);
 
-         this.buildTree(descr, is_original);
+         if (!this.model) return;
 
-         this.byId("treeTable").expandToLevel(is_original ? 1 : 99);
+         var descr = JSON.parse(msg), br = this.byId("treeTable");
+
+         br.setNoData("");
+         br.setShowNoData(false);
+
+         var topnode = this.buildTreeNode(descr, [], 0, is_original ? 1 : 999);
+         if (this.standalone)
+            this.fullModel = topnode;
+
+         this.model.setFullModel(topnode);
       },
 
       /** TO BE CHANGED !!! When single node element is modified on the server side */
@@ -565,6 +571,10 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          var arr = JSON.parse(msg), can_refresh = true;
 
          if (!arr || !this.geo_clones) return;
+
+         console.error('modifyDescription should be modified');
+
+         return;
 
          for (var k=0;k<arr.length;++k) {
             var moditem = arr[k];
@@ -598,42 +608,20 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
             this.model.refresh();
          } else {
             // rebuild complete tree for TreeBrowser
-            this.buildTree();
          }
 
       },
 
-      // here try to append only given stack to the tree
-      // used to build partial tree with visible objects
-      appendStackToTree: function(tnodes, stack, color) {
-         var prnt = null, node = null;
-         for (var i=-1;i<stack.length;++i) {
-            var indx = (i<0) ? 0 : node.chlds[stack[i]];
-            node = this.geo_clones.nodes[indx];
-            var tnode = tnodes[indx];
-            if (!tnode)
-               tnodes[indx] = tnode = { title: node.name, id: indx, color_visible: false, node_visible: true };
-
-            if (prnt) {
-               if (!prnt.chlds) prnt.chlds = [];
-               if (prnt.chlds.indexOf(tnode) < 0)
-                  prnt.chlds.push(tnode);
-            }
-            prnt = tnode;
-         }
-
-         prnt.end_node = true;
-         prnt.color = color ? "rgb(" + color + ")" : "";
-         prnt.color_visible = prnt.color.length > 0;
-      },
-
-      buildTreeNode: function(nodes, cache, indx) {
+      buildTreeNode: function(nodes, cache, indx, expand_lvl) {
          var tnode = cache[indx];
          if (tnode) return tnode;
+         if (!expand_lvl) expand_lvl = 0;
 
          var node = nodes[indx];
 
-         cache[indx] = tnode = { title: node.name, id: indx, color_visible: false, node_visible: node.vis != 0 };
+         cache[indx] = tnode = { name: node.name, id: indx, color_visible: false, node_visible: node.vis != 0 };
+
+         if (expand_lvl > 0) tnode.expanded = true;
 
          if (node.color) {
             tnode.color = "rgb(" + node.color + ")";
@@ -641,42 +629,24 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          }
 
          if (node.chlds && (node.chlds.length>0)) {
-            tnode.chlds = [];
-            for (var k=0;k<node.chlds.length;++k)
-               tnode.chlds.push(this.buildTreeNode(nodes, cache, node.chlds[k]));
+            tnode.childs = [];
+            tnode.nchilds = node.chlds.length;
+            for (var k=0;k<tnode.nchilds;++k)
+               tnode.childs.push(this.buildTreeNode(nodes, cache, node.chlds[k], expand_lvl-1));
          } else {
-            tnode.end_node = true;
+            tnode.end_node = true; // TODO: no need for such flag
          }
 
          return tnode;
-      },
-
-      /** Build complete tree of all existing nodes.
-       * Produced structure can be very large, therefore later
-       * one should move this functionality to the server */
-      buildTree: function(nodes, is_original) {
-
-         if (!nodes) return;
-
-         var cache = [];
-         this.data.Nodes = [ this.buildTreeNode(nodes, cache, 0) ];
-
-         if (is_original) {
-            // remember nodes
-            this.originalCache = cache;
-            this.originalNodes = this.data.Nodes;
-         }
-
-         this.model.refresh();
       },
 
       /** search main drawn nodes for matches */
       findMatchesFromDraw: function(func) {
          var matches = [];
 
-         if (this.last_draw_msg && this.last_draw_msg.visisbles && this.geo_clones)
-            for (var k=0;k<this.last_draw_msg.visisbles.length;++k) {
-               var item = this.last_draw_msg.visisbles[k];
+         if (this.last_draw_msg && this.last_draw_msg.visibles && this.geo_clones)
+            for (var k=0;k<this.last_draw_msg.visibles.length;++k) {
+               var item = this.last_draw_msg.visibles[k];
                var res = this.geo_clones.ResolveStack(item.stack);
                if (func(res.node))
                   matches.push({ stack: item.stack, color: item.color });
@@ -685,31 +655,65 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          return matches;
       },
 
+      /** Show special message insted of nodes hierarchy */
+      showTextInBrowser: function(text) {
+         var br = this.byId("treeTable");
+         br.collapseAll();
+         if (!text || (text === "RESET")) {
+            br.setNoData("");
+            br.setShowNoData(false);
 
-      /** Show found nodes in the browser */
-      showFoundNodes: function(matches) {
-         var level = 0;
+            this.model.setNoData(false);
+            this.model.refresh();
 
-         // fully reset search selection
-         if ((matches === null) || (matches === undefined) || (matches === "RESET")) {
-            this.byId("treeTable").collapseAll();
-            this.data.Nodes = this.originalNodes || null;
-            level = 1;
-         } else if (typeof matches == "string") {
-            this.byId("treeTable").collapseAll();
-            this.data.Nodes = [ { title: matches } ];
-         } else if (!matches || (matches.length == 0)) {
-            this.data.Nodes = null;
          } else {
-            var nodes = [];
-            for (var k=0;k<matches.length;++k)
-               this.appendStackToTree(nodes, matches[k].stack, matches[k].color);
-            this.data.Nodes = [ nodes[0] ];
-            if (matches.length < 100) level = 99;
+            br.setNoData(text);
+            br.setShowNoData(true);
+            this.model.setNoData(true);
+            this.model.refresh();
+         }
+      },
+
+      /** Show found nodes in the browser, used for offline */
+      showFoundNodes: function(matches) {
+
+         var br = this.byId("treeTable");
+
+         var nodes = [];
+         for (var k=0;k<matches.length;++k)
+             this.appendStackToTree(nodes, matches[k].stack, matches[k].color);
+
+         br.setNoData("");
+         br.setShowNoData(false);
+         this.model.setFullModel(nodes[0]);
+      },
+
+      /** Here one tries to append only given stack to the tree
+        * used to build partial tree with visible objects
+        * Used only in standalone mode */
+      appendStackToTree: function(tnodes, stack, color) {
+         var prnt = null, node = null, path = "/";
+         for (var i=-1;i<stack.length;++i) {
+            var indx = (i<0) ? 0 : node.chlds[stack[i]];
+            node = this.geo_clones.nodes[indx];
+            path += node.name + "/";
+            var tnode = tnodes[indx];
+            if (!tnode)
+               tnodes[indx] = tnode = { name: node.name, fullpath: path, id: indx, color_visible: false, node_visible: true };
+
+            if (prnt) {
+               if (!prnt.childs) prnt.childs = [];
+               if (prnt.childs.indexOf(tnode) < 0)
+                  prnt.childs.push(tnode);
+               prnt.nchilds = prnt.childs.length;
+               prnt.expanded = true;
+            }
+            prnt = tnode;
          }
 
-         this.model.refresh();
-         if (level > 0) this.byId("treeTable").expandToLevel(level);
+         prnt.end_node = true;
+         prnt.color = color ? "rgb(" + color + ")" : "";
+         prnt.color_visible = prnt.color.length > 0;
       },
 
       /** Paint extra node - or remove them from painting */
@@ -757,119 +761,30 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
       },
 
       checkRequestMsg: function() {
-          if (this.isConnected && this.renderingDone) {
+         if (this.isConnected && this.renderingDone) {
 
-             if (!this.ask_reload) {
-                this.ask_reload = true;
-                this.websocket.Send("RELOAD");
-             }
-
-             if (this.creator && !this.ask_getdraw) {
-                this.websocket.Send("GETDRAW");
-                this.ask_getdraw = true;
-             }
-          }
+            if (this.creator && !this.ask_getdraw) {
+               this.websocket.Send("GETDRAW");
+               this.ask_getdraw = true;
+            }
+         }
       },
 
       /** method called from geom painter when specific node need to be activated in the browser
        * Due to complex indexing in TreeTable it is not trivial to select special node */
       activateInTreeTable: function(itemnames, force) {
-         if (!force || !itemnames) return;
 
-         var stack = this.geo_clones.FindStackByName(itemnames[0]);
-         if (!stack) return;
+         if (!force || !itemnames || !this.model) return;
 
-         function test_match(st) {
-            if (!st || (st.length > stack.length)) return -1;
-            for (var k=0;k<stack.length;++k) {
-               if (k>=st.length) return k;
-               if (stack[k] !== st[k]) return -1; // either stack matches completely or not at all
-            }
-            return stack.length;
-         }
+         var index = this.model.expandNodeByPath(itemnames[0]),
+             tt = this.byId("treeTable");
 
-         // now start searching items
-
-         var tt = this.getView().byId("treeTable"),
-             rows = tt.getRows(), best_match = -1, best_row = 0;
-
-         for (var i=0;i<rows.length;++i) {
-
-            var rstack = this.getRowStack(rows[i]);
-            var match = test_match(rstack);
-
-            if (match > best_match) {
-               best_match = match;
-               best_row = rows[i].getIndex();
-            }
-         }
-
-         // start from very beginning
-         if (best_match < 0) {
-            tt.collapseAll();
-            best_match = 0;
-            best_row = 0;
-         }
-
-         if (best_match < stack.length) {
-            var ii = best_row;
-            // item should remain as is, but all childs can be below limit
-            tt.expand(ii);
-
-            while (best_match < stack.length) {
-               ii += stack[best_match++] + 1; // stack is index in child array, can use it here
-               if (ii > tt.getFirstVisibleRow() + tt.getVisibleRowCount()) {
-                  tt.setFirstVisibleRow(Math.max(0, ii - Math.round(tt.getVisibleRowCount()/2)));
-               }
-               tt.expand(ii);
-            }
-         }
-      },
-
-      /** called when new portion of data received from server
-       * OLD CODE, TO BE REMOVED */
-      processSearchReply: function(msg, is_shape) {
-         // not waiting search - ignore any replies
-
-         var lst = [], has_binaries = false;
-
-         if ((typeof msg != "string") && msg && msg.visibles) {
-            has_binaries = true;
-            lst = msg.visibles;
-            is_shape = msg.is_shape;
-         } else if (msg == "NO") {
-            this.showFoundNodes("Not found");
-            lst = null;
-         } else if (msg.substr(0,7) == "TOOMANY") {
-            this.showFoundNodes("Too many " + msg.substr(8));
-            lst = null;
-         } else {
-            // get draw message with all data
-            msg = JSROOT.parse(msg);
-            for (var k=0;k<msg.visibles.length;++k)
-               if (msg.visibles[k].ri) { // wait for binary render data
-                  this.found_msg = msg;
-                  msg.is_shape = is_shape;
-                  return;
-               }
-            lst = msg.visibles;
-
-            console.log('FOUND NODES ', lst.length);
-         }
-
-         if (is_shape) {
-            this.showMoreNodes(lst);
-         } else {
-            this.paintFoundNodes(lst, true, has_binaries);
-         }
-
+         if ((index > 0) && tt)
+            tt.setFirstVisibleRow(Math.max(0, index - Math.round(tt.getVisibleRowCount()/2)));
       },
 
       /** Submit node search query to server, ignore in offline case */
       submitSearchQuery: function(query, from_handler) {
-
-         // ignore query in file description mode
-         if (this.standalone) return;
 
          if (!from_handler) {
             // do not submit immediately, but after very short timeout
@@ -881,38 +796,45 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
 
          delete this.search_handler;
 
-         if (!query) query = "";
-
-         if (typeof query == "string")
-            query = "SEARCH:" + query;
-         else
-            query = "GET:" + JSON.stringify(query);
-
-         this.websocket.Send(query);
+         this.websocket.Send("SEARCH:" + (query || ""));
       },
 
       /** when new query entered in the seach field */
       onSearch : function(oEvt) {
          var query = oEvt.getSource().getValue();
-         if (!this.standalone) {
+         if (!query) {
+            this.paintFoundNodes(null); // remove all search results
+            this.doReload(false);
+         } else if (!this.standalone) {
             this.submitSearchQuery(query);
-         } else if (query) {
+         } else {
             var lst = this.findMatchesFromDraw(function(node) {
                return node.name.indexOf(query)==0;
             });
 
-            this.showFoundNodes(lst);
-            this.paintFoundNodes(lst);
-
-         } else {
-            this.showFoundNodes(null);
-            this.paintFoundNodes(null);
+            if (lst && lst.length) {
+               this.showFoundNodes(lst);
+               this.paintFoundNodes(lst);
+            } else {
+               this.showTextInBrowser("No found nodes");
+               this.paintFoundNodes(null);
+            }
          }
       },
 
       /** Reload geometry description and base drawing, normally not required */
       onRealoadPress: function (oEvent) {
-         this.websocket.Send("RELOAD");
+         this.doReload(true);
+      },
+
+      doReload: function(force) {
+         if (this.standalone) {
+            this.showTextInBrowser();
+            this.paintFoundNodes(null);
+            this.model.setFullModel(this.fullModel);
+         } else {
+            this.model.reloadMainModel(force);
+         }
       },
 
       /** Quit ROOT session */
