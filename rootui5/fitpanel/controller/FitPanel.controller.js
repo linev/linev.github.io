@@ -23,6 +23,7 @@ sap.ui.define([
 
      //function called from GuiPanelController
       onPanelInit : function() {
+         console.log('Loading special style from special folder');
 
          JSROOT.loadScript('../rootui5/fitpanel/style/style.css');
 
