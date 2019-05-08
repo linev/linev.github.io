@@ -1,1 +1,1 @@
-SHOWPANEL:localapp.view.SimpleFitPanel
+SHOWPANEL:rootui5.fitpanel.view.FitPanel

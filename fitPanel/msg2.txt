@@ -1,415 +1,231 @@
 MODEL:{
-  "_typename" : "FitPanelModel",
+  "_typename" : "ROOT::Experimental::RFitPanel6Model",
   "fDataSet" : [{
-    "_typename" : "ComboBoxItem",
-    "fId" : "1",
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
+    "fId" : "gdir::hpx",
     "fSet" : "TH1F::hpx"
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "2",
-    "fSet" : "TH2F::hpxhpy"
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
+    "fId" : "gdir::hpxpy",
+    "fSet" : "TH2F::hpxpy"
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "3",
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
+    "fId" : "gdir::hprof",
     "fSet" : "TProfile::hprof"
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "4",
-    "fSet" : "TNtuple::ntuple"
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
+    "fId" : "gdir::test",
+    "fSet" : "TH1F::test"
   }],
-  "fSelectDataId" : "2",
-  "fTypeFunc" : [{
-    "_typename" : "ComboBoxItem",
-    "fId" : "0",
-    "fSet" : "Predef-1D"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "1",
-    "fSet" : "User Func"
-  }],
-  "fSelectXYId" : "1",
+  "fSelectDataId" : "gdir::test",
   "fMethod" : [{
-    "_typename" : "ComboBoxItem",
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
     "fId" : "1",
     "fSet" : "Linear Chi-square"
   }, {
-    "_typename" : "ComboBoxItem",
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
     "fId" : "2",
     "fSet" : "Non-Linear Chi-square"
   }, {
-    "_typename" : "ComboBoxItem",
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
     "fId" : "3",
     "fSet" : "Linear Chi-square with Robust"
   }, {
-    "_typename" : "ComboBoxItem",
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
     "fId" : "4",
     "fSet" : "Binned Likelihood"
   }],
   "fSelectMethodId" : "1",
-  "fContourPar1" : [{
-    "_typename" : "ComboBoxItem",
-    "fId" : "1",
-    "fSet" : "Coeff0"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "2",
-    "fSet" : "Coeff1"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "3",
-    "fSet" : "Coeff3"
-  }],
-  "fContourPar1Id" : "1",
-  "fContourPar2" : [{
-    "_typename" : "ComboBoxItem",
-    "fId" : "1",
-    "fSet" : "Coeff0"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "2",
-    "fSet" : "Coeff1"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "3",
-    "fSet" : "Coeff3"
-  }],
-  "fContourPar2Id" : "2",
-  "fScanPar" : [{
-    "_typename" : "ComboBoxItem",
-    "fId" : "1",
-    "fSet" : "Coeff0"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "2",
-    "fSet" : "Coeff1"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "3",
-    "fSet" : "Coeff3"
-  }],
-  "fScanParId" : "1",
+  "fContour1" : [],
+  "fContourPar1Id" : "",
+  "fContour2" : [],
+  "fContourPar2Id" : "",
+  "fScan" : [],
+  "fScanId" : "",
   "fRealFunc" : "",
-  "fOption" : "",
   "fFuncChange" : "",
+  "fMinLibrary" : "",
   "fMethodMinAll" : [[{
-    "_typename" : "ComboBoxItem",
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
     "fId" : "1",
     "fSet" : "MIGRAD"
   }, {
-    "_typename" : "ComboBoxItem",
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
     "fId" : "2",
     "fSet" : "SIMPLEX"
   }, {
-    "_typename" : "ComboBoxItem",
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
     "fId" : "3",
     "fSet" : "SCAN"
   }, {
-    "_typename" : "ComboBoxItem",
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
     "fId" : "4",
     "fSet" : "Combination"
   }], [{
-    "_typename" : "ComboBoxItem",
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
     "fId" : "1",
     "fSet" : "MIGRAD"
   }, {
-    "_typename" : "ComboBoxItem",
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
     "fId" : "2",
     "fSet" : "SIMPLEX"
   }, {
-    "_typename" : "ComboBoxItem",
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
     "fId" : "3",
     "fSet" : "SCAN"
   }, {
-    "_typename" : "ComboBoxItem",
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
     "fId" : "4",
     "fSet" : "Combination"
   }], [{
-    "_typename" : "ComboBoxItem",
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
     "fId" : "1",
     "fSet" : "FUMILI"
   }], [], [{
-    "_typename" : "ComboBoxItem",
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
     "fId" : "1",
     "fSet" : "TMVA Genetic Algorithm"
   }]],
-  "fTypeXYAll" : [[{
-    "_typename" : "ComboBoxItem",
+  "fTypeFunc" : [{
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
+    "fId" : "0",
+    "fSet" : "Predef-1D"
+  }, {
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
     "fId" : "1",
-    "fSet" : "gaus"
+    "fSet" : "Predef-2D"
   }, {
-    "_typename" : "ComboBoxItem",
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
     "fId" : "2",
-    "fSet" : "gausn"
+    "fSet" : "User"
+  }],
+  "fSelectTypeFunc" : "0",
+  "fFuncListAll" : [[{
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "gaus",
+    "linear" : false
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "3",
-    "fSet" : "expo"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "gausn",
+    "linear" : false
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "4",
-    "fSet" : "landau"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "landau",
+    "linear" : false
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "5",
-    "fSet" : "landaun"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "landaun",
+    "linear" : false
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "6",
-    "fSet" : "pol0"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "expo",
+    "linear" : false
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "7",
-    "fSet" : "pol1"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "pol0",
+    "linear" : true
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "8",
-    "fSet" : "pol2"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "chebyshev0",
+    "linear" : false
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "9",
-    "fSet" : "pol3"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "pol1",
+    "linear" : true
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "10",
-    "fSet" : "pol4"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "chebyshev1",
+    "linear" : false
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "11",
-    "fSet" : "pol5"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "pol2",
+    "linear" : true
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "12",
-    "fSet" : "pol6"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "chebyshev2",
+    "linear" : false
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "13",
-    "fSet" : "pol7"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "pol3",
+    "linear" : true
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "14",
-    "fSet" : "pol8"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "chebyshev3",
+    "linear" : false
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "15",
-    "fSet" : "pol9"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "pol4",
+    "linear" : true
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "16",
-    "fSet" : "cheb0"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "chebyshev4",
+    "linear" : false
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "17",
-    "fSet" : "cheb1"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "pol5",
+    "linear" : true
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "18",
-    "fSet" : "cheb2"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "chebyshev5",
+    "linear" : false
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "19",
-    "fSet" : "cheb3"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "pol6",
+    "linear" : true
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "20",
-    "fSet" : "cheb4"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "chebyshev6",
+    "linear" : false
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "21",
-    "fSet" : "cheb5"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "pol7",
+    "linear" : true
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "22",
-    "fSet" : "cheb6"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "chebyshev7",
+    "linear" : false
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "23",
-    "fSet" : "cheb7"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "pol8",
+    "linear" : true
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "24",
-    "fSet" : "cheb8"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "chebyshev8",
+    "linear" : false
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "25",
-    "fSet" : "cheb9"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "pol9",
+    "linear" : true
   }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "26",
-    "fSet" : "user"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "chebyshev9",
+    "linear" : false
   }], [{
-    "_typename" : "ComboBoxItem",
-    "fId" : "1",
-    "fSet" : "chebyshev0"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "2",
-    "fSet" : "chebyshev1"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "3",
-    "fSet" : "chebyshev2"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "4",
-    "fSet" : "chebyshev3"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "5",
-    "fSet" : "chebyshev4"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "6",
-    "fSet" : "chebyshev5"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "7",
-    "fSet" : "chebyshev6"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "8",
-    "fSet" : "chebyshev7"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "9",
-    "fSet" : "chebyshev8"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "10",
-    "fSet" : "chebyshev9"
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "none",
+    "linear" : false
+  }], [{
+    "_typename" : "ROOT::Experimental::RFitFuncInfo",
+    "name" : "user",
+    "linear" : false
   }]],
-  "fMethodMin" : [{
-    "_typename" : "ComboBoxItem",
-    "fId" : "1",
-    "fSet" : "MIGRAD"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "2",
-    "fSet" : "SIMPLEX"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "3",
-    "fSet" : "SCAN"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "4",
-    "fSet" : "Combination"
-  }],
-  "fTypeXY" : [{
-    "_typename" : "ComboBoxItem",
-    "fId" : "1",
-    "fSet" : "gaus"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "2",
-    "fSet" : "gausn"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "3",
-    "fSet" : "expo"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "4",
-    "fSet" : "landau"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "5",
-    "fSet" : "landaun"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "6",
-    "fSet" : "pol0"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "7",
-    "fSet" : "pol1"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "8",
-    "fSet" : "pol2"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "9",
-    "fSet" : "pol3"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "10",
-    "fSet" : "pol4"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "11",
-    "fSet" : "pol5"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "12",
-    "fSet" : "pol6"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "13",
-    "fSet" : "pol7"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "14",
-    "fSet" : "pol8"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "15",
-    "fSet" : "pol9"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "16",
-    "fSet" : "cheb0"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "17",
-    "fSet" : "cheb1"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "18",
-    "fSet" : "cheb2"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "19",
-    "fSet" : "cheb3"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "20",
-    "fSet" : "cheb4"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "21",
-    "fSet" : "cheb5"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "22",
-    "fSet" : "cheb6"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "23",
-    "fSet" : "cheb7"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "24",
-    "fSet" : "cheb8"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "25",
-    "fSet" : "cheb9"
-  }, {
-    "_typename" : "ComboBoxItem",
-    "fId" : "26",
-    "fSet" : "user"
-  }],
-  "fSelectTypeId" : "0",
+  "fSelectedFunc" : "gaus",
   "fSelectMethodMinId" : "1",
+  "fUpdateMinRange" : -4,
+  "fUpdateMaxRange" : 4,
   "fMinRange" : -4,
   "fMaxRange" : 4,
   "fStep" : 0.08,
   "fRange" : [-4, 4],
+  "fUpdateRange" : [-4, 4],
   "fFitOptions" : 3,
   "fLinear" : false,
   "fRobust" : false,
   "fLibrary" : 0,
   "fPrint" : 0,
+  "fErrorDef" : 1,
+  "fMaxTol" : 0.01,
+  "fMaxInter" : 0,
   "fTypeId" : 0,
   "fFuncChangeInt" : 0,
   "fIntegral" : false,
@@ -421,5 +237,15 @@ MODEL:{
   "fUseGradient" : false,
   "fSame" : false,
   "fNoDrawing" : false,
-  "fNoStore" : false
+  "fNoStore" : false,
+  "fContourPar1" : 0,
+  "fContourPar2" : 0,
+  "fContourPoints" : 0,
+  "fConfLevel" : 0,
+  "fContourImpose" : false,
+  "fColorContour" : ["", "", ""],
+  "fScanPoints" : 0,
+  "fScanPar" : 0,
+  "fScanMin" : 0,
+  "fScanMax" : 0
 }
