@@ -21,10 +21,10 @@ sap.ui.define([
 
    return GuiPanelController.extend("rootui5.fitpanel.controller.FitPanel", {
 
-         //function called from GuiPanelController
+     //function called from GuiPanelController
       onPanelInit : function() {
 
-         JSROOT.loadScript('rootui5sys/fitpanel/style/style.css');
+         JSROOT.loadScript('../rootui5/fitpanel/style/style.css');
 
          var id = this.getView().getId();
          this.inputId = "";
