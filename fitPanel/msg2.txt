@@ -36,15 +36,9 @@ MODEL:{
     "fSet" : "Binned Likelihood"
   }],
   "fSelectMethodId" : "1",
-  "fContour1" : [],
-  "fContourPar1Id" : "",
-  "fContour2" : [],
-  "fContourPar2Id" : "",
-  "fScan" : [],
-  "fScanId" : "",
   "fRealFunc" : "",
   "fFuncChange" : "",
-  "fMinLibrary" : "",
+  "fMinLibrary" : "MIGRAD",
   "fMethodMinAll" : [[{
     "_typename" : "ROOT::Experimental::RComboBoxItem",
     "fId" : "1",
@@ -216,15 +210,15 @@ MODEL:{
   "fMinRange" : -4,
   "fMaxRange" : 4,
   "fStep" : 0.08,
-  "fRange" : [-4, 4],
-  "fUpdateRange" : [-4, 4],
+  "fRange" : [-2.24, 1.84],
+  "fUpdateRange" : [-2.24, 1.84],
   "fFitOptions" : 3,
   "fLinear" : false,
   "fRobust" : false,
   "fLibrary" : 0,
   "fPrint" : 0,
-  "fErrorDef" : 1,
-  "fMaxTol" : 0.01,
+  "fErrorDef" : null,
+  "fMaxTol" : null,
   "fMaxInter" : 0,
   "fTypeId" : 0,
   "fFuncChangeInt" : 0,
@@ -238,6 +232,82 @@ MODEL:{
   "fSame" : false,
   "fNoDrawing" : false,
   "fNoStore" : false,
+  "fFuncPars" : {
+    "_typename" : "ROOT::Experimental::RFitFuncParsList",
+    "haspars" : true,
+    "name" : "gaus",
+    "pars" : [{
+      "_typename" : "ROOT::Experimental::RFitFuncParameter",
+      "ipar" : 0,
+      "name" : "Constant",
+      "value" : "318.891568",
+      "fixed" : false,
+      "error" : "4.245164",
+      "min" : "0.000000",
+      "max" : "0.000000"
+    }, {
+      "_typename" : "ROOT::Experimental::RFitFuncParameter",
+      "ipar" : 1,
+      "name" : "Mean",
+      "value" : "0.006816",
+      "fixed" : false,
+      "error" : "0.011796",
+      "min" : "0.000000",
+      "max" : "0.000000"
+    }, {
+      "_typename" : "ROOT::Experimental::RFitFuncParameter",
+      "ipar" : 2,
+      "name" : "Sigma",
+      "value" : "1.002462",
+      "fixed" : false,
+      "error" : "0.011037",
+      "min" : "0.000000",
+      "max" : "8.835449"
+    }]
+  },
+  "fHasAdvanced" : true,
+  "fContour1" : [{
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
+    "fId" : "0",
+    "fSet" : "Constant"
+  }, {
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
+    "fId" : "1",
+    "fSet" : "Mean"
+  }, {
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
+    "fId" : "2",
+    "fSet" : "Sigma"
+  }],
+  "fContourPar1Id" : "0",
+  "fContour2" : [{
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
+    "fId" : "0",
+    "fSet" : "Constant"
+  }, {
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
+    "fId" : "1",
+    "fSet" : "Mean"
+  }, {
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
+    "fId" : "2",
+    "fSet" : "Sigma"
+  }],
+  "fContourPar2Id" : "0",
+  "fScan" : [{
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
+    "fId" : "0",
+    "fSet" : "Constant"
+  }, {
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
+    "fId" : "1",
+    "fSet" : "Mean"
+  }, {
+    "_typename" : "ROOT::Experimental::RComboBoxItem",
+    "fId" : "2",
+    "fSet" : "Sigma"
+  }],
+  "fScanId" : "0",
   "fContourPar1" : 0,
   "fContourPar2" : 0,
   "fContourPoints" : 0,
