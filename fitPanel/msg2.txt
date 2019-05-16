@@ -1,311 +1,387 @@
 MODEL:{
-  "_typename" : "ROOT::Experimental::RFitPanel6Model",
+  "_typename" : "ROOT::Experimental::RFitPanelModel",
+  "fTitle" : "Fit panel",
   "fDataSet" : [{
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "gdir::hpx",
-    "fSet" : "TH1F::hpx"
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Panel",
+    "id" : "panel::test",
+    "name" : "TH1F::test"
   }, {
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "gdir::hpxpy",
-    "fSet" : "TH2F::hpxpy"
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "gDirectory",
+    "id" : "gdir::hpx",
+    "name" : "TH1F::hpx"
   }, {
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "gdir::hprof",
-    "fSet" : "TProfile::hprof"
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "gDirectory",
+    "id" : "gdir::hpxpy",
+    "name" : "TH2F::hpxpy"
   }, {
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "gdir::test",
-    "fSet" : "TH1F::test"
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "gDirectory",
+    "id" : "gdir::hprof",
+    "name" : "TProfile::hprof"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "gDirectory",
+    "id" : "gdir::test",
+    "name" : "TH1F::test"
   }],
-  "fSelectDataId" : "gdir::test",
-  "fMethod" : [{
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "1",
-    "fSet" : "Linear Chi-square"
+  "fSelectedData" : "panel::test",
+  "fDim" : 1,
+  "fFuncList" : [{
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::gaus",
+    "name" : "gaus"
   }, {
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "2",
-    "fSet" : "Non-Linear Chi-square"
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::gausn",
+    "name" : "gausn"
   }, {
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "3",
-    "fSet" : "Linear Chi-square with Robust"
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::expo",
+    "name" : "expo"
   }, {
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "4",
-    "fSet" : "Binned Likelihood"
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::landau",
+    "name" : "landau"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::landaun",
+    "name" : "landaun"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::pol0",
+    "name" : "pol0"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::pol1",
+    "name" : "pol1"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::pol2",
+    "name" : "pol2"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::pol3",
+    "name" : "pol3"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::pol4",
+    "name" : "pol4"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::pol5",
+    "name" : "pol5"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::pol6",
+    "name" : "pol6"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::pol7",
+    "name" : "pol7"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::pol8",
+    "name" : "pol8"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::pol9",
+    "name" : "pol9"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::cheb0",
+    "name" : "cheb0"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::cheb1",
+    "name" : "cheb1"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::cheb2",
+    "name" : "cheb2"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::cheb3",
+    "name" : "cheb3"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::cheb4",
+    "name" : "cheb4"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::cheb5",
+    "name" : "cheb5"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::cheb6",
+    "name" : "cheb6"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::cheb7",
+    "name" : "cheb7"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::cheb8",
+    "name" : "cheb8"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Predefined",
+    "id" : "dflt::cheb9",
+    "name" : "cheb9"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Previous",
+    "id" : "previous::prev4-gaus",
+    "name" : "prev4-gaus"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Previous",
+    "id" : "previous::prev3-pol9",
+    "name" : "prev3-pol9"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Previous",
+    "id" : "previous::prev2-gaus",
+    "name" : "prev2-gaus"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Previous",
+    "id" : "previous::prev1-gaus",
+    "name" : "prev1-gaus"
   }],
-  "fSelectMethodId" : "1",
-  "fRealFunc" : "",
-  "fFuncChange" : "",
-  "fMinLibrary" : "MIGRAD",
-  "fMethodMinAll" : [[{
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "1",
-    "fSet" : "MIGRAD"
+  "fSelectedFunc" : "previous::prev4-gaus",
+  "fSelectedTab" : "General",
+  "fFitMethods" : [{
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RComboBoxItem",
+    "key" : "P",
+    "value" : "Chi-square"
   }, {
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "2",
-    "fSet" : "SIMPLEX"
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RComboBoxItem",
+    "key" : "L",
+    "value" : "Log Likelihood"
   }, {
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "3",
-    "fSet" : "SCAN"
-  }, {
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "4",
-    "fSet" : "Combination"
-  }], [{
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "1",
-    "fSet" : "MIGRAD"
-  }, {
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "2",
-    "fSet" : "SIMPLEX"
-  }, {
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "3",
-    "fSet" : "SCAN"
-  }, {
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "4",
-    "fSet" : "Combination"
-  }], [{
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "1",
-    "fSet" : "FUMILI"
-  }], [], [{
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "1",
-    "fSet" : "TMVA Genetic Algorithm"
-  }]],
-  "fTypeFunc" : [{
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "0",
-    "fSet" : "Predef-1D"
-  }, {
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "1",
-    "fSet" : "Predef-2D"
-  }, {
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "2",
-    "fSet" : "User"
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RComboBoxItem",
+    "key" : "WL",
+    "value" : "Binned LogLikelihood"
   }],
-  "fSelectTypeFunc" : "0",
-  "fFuncListAll" : [[{
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "gaus",
-    "linear" : false
-  }, {
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "gausn",
-    "linear" : false
-  }, {
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "landau",
-    "linear" : false
-  }, {
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "landaun",
-    "linear" : false
-  }, {
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "expo",
-    "linear" : false
-  }, {
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "pol0",
-    "linear" : true
-  }, {
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "chebyshev0",
-    "linear" : false
-  }, {
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "pol1",
-    "linear" : true
-  }, {
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "chebyshev1",
-    "linear" : false
-  }, {
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "pol2",
-    "linear" : true
-  }, {
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "chebyshev2",
-    "linear" : false
-  }, {
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "pol3",
-    "linear" : true
-  }, {
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "chebyshev3",
-    "linear" : false
-  }, {
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "pol4",
-    "linear" : true
-  }, {
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "chebyshev4",
-    "linear" : false
-  }, {
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "pol5",
-    "linear" : true
-  }, {
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "chebyshev5",
-    "linear" : false
-  }, {
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "pol6",
-    "linear" : true
-  }, {
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "chebyshev6",
-    "linear" : false
-  }, {
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "pol7",
-    "linear" : true
-  }, {
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "chebyshev7",
-    "linear" : false
-  }, {
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "pol8",
-    "linear" : true
-  }, {
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "chebyshev8",
-    "linear" : false
-  }, {
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "pol9",
-    "linear" : true
-  }, {
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "chebyshev9",
-    "linear" : false
-  }], [{
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "none",
-    "linear" : false
-  }], [{
-    "_typename" : "ROOT::Experimental::RFitFuncInfo",
-    "name" : "user",
-    "linear" : false
-  }]],
-  "fSelectedFunc" : "gaus",
-  "fSelectMethodMinId" : "1",
-  "fUpdateMinRange" : -4,
-  "fUpdateMaxRange" : 4,
-  "fMinRange" : -4,
-  "fMaxRange" : 4,
-  "fStep" : 0.08,
-  "fRange" : [-2.24, 1.84],
-  "fUpdateRange" : [-2.24, 1.84],
-  "fFitOptions" : 3,
-  "fLinear" : false,
+  "fFitMethod" : "P",
+  "fLinearFit" : false,
   "fRobust" : false,
-  "fLibrary" : 0,
-  "fPrint" : 0,
-  "fErrorDef" : null,
-  "fMaxTol" : null,
-  "fMaxInter" : 0,
-  "fTypeId" : 0,
-  "fFuncChangeInt" : 0,
+  "fRobustLevel" : 0.95,
   "fIntegral" : false,
-  "fMinusErrors" : false,
-  "fWeights" : false,
-  "fBins" : false,
   "fUseRange" : false,
-  "fAddList" : false,
+  "fBestErrors" : false,
+  "fImproveFitResults" : false,
+  "fAllWeights1" : false,
+  "fAddToList" : false,
+  "fEmptyBins1" : false,
   "fUseGradient" : false,
   "fSame" : false,
   "fNoDrawing" : false,
-  "fNoStore" : false,
+  "fNoStoreDraw" : false,
+  "fLibrary" : 0,
+  "fHasGenetics" : true,
+  "fMethodMinAll" : [{
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RMinimezerAlgorithm",
+    "lib" : 0,
+    "id" : 1,
+    "text" : "MIGRAD"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RMinimezerAlgorithm",
+    "lib" : 0,
+    "id" : 2,
+    "text" : "SIMPLEX"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RMinimezerAlgorithm",
+    "lib" : 0,
+    "id" : 3,
+    "text" : "SCAN"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RMinimezerAlgorithm",
+    "lib" : 0,
+    "id" : 4,
+    "text" : "Combination"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RMinimezerAlgorithm",
+    "lib" : 1,
+    "id" : 1,
+    "text" : "MIGRAD"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RMinimezerAlgorithm",
+    "lib" : 1,
+    "id" : 2,
+    "text" : "SIMPLEX"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RMinimezerAlgorithm",
+    "lib" : 1,
+    "id" : 6,
+    "text" : "FUMILI"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RMinimezerAlgorithm",
+    "lib" : 1,
+    "id" : 3,
+    "text" : "SCAN"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RMinimezerAlgorithm",
+    "lib" : 1,
+    "id" : 4,
+    "text" : "Combination"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RMinimezerAlgorithm",
+    "lib" : 2,
+    "id" : 5,
+    "text" : "FUMILI"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RMinimezerAlgorithm",
+    "lib" : 3,
+    "id" : 7,
+    "text" : "Fletcher-Reeves conjugate gradient"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RMinimezerAlgorithm",
+    "lib" : 3,
+    "id" : 8,
+    "text" : "Polak-Ribiere conjugate gradient"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RMinimezerAlgorithm",
+    "lib" : 3,
+    "id" : 9,
+    "text" : "BFGS conjugate gradient"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RMinimezerAlgorithm",
+    "lib" : 3,
+    "id" : 10,
+    "text" : "BFGS conjugate gradient (Version 2)"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RMinimezerAlgorithm",
+    "lib" : 3,
+    "id" : 11,
+    "text" : "Levenberg-Marquardt"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RMinimezerAlgorithm",
+    "lib" : 3,
+    "id" : 12,
+    "text" : "Simulated Annealing"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RMinimezerAlgorithm",
+    "lib" : 4,
+    "id" : 14,
+    "text" : "TMVA Genetic Algorithm"
+  }],
+  "fSelectMethodMin" : 1,
+  "fErrorDef" : 1,
+  "fMaxTolerance" : 0.01,
+  "fMaxIterations" : 0,
+  "fPrint" : 0,
+  "fMinRangeX" : -4,
+  "fMaxRangeX" : 4,
+  "fStepX" : 0.08,
+  "fRangeX" : [-4, 4],
+  "fMinRangeY" : 0,
+  "fMaxRangeY" : 100,
+  "fStepY" : 1,
+  "fRangeY" : [0, 100],
   "fFuncPars" : {
-    "_typename" : "ROOT::Experimental::RFitFuncParsList",
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RFuncParsList",
     "haspars" : true,
-    "name" : "gaus",
+    "id" : "previous::prev4-gaus",
+    "name" : "prev4-gaus",
     "pars" : [{
-      "_typename" : "ROOT::Experimental::RFitFuncParameter",
+      "_typename" : "ROOT::Experimental::RFitPanelModel::RFuncPar",
       "ipar" : 0,
       "name" : "Constant",
-      "value" : "318.891568",
+      "value" : "317.917797",
       "fixed" : false,
-      "error" : "4.245164",
+      "error" : "3.946141",
       "min" : "0.000000",
       "max" : "0.000000"
     }, {
-      "_typename" : "ROOT::Experimental::RFitFuncParameter",
+      "_typename" : "ROOT::Experimental::RFitPanelModel::RFuncPar",
       "ipar" : 1,
       "name" : "Mean",
-      "value" : "0.006816",
+      "value" : "0.010999",
       "fixed" : false,
-      "error" : "0.011796",
+      "error" : "0.010062",
       "min" : "0.000000",
       "max" : "0.000000"
     }, {
-      "_typename" : "ROOT::Experimental::RFitFuncParameter",
+      "_typename" : "ROOT::Experimental::RFitPanelModel::RFuncPar",
       "ipar" : 2,
       "name" : "Sigma",
-      "value" : "1.002462",
+      "value" : "0.998510",
       "fixed" : false,
-      "error" : "0.011037",
+      "error" : "0.007357",
       "min" : "0.000000",
-      "max" : "8.835449"
+      "max" : "10.040772"
     }]
   },
   "fHasAdvanced" : true,
+  "fAdvancedTab" : "Contour",
   "fContour1" : [{
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "0",
-    "fSet" : "Constant"
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RComboBoxItem",
+    "key" : "0",
+    "value" : "Constant"
   }, {
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "1",
-    "fSet" : "Mean"
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RComboBoxItem",
+    "key" : "1",
+    "value" : "Mean"
   }, {
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "2",
-    "fSet" : "Sigma"
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RComboBoxItem",
+    "key" : "2",
+    "value" : "Sigma"
   }],
   "fContourPar1Id" : "0",
   "fContour2" : [{
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "0",
-    "fSet" : "Constant"
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RComboBoxItem",
+    "key" : "0",
+    "value" : "Constant"
   }, {
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "1",
-    "fSet" : "Mean"
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RComboBoxItem",
+    "key" : "1",
+    "value" : "Mean"
   }, {
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "2",
-    "fSet" : "Sigma"
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RComboBoxItem",
+    "key" : "2",
+    "value" : "Sigma"
   }],
   "fContourPar2Id" : "0",
   "fScan" : [{
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "0",
-    "fSet" : "Constant"
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RComboBoxItem",
+    "key" : "0",
+    "value" : "Constant"
   }, {
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "1",
-    "fSet" : "Mean"
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RComboBoxItem",
+    "key" : "1",
+    "value" : "Mean"
   }, {
-    "_typename" : "ROOT::Experimental::RComboBoxItem",
-    "fId" : "2",
-    "fSet" : "Sigma"
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RComboBoxItem",
+    "key" : "2",
+    "value" : "Sigma"
   }],
   "fScanId" : "0",
   "fContourPar1" : 0,

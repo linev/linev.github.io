@@ -3,58 +3,57 @@
    xmlns:l="sap.ui.layout" controllerName="rootui5.fitpanel.controller.FitPanel">
    <Page id="simplefitpanel_page" title="Simple Fit Panel" showHeader="false">
       <VBox class="sapUiSizeCompact sapUiSmallMarginStart" width="100%">
-         <HBox alignItems="Center">
-            <Label text="Data Set:" labelFor="DataSet"
-               class="sapUiSmallMarginBeginEnd" />
-            <ComboBox id="DataSet" selectedKey="{/fSelectDataId}"
-               items="{ path: '/fDataSet', sorter: { path: 'fSet' } }"
-               class="sapUiSmallMarginBeginEnd">
-               <core:Item key="{fId}" text="{fSet}" />
-            </ComboBox>
-         </HBox>
-         <HBox alignItems="Center">
-            <Label text="Func:" labelFor="TypeFunc"
-               class="sapUiSmallMarginBeginEnd" />
-            <ComboBox id="TypeFunc" class="sapUiSmallMarginBeginEnd"
-               selectedKey="{/fSelectTypeFunc}"
-               items="{ path: '/fTypeFunc', sorter: { path: 'fFunc' } }"
-               change="selectTypeFunc">
-               <core:Item key="{fId}" text="{fSet}" />
-            </ComboBox>
-            <ComboBox id="selectedFuncCombo" class="sapUiSmallMarginBeginEnd"
+         <l:Grid class="sapUiSizeCompact" hSpacing="0.5" vSpacing="0">
+           <Text text="Data Set:">
+               <layoutData>
+                  <l:GridData span="XL4 L4 M4 S4" />
+               </layoutData>
+           </Text>
+           <ComboBox id="DataSet" class="sapUiSmallMarginBeginEnd"
+               selectedKey="{/fSelectedData}"
+               items="{ path: '/fDataSet', sorter: { path: 'group', group: true, descending: false } }"
+                  change="onSelectedDataChange">
+               <core:Item key="{id}" text="{name}" />
+               <layoutData>
+                  <l:GridData span="XL8 L8 M8 S8" />
+               </layoutData>
+           </ComboBox>
+           <Text text="Function:">
+               <layoutData>
+                  <l:GridData span="XL4 L4 M4 S4" />
+               </layoutData>
+           </Text>
+           <ComboBox id="selectedFuncCombo" class="sapUiSmallMarginBeginEnd"
                selectedKey="{/fSelectedFunc}"
-               items="{ path: '/fFuncList', sorter: { path: 'name' } }"
+               items="{ path: '/fFuncList', sorter: { path: 'group', group: true, descending: false } }"
                change="onSelectedFuncChange">
-               <core:Item key="{name}" text="{name}" />
-            </ComboBox>
-         </HBox>
-         <HBox alignItems="Center">
-            <Label text="Selected " labelFor="OperationText"
-               class="sapUiSmallMarginBeginEnd" />
-            <Input id="OperationText" value="" valueLiveUpdate="{/fOpTextUpdate}"
-               liveChange="operationTextChange" class="sapUiSmallMarginBeginEnd" />
-            <Label id="selectedOpText" text="gaus"
-               class="sapUiSmallMarginBeginEnd" />
-         </HBox>
-         <IconTabBar id="Gen-Min" headerMode="Inline">
+               <core:Item key="{id}" text="{name}" />
+               <layoutData>
+                  <l:GridData span="XL8 L8 M8 S8" />
+               </layoutData>
+           </ComboBox>
+         </l:Grid>
+         <IconTabBar expandable="false" headerMode="Inline" selectedKey="{/fSelectedTab}">
             <items>
-               <IconTabFilter text="General">
+               <IconTabFilter key="General" text="General">
                   <VBox>
                      <Title level="H3" text="Method" />
                      <l:Grid defaultSpan="XL6 L6 M6 S6" class="sapUiSizeCompact"
                         hSpacing="0.5" vSpacing="0">
-                        <ComboBox id="MethodCombo" selectedKey="{/fSelectMethodId}"
-                           items="{ path: '/fMethod', sorter: { path: 'fMethod' } }">
-                           <core:Item key="{fId}" text="{fSet}" />
+                        <ComboBox id="MethodCombo" selectedKey="{/fFitMethod}"
+                           items="{ path: '/fFitMethods' }">
+                           <core:Item key="{key}" text="{value}" />
+                           <layoutData>
+                              <l:GridData span="XL12 L12 M12 S12" />
+                           </layoutData>
                         </ComboBox>
-                        <Button text="User-Defined..." press="pressUserDefined" />
-                        <CheckBox text="Linear fit" selected="{/fLinear}" />
+                        <CheckBox text="Linear fit" selected="{/fLinearFit}" />
                         <HBox>
                            <CheckBox id="robust123" text="Robust"
-                              enabled="{= ${/fSelectMethodId} === '3'}"
+                              enabled="{= ${/fLinearFit} === true}"
                               selected="{/fRobust}"
                               tooltip="Perform Linear Robust fitter if selected" />
-                           <StepInput value="0.95" min="0.01"
+                           <StepInput value="{/fRobustLevel}" min="0.01"
                               max="1" step="0.01" displayValuePrecision="2"
                               enabled="{= ${/fRobust} === true}"
                               tooltip="Available only for graphs" />
@@ -69,16 +68,16 @@
                         <CheckBox text="Use range" selected="{/fUseRange}"
                            tooltip="'R'-fit only data..." />
                         <CheckBox text="Best errors" selected="{/fBestErrors}"
-                           tooltip="'E'-better ..." />
-                        <CheckBox text="Improve fit results"
-                           selected="{/fImproveFitResults}" tooltip="'M'-after medium is found ..." />
+                           enabled="{= ${/fLinearFit} !== true}" tooltip="'E'-better ..." />
+                        <CheckBox text="Improve fit results" selected="{/fImproveFitResults}"
+                           enabled="{= ${/fLinearFit} !== true}" tooltip="'M'-after medium is found ..." />
                         <CheckBox text="All weights = 1"
-                           selected="{/fWeights}" enabled="{= ${/fBins} === false}"
+                           selected="{/fAllWeights1}" enabled="true"
                            tooltip="'W'-all weights=1 for non-empty bins; eroors bars ignored" />
-                        <CheckBox text="Add to list" selected="{/fAddList}"
+                        <CheckBox text="Add to list" selected="{/fAddToList}"
                            tooltip="'+'-add function to the list without deleting the previous" />
                         <CheckBox text="Empty bins, weights=1"
-                           selected="{/fBins}" enabled="{= ${/fWeights} === false}"
+                           selected="{/fEmptyBins1}" enabled="true"
                            tooltip="'WW'-all weights=1 including empty bins; errors bars ignored" />
                         <CheckBox text="Use Gradient" selected="{/fUseGradient}"
                            tooltip="'G'-Use gradient" />
@@ -86,53 +85,55 @@
                      <Title level="H3" text="Draw Options" />
                      <l:Grid class="sapUiSizeCompact" hSpacing="0.5"
                         vSpacing="0">
-                        <CheckBox text="SAME" selected="{/fSame}" />
-                        <CheckBox text="No Drawing" selected="{/fNoDrawing}">
+                        <CheckBox text="SAME" selected="{/fSame}"
+                                  tooltip="Superimpose on previous picture in the same pad"/>
+                        <CheckBox text="No Drawing" selected="{/fNoDrawing}"
+                                  tooltip="'O'-do not draw graphic function">
                            <layoutData>
                               <l:GridData linebreak="true" />
                            </layoutData>
                         </CheckBox>
                         <CheckBox text="Do not store/draw"
-                           selected="{/fNoStoreDraw}">
+                           selected="{/fNoStoreDraw}"
+                           tooltip="'N'-do not store function, do not draw it">
                            <layoutData>
                               <l:GridData linebreak="true"
                                  span="XL6 L6 M6 S6" />
                            </layoutData>
                         </CheckBox>
                      </l:Grid>
-                     <RangeSlider id="Slider"
-                        showAdvancedTooltip="true" range="{/fRange}"
-                        min="{/fMinRange}" max="{/fMaxRange}" step="{/fStep}"
+                     <RangeSlider id="SliderX" visible="{= ${/fDim} > 0}"
+                        showAdvancedTooltip="true" range="{/fRangeX}"
+                        min="{/fMinRangeX}" max="{/fMaxRangeX}" step="{/fStepX}"
                         width="100%" showHandleTooltip="false"
                         inputsAsTooltips="true" class="sapUiSmallMarginBottom" />
-                     <FlexBox alignItems="Start" justifyContent="End">
-                        <Button text="Update Range" press="updateRange"
-                           tooltip="Update the fitting range" />
-                     </FlexBox>
+                     <RangeSlider id="SliderY" visible="{= ${/fDim} > 1}"
+                        showAdvancedTooltip="true" range="{/fRangeY}"
+                        min="{/fMinRangeY}" max="{/fMaxRangeY}" step="{/fStepY}"
+                        width="100%" showHandleTooltip="false"
+                        inputsAsTooltips="true" class="sapUiSmallMarginBottom"/>
                   </VBox>
                </IconTabFilter>
-               <IconTabFilter text="Minimization">
+               <IconTabFilter key="Minimization" text="Minimization">
                   <VBox>
                      <Title level="H3" text="Library" />
-                     <RadioButtonGroup id="libraryRB"
-                        columns="3" width="100%" selectedIndex="{/fLibrary}"
-                        select="selectRB">
+                     <RadioButtonGroup columns="3" width="100%" selectedIndex="{/fLibrary}"
+                        select="selectMinimizationLibrary">
                         <buttons>
-                           <RadioButton id="RB2-1" text="Minuit" />
-                           <RadioButton id="RB2-2" text="Minuit2" />
-                           <RadioButton id="RB2-3" text="Fumili" />
-                           <RadioButton id="RB2-4" text="GSL" />
-                           <RadioButton id="RB2-5" text="Genetics" />
+                           <RadioButton text="Minuit" />
+                           <RadioButton text="Minuit2" />
+                           <RadioButton text="Fumili" />
+                           <RadioButton text="GSL" />
+                           <RadioButton text="Genetics" enabled="{/fHasGenetics}"/>
                         </buttons>
                      </RadioButtonGroup>
                      <Title level="H3" text="Method" />
-                     <ComboBox id="MethodMin" selectedKey="{/fSelectMethodMinId}"
-                        items="{ path: '/fMethodMin', sorter: { path: 'fMethodMin' } }">
-                        <core:Item key="{fId}" text="{fSet}" />
+                     <ComboBox id="MethodMin" selectedKey="{/fSelectMethodMin}"
+                        items="{ path: '/fMethodMinAll', filters: { path: 'lib', operator: 'EQ', value1: 0 } }">
+                        <core:Item key="{id}" text="{text}" />
                      </ComboBox>
                      <Title level="H3" text="Settings" />
-                     <l:Grid class="sapUiSizeCompact" hSpacing="0.5"
-                        vSpacing="0">
+                     <l:Grid class="sapUiSizeCompact" hSpacing="0.5" vSpacing="0">
                         <Text
                            text="Use ENTER key to validate a new value or click on Reset button to set the defaults.">
                            <layoutData>
@@ -144,8 +145,7 @@
                               <l:GridData span="XL8 L8 M8 S8" />
                            </layoutData>
                         </Text>
-                        <Input id="errorDef" type="Number"
-                           placeholder="1.00">
+                        <Input type="Number" value="{/fErrorDef}" placeholder="1.00">
                            <layoutData>
                               <l:GridData span="XL4 L4 M4 S4" />
                            </layoutData>
@@ -155,8 +155,7 @@
                               <l:GridData span="XL8 L8 M8 S8" />
                            </layoutData>
                         </Text>
-                        <Input id="maxTolerance" type="Number"
-                           placeholder="0.01">
+                        <Input type="Number" value="{/fMaxTolerance}" placeholder="0.01">
                            <layoutData>
                               <l:GridData span="XL4 L4 M4 S4" />
                            </layoutData>
@@ -166,8 +165,7 @@
                               <l:GridData span="XL8 L8 M8 S8" />
                            </layoutData>
                         </Text>
-                        <Input id="maxInterations" type="Number"
-                           placeholder="0">
+                        <Input type="Number" value="{/fMaxIterations}"  placeholder="0">
                            <layoutData>
                               <l:GridData span="XL4 L4 M4 S4" />
                            </layoutData>
@@ -184,7 +182,7 @@
                      </RadioButtonGroup>
                   </VBox>
                </IconTabFilter>
-               <IconTabFilter text="Pars" visible="{/fFuncPars/haspars}">
+               <IconTabFilter key="Pars" text="Pars" visible="{/fFuncPars/haspars}">
                    <HBox>
                       <Text text="Func: {/fFuncPars/name}"/>
                       <Button press="pressApplyPars" text="Apply" tooltip="Set parameters"/>
@@ -212,10 +210,10 @@
                       </items>
                    </Table>
                </IconTabFilter>
-               <IconTabFilter text="Advanced" visible="{/fHasAdvanced}">
-                  <IconTabBar id="AdvancedOptions" headerMode="Inline">
+               <IconTabFilter key="Advanced" text="Advanced" visible="{/fHasAdvanced}">
+                  <IconTabBar headerMode="Inline" expandable="false" selectedKey="{/fAdvancedTab}">
                      <items>
-                        <IconTabFilter text="Contour">
+                        <IconTabFilter key="Contour" text="Contour">
                            <l:Grid defaultSpan="XL6 L6 M6 S6"
                               class="sapUiSizeCompact" hSpacing="0.5"
                               vSpacing="0">
@@ -226,14 +224,14 @@
                               <Text text="Parameter 1:" />
                               <ComboBox id="ContourPar1"
                                  selectedKey="{/fContourPar1Id}"
-                                 items="{ path: '/fContour1', sorter: { path: 'fSet' } }">
-                                 <core:Item key="{fId}" text="{fSet}" />
+                                 items="{ path: '/fContour1', sorter: { path: 'value' } }">
+                                 <core:Item key="{key}" text="{value}" />
                               </ComboBox>
                               <Text text="Parameter 2:" />
                               <ComboBox id="ContourPar2"
                                  selectedKey="{/fContourPar2Id}"
-                                 items="{ path: '/fContour2', sorter: { path: 'fSet' } }">
-                                 <core:Item key="{fId}" text="{fSet}" />
+                                 items="{ path: '/fContour2', sorter: { path: 'value' } }">
+                                 <core:Item key="{key}" text="{value}" />
                               </ComboBox>
                               <Text text="Confidene Level:" />
                               <StepInput id="ConfLevel" value="0.683"
@@ -249,7 +247,7 @@
                                  text="Super impose" selected="{/fContourImpose}" />
                            </l:Grid>
                         </IconTabFilter>
-                        <IconTabFilter text="Scan">
+                        <IconTabFilter key="Scan" text="Scan">
                            <l:Grid defaultSpan="XL6 L6 M6 S6"
                               class="sapUiSizeCompact" hSpacing="0.5"
                               vSpacing="0">
@@ -260,8 +258,8 @@
                               <Text text="Parameter:" />
                               <ComboBox id="ScanPar"
                                  selectedKey="{/fScanId}"
-                                 items="{ path: '/fScan', sorter: { path: 'fSet' } }">
-                                 <core:Item key="{fId}" text="{fSet}" />
+                                 items="{ path: '/fScan', sorter: { path: 'value' } }">
+                                 <core:Item key="{key}" text="{value}" />
                               </ComboBox>
                               <Text text="Min:" />
                               <StepInput id="scanMin" value="0.0001"
@@ -273,7 +271,7 @@
                                  editable="true" displayValuePrecision="4" />
                            </l:Grid>
                         </IconTabFilter>
-                        <IconTabFilter text="Conf Intervals">
+                        <IconTabFilter key="Intervals" text="Conf Intervals">
                            <l:Grid defaultSpan="XL6 L6 M6 S6"
                               class="sapUiSizeCompact" hSpacing="0.5"
                               vSpacing="0">
@@ -287,19 +285,16 @@
                         </IconTabFilter>
                      </items>
                   </IconTabBar>
-                  <Button text="Draw" press="" />
-                  <Button text="Close" press="" />
                </IconTabFilter>
             </items>
          </IconTabBar>
       </VBox>
       <footer>
          <Toolbar>
-            <ToolbarSpacer />
+            <Button text="Update" press="doUpdate" tooltip="Update panel content from server" />
+            <ToolbarSpacer/>
             <Button text="Fit" press="doFit" tooltip="Fit the histogram" />
-            <Button text="Reset" press="resetPanel" tooltip="Reset to initial state" />
-            <Button text="Back" press="backPanel"
-               tooltip="Go to the previous fitting" />
+            <Button text="Draw" press="doDraw" tooltip="Draw histogram and selected function" />
             <Button text="Close" press="closePanel" tooltip="Close the Fit Panel" />
          </Toolbar>
       </footer>
