@@ -7,29 +7,23 @@ sap.ui.define([
 
    "use strict";
 
-   var colorConf = "rgb(0,0,0)";
-
    return GuiPanelController.extend("rootui5.fitpanel.controller.FitPanel", {
 
          //function called from GuiPanelController
       onPanelInit : function() {
 
          // WORKAROUND, need to be FIXED IN THE FUTURE
-         // JSROOT.loadScript('rootui5sys/fitpanel/style/style.css');
+         if (window && window.location && window.location.hostname && window.location.hostname.indexOf("github.io")>=0)
+            JSROOT.loadScript('../rootui5/fitpanel/style/style.css');
+         else
+            JSROOT.loadScript('rootui5sys/fitpanel/style/style.css');
 
-         // for linev.github.io
-         JSROOT.loadScript('../rootui5/fitpanel/style/style.css');
-
-         this.inputId = "";
          var data = {
-               fDataSet:[ { key:"1", value: "----" } ],
-               fSelectedData: "1",
+               fDim: 1,
                fMinRangeX: -1,
-               fShowRangeX: false,
                fMaxRangeX: 1,
                fStepX: 0.1,
                fRangeX: [-1,1],
-               fShowRangeY: false,
                fMinRangeY: -1,
                fMaxRangeY: 1,
                fStepY: 0.1,
@@ -109,14 +103,9 @@ sap.ui.define([
          this.sendModel();
       },
 
-      //Change the input text field. When a function is seleced, it appears on the text input field and
-      //on the text area.
+      // when change function many elements may be changed - resync model
       onSelectedFuncChange: function() {
-
-         var func = this.data().fSelectedFunc;
-
-         if (this.websocket && func)
-            this.websocket.Send("GETPARS:" + func);
+         this.sendModel();
       },
 
       // approve current fSelectMethodMin value - and change if require
@@ -144,58 +133,24 @@ sap.ui.define([
          this.refresh();
       },
 
-      testMethodVal: function(val) {
-        return val == "0";
-      },
-
-      //Change the selected checkbox of Draw Options
-      //if Do not Store is selected then No Drawing is also selected
-      storeChange: function(){
+      onContourPar1Change: function() {
          var data = this.data();
-         var fDraw = this.getView().byId("noStore").getSelected();
-         console.log("fDraw = ", fDraw);
-         data.fNoStore = fDraw;
-         this.refresh();
-         console.log("fNoDrawing ", data.fNoStore);
+         if (data.fContourPar1Id == data.fContourPar2Id) {
+            var par2 = parseInt(data.fContourPar2Id);
+            if (par2 > 0) par2--; else par2 = 1;
+            data.fContourPar2Id = par2.toString();
+            this.refresh();
+         }
       },
 
-      drawContour: function() {
-
-      	var contourPoints = this.byId("contourPoints").getValue();
-         var contourPar1 = parseInt(this.byId("ContourPar1").getSelectedKey());
-         var contourPar2 = parseInt(this.byId("ContourPar2").getSelectedKey());
-         var confLevel = this.byId("ConfLevel").getValue();
-         var colorContourNum = (String((this.colorContour.replace( /^\D+/g, '')).replace(/[()]/g, ''))).split(',');
-
+      onContourPar2Change: function() {
          var data = this.data();
-         data.fContourPoints = contourPoints;
-      	data.fContourPar1 = contourPar1;
-      	data.fContourPar2 = contourPar2;
-         data.fColorContour = colorContourNum;
-
-         console.log("COLOR ", colorContourNum, typeof colorContourNum, " origin ", this.colorContour);
-       //   var colConfN = colorConf.replace( /^\D+/g, '');
-       //   var colorConfNum = colConfN.replace(/[()]/g, '');
-      	// data.fConfLevel = colorConfNum;
-
-	  	  this.refresh();
-        //Each time we click the button, we keep the current state of the model
-        if (this.websocket)
-            this.websocket.Send('SETCONTOUR:'+this.getView().getModel().getJSON());
-      },
-
-      drawScan: function() {
-      	var data = this.data();
-      	data.fScanPoints = this.byId("scanPoints").getValue();
-      	data.fScanPar = parseInt(this.byId("ScanPar").getSelectedKey());
-      	data.fScanMin = this.byId("scanMin").getValue();
-      	data.fScanMax = this.byId("scanMax").getValue();
-
-      	this.refresh();
-         //Each time we click the button, we keep the current state of the model
-         if (this.websocket)
-            this.websocket.Send('SETSCAN:'+this.getView().getModel().getJSON());
-
+         if (data.fContourPar1Id == data.fContourPar2Id) {
+            var par1 = parseInt(data.fContourPar1Id);
+            if (par1 > 0) par1--; else par1 = 1;
+            data.fContourPar1Id = par1.toString();
+            this.refresh();
+         }
       },
 
       pressApplyPars: function() {
@@ -203,59 +158,7 @@ sap.ui.define([
 
          if (this.websocket)
             this.websocket.Send("SETPARS:" + json);
-      },
-
-      colorPickerContour: function (oEvent) {
-         this.inputId = oEvent.getSource().getId();
-         if (!this.oColorPickerPopoverContour) {
-            this.oColorPickerPopoverContour = new sap.ui.unified.ColorPickerPopover({
-               colorString: "blue",
-               mode: sap.ui.unified.ColorPickerMode.HSL,
-               change: this.handleChangeContour.bind(this)
-            });
-         }
-         this.oColorPickerPopoverContour.openBy(oEvent.getSource());
-      },
-
-      handleChangeContour: function (oEvent) {
-         var oView = this.getView();
-         this.inputId = "";
-         var color1 = oEvent.getParameter("colorString");
-         var oButtonContour = this.getView().byId("colorContour");
-         var oButtonInnerContour = oButtonContour.$().find('.sapMBtnInner');
-         oButtonInnerContour.css('background',color1);
-         oButtonInnerContour.css('color','#FFFFFF');
-         oButtonInnerContour.css('text-shadow','1px 1px 2px #333333');
-
-         this.colorContour = color1;
-         return this.colorContour;
-	  },
-
-	  colorPickerConf: function (oEvent) {
-         this.inputId = oEvent.getSource().getId();
-         if (!this.oColorPickerPopoverConf) {
-            this.oColorPickerPopoverConf = new sap.ui.unified.ColorPickerPopover({
-               colorString: "blue",
-               mode: sap.ui.unified.ColorPickerMode.HSL,
-               change: this.handleChangeConf.bind(this)
-            });
-         }
-         this.oColorPickerPopoverConf.openBy(oEvent.getSource());
-      },
-
-      handleChangeConf: function (oEvent) {
-         var oView = this.getView();
-         this.inputId = "";
-         var color2 = oEvent.getParameter("colorString");
-         var oButtonContour = this.getView().byId("colorConf");
-         var oButtonInnerContour = oButtonContour.$().find('.sapMBtnInner');
-         oButtonInnerContour.css('background',color2);
-         oButtonInnerContour.css('color','#FFFFFF');
-         oButtonInnerContour.css('text-shadow','1px 1px 2px #333333');
-
-         colorConf = color2;
-         return colorConf;
-	  }
+      }
 
    });
 

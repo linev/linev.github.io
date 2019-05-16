@@ -157,13 +157,8 @@ MODEL:{
   }, {
     "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
     "group" : "Previous",
-    "id" : "previous::prev4-gaus",
-    "name" : "prev4-gaus"
-  }, {
-    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
-    "group" : "Previous",
-    "id" : "previous::prev3-pol9",
-    "name" : "prev3-pol9"
+    "id" : "previous::prev1-gaus",
+    "name" : "prev1-gaus"
   }, {
     "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
     "group" : "Previous",
@@ -172,11 +167,21 @@ MODEL:{
   }, {
     "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
     "group" : "Previous",
-    "id" : "previous::prev1-gaus",
-    "name" : "prev1-gaus"
+    "id" : "previous::prev3-gaus",
+    "name" : "prev3-gaus"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Previous",
+    "id" : "previous::prev4-gaus",
+    "name" : "prev4-gaus"
+  }, {
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
+    "group" : "Previous",
+    "id" : "previous::prev5-gaus",
+    "name" : "prev5-gaus"
   }],
-  "fSelectedFunc" : "previous::prev4-gaus",
-  "fSelectedTab" : "General",
+  "fSelectedFunc" : "previous::prev5-gaus",
+  "fSelectedTab" : "Minimization",
   "fFitMethods" : [{
     "_typename" : "ROOT::Experimental::RFitPanelModel::RComboBoxItem",
     "key" : "P",
@@ -309,8 +314,8 @@ MODEL:{
   "fFuncPars" : {
     "_typename" : "ROOT::Experimental::RFitPanelModel::RFuncParsList",
     "haspars" : true,
-    "id" : "previous::prev4-gaus",
-    "name" : "prev4-gaus",
+    "id" : "previous::prev5-gaus",
+    "name" : "prev5-gaus",
     "pars" : [{
       "_typename" : "ROOT::Experimental::RFitPanelModel::RFuncPar",
       "ipar" : 0,
@@ -342,7 +347,7 @@ MODEL:{
   },
   "fHasAdvanced" : true,
   "fAdvancedTab" : "Contour",
-  "fContour1" : [{
+  "fAdvancedPars" : [{
     "_typename" : "ROOT::Experimental::RFitPanelModel::RComboBoxItem",
     "key" : "0",
     "value" : "Constant"
@@ -355,43 +360,16 @@ MODEL:{
     "key" : "2",
     "value" : "Sigma"
   }],
+  "fContourPoints" : 40,
   "fContourPar1Id" : "0",
-  "fContour2" : [{
-    "_typename" : "ROOT::Experimental::RFitPanelModel::RComboBoxItem",
-    "key" : "0",
-    "value" : "Constant"
-  }, {
-    "_typename" : "ROOT::Experimental::RFitPanelModel::RComboBoxItem",
-    "key" : "1",
-    "value" : "Mean"
-  }, {
-    "_typename" : "ROOT::Experimental::RFitPanelModel::RComboBoxItem",
-    "key" : "2",
-    "value" : "Sigma"
-  }],
-  "fContourPar2Id" : "0",
-  "fScan" : [{
-    "_typename" : "ROOT::Experimental::RFitPanelModel::RComboBoxItem",
-    "key" : "0",
-    "value" : "Constant"
-  }, {
-    "_typename" : "ROOT::Experimental::RFitPanelModel::RComboBoxItem",
-    "key" : "1",
-    "value" : "Mean"
-  }, {
-    "_typename" : "ROOT::Experimental::RFitPanelModel::RComboBoxItem",
-    "key" : "2",
-    "value" : "Sigma"
-  }],
+  "fContourPar2Id" : "1",
+  "fContourConfLevel" : 0,
+  "fContourColor" : "#00ffff",
+  "fContourSuperImpose" : false,
+  "fScanPoints" : 40,
   "fScanId" : "0",
-  "fContourPar1" : 0,
-  "fContourPar2" : 0,
-  "fContourPoints" : 0,
-  "fConfLevel" : 0,
-  "fContourImpose" : false,
-  "fColorContour" : ["", "", ""],
-  "fScanPoints" : 0,
-  "fScanPar" : 0,
   "fScanMin" : 0,
-  "fScanMax" : 0
+  "fScanMax" : 0,
+  "fConfidenceLevel" : 0.683,
+  "fConfidenceColor" : ""
 }
