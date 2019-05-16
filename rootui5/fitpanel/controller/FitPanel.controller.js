@@ -15,10 +15,10 @@ sap.ui.define([
       onPanelInit : function() {
 
          // WORKAROUND, need to be FIXED IN THE FUTURE
-         JSROOT.loadScript('rootui5sys/fitpanel/style/style.css');
+         // JSROOT.loadScript('rootui5sys/fitpanel/style/style.css');
 
          // for linev.github.io
-         // JSROOT.loadScript('../rootui5/fitpanel/style/style.css');
+         JSROOT.loadScript('../rootui5/fitpanel/style/style.css');
 
          this.inputId = "";
          var data = {
