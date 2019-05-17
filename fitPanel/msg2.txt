@@ -28,6 +28,7 @@ MODEL:{
     "name" : "TH1F::test"
   }],
   "fSelectedData" : "panel::test",
+  "fDataType" : 1,
   "fDim" : 1,
   "fFuncList" : [{
     "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
@@ -159,43 +160,19 @@ MODEL:{
     "group" : "Previous",
     "id" : "previous::prev1-gaus",
     "name" : "prev1-gaus"
-  }, {
-    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
-    "group" : "Previous",
-    "id" : "previous::prev2-gaus",
-    "name" : "prev2-gaus"
-  }, {
-    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
-    "group" : "Previous",
-    "id" : "previous::prev3-gaus",
-    "name" : "prev3-gaus"
-  }, {
-    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
-    "group" : "Previous",
-    "id" : "previous::prev4-gaus",
-    "name" : "prev4-gaus"
-  }, {
-    "_typename" : "ROOT::Experimental::RFitPanelModel::RItemInfo",
-    "group" : "Previous",
-    "id" : "previous::prev5-gaus",
-    "name" : "prev5-gaus"
   }],
-  "fSelectedFunc" : "previous::prev5-gaus",
-  "fSelectedTab" : "Minimization",
+  "fSelectedFunc" : "previous::prev1-gaus",
+  "fSelectedTab" : "Advanced",
   "fFitMethods" : [{
-    "_typename" : "ROOT::Experimental::RFitPanelModel::RComboBoxItem",
-    "key" : "P",
-    "value" : "Chi-square"
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RMethodInfo",
+    "id" : 15,
+    "text" : "Chi-square"
   }, {
-    "_typename" : "ROOT::Experimental::RFitPanelModel::RComboBoxItem",
-    "key" : "L",
-    "value" : "Log Likelihood"
-  }, {
-    "_typename" : "ROOT::Experimental::RFitPanelModel::RComboBoxItem",
-    "key" : "WL",
-    "value" : "Binned LogLikelihood"
+    "_typename" : "ROOT::Experimental::RFitPanelModel::RMethodInfo",
+    "id" : 16,
+    "text" : "Binned Likelihood"
   }],
-  "fFitMethod" : "P",
+  "fFitMethod" : 15,
   "fLinearFit" : false,
   "fRobust" : false,
   "fRobustLevel" : 0.95,
@@ -314,8 +291,8 @@ MODEL:{
   "fFuncPars" : {
     "_typename" : "ROOT::Experimental::RFitPanelModel::RFuncParsList",
     "haspars" : true,
-    "id" : "previous::prev5-gaus",
-    "name" : "prev5-gaus",
+    "id" : "previous::prev1-gaus",
+    "name" : "prev1-gaus",
     "pars" : [{
       "_typename" : "ROOT::Experimental::RFitPanelModel::RFuncPar",
       "ipar" : 0,
@@ -346,7 +323,7 @@ MODEL:{
     }]
   },
   "fHasAdvanced" : true,
-  "fAdvancedTab" : "Contour",
+  "fAdvancedTab" : "Scan",
   "fAdvancedPars" : [{
     "_typename" : "ROOT::Experimental::RFitPanelModel::RComboBoxItem",
     "key" : "0",
@@ -360,16 +337,16 @@ MODEL:{
     "key" : "2",
     "value" : "Sigma"
   }],
+  "fConfidenceLevel" : 0.683,
   "fContourPoints" : 40,
   "fContourPar1Id" : "0",
   "fContourPar2Id" : "1",
-  "fContourConfLevel" : 0,
-  "fContourColor" : "#00ffff",
+  "fContourColor" : "#c0b6ac",
   "fContourSuperImpose" : false,
   "fScanPoints" : 40,
   "fScanId" : "0",
-  "fScanMin" : 0,
-  "fScanMax" : 0,
-  "fConfidenceLevel" : 0.683,
-  "fConfidenceColor" : ""
+  "fScanMin" : 1e-4,
+  "fScanMax" : 1e-4,
+  "fScanColor" : "#0000ff",
+  "fConfidenceColor" : "#c0b6ac"
 }
