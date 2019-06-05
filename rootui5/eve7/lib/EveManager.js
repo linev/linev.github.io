@@ -40,7 +40,11 @@ sap.ui.define([], function() {
    /** Returns element with given ID */
    EveManager.prototype.GetElement = function(id)
    {
-      return this.map[id];
+      // AMT todo ... I think this check should be optional
+      if (id in this.map)
+	 return this.map[id];
+      else
+	 return undefined;
    }
 
    EveManager.prototype.addSceneHandler = function(handler)
@@ -80,7 +84,7 @@ sap.ui.define([], function() {
          return;
       }
 
-      console.log("msg len=", msg.length, " txt:", msg.substr(0,120), "...");
+      // console.log("msg len=", msg.length, " txt:", msg.substr(0,120), "...");
 
       var resp = JSON.parse(msg);
 
@@ -297,11 +301,11 @@ sap.ui.define([], function() {
       var mother = this.GetElement(motherId);
       var mc = mother.childs;
       for (var i = 0; i < mc.length; ++i) {
-      
+
          if (mc[i].fElementId === elId) {
             mc.splice(i, 1);
          }
-      }    
+      }
 
       delete this.map[elId];
       delSet.delete(elId);
@@ -311,7 +315,7 @@ sap.ui.define([], function() {
    }
 
    //______________________________________________________________________________
-   
+
    EveManager.prototype.ImportSceneChangeJson = function(msg)
    {
       var arr = msg.arr;
@@ -319,32 +323,32 @@ sap.ui.define([], function() {
       this.scene_changes = msg;
 
       var scene = this.GetElement(msg.header.fSceneId);
-      console.log("ImportSceneChange", scene.fName, msg);
+      //console.log("ImportSceneChange", scene.fName, msg);
 
       // notify scenes for beginning of changes and
       // notify for element removal
       var removedIds = msg.header["removedElements"];
 
-      // do we need this? -- AMT this is intended to freeze redraws 
+      // do we need this? -- AMT this is intended to freeze redraws
       this.callSceneReceivers(scene, "beginChanges");
 
       // notify controllers
       this.callSceneReceivers(scene, "elementsRemoved", removedIds);
-      
+
       var delSet = new Set();
       for (var r = 0; r < removedIds.length; ++r) {
          var id  = removedIds[r];
          delSet.add(id);
       }
-      console.log("start with delSet ", delSet);
+     // console.log("start with delSet ", delSet);
       while (delSet.size != 0) {
          var it = delSet.values();
          var id = it.next().value;
-         console.log("going to call RecursiveRemove .... ", this.map[id]);
+         // console.log("going to call RecursiveRemove .... ", this.map[id]);
          this.RecursiveRemove(this.GetElement(id), delSet);
-         console.log("complete RecursiveREmove ", delSet);
-      }      
-      
+         // console.log("complete RecursiveREmove ", delSet);
+      }
+
       // wait for binary if needed
       if (msg.header.fTotalBinarySize)
       {
@@ -402,9 +406,12 @@ sap.ui.define([], function() {
 
             if (em.changeBit & this.EChangeBits.kCBObjProps) {
                delete obj.render_data;
+	       // AMT note ... the REveSelection changes fall here
+	       // I think this should be a separate change bit
+               delete obj.sel_list;
                jQuery.extend(obj, em);
 
-               this.ParseUpdateTriggersAndProcessPostStream(em);
+               this.ParseUpdateTriggersAndProcessPostStream(obj);
 
                tag = "replaceElement";
             }
@@ -433,7 +440,7 @@ sap.ui.define([], function() {
 
       var treeRebuild = header.removedElements.length || (arr.length != nModified );
       if (treeRebuild) this.InvokeReceivers("update", null, 0, this);
-      
+
       this.callSceneReceivers(scene, "endChanges", treeRebuild);
    },
 
@@ -560,7 +567,7 @@ sap.ui.define([], function() {
    {
       // el - rep of a REveSelection object.
 
-      console.log("UpdateTrigger UT_Selection_Refresh_State called for ", el.fName);
+     // console.log("UpdateTrigger UT_Selection_Refresh_State called for ", el.fName);
 
       // XXXX Hack to assign global selection / highlight ids.
       // This would be more properly done by having REveWorld : public REveScene and store
@@ -574,17 +581,90 @@ sap.ui.define([], function() {
       {
          if (el.fName == "Global Selection") this.global_selection_id = el.fElementId;
          if (el.fName == "Global Highlight") this.global_highlight_id = el.fElementId;
-
-         el._selection_set = new Set;
-
          el._is_registered = true;
+         el.prev_sel_list  = el.sel_list;
+         return;
       }
 
-      console.log("And now process the bloody selection.")
+      console.log("==============================And now process the bloody selection.", el.fName, el.prev_sel_list, el.sel_list);
 
-      //for (el["sel_list"]
-      //el.
+      var oldMap = new Map();
+      el.prev_sel_list.forEach(function(rec) {
+         var iset = new Set(rec.sec_idcs);
+         var x = {"valid" : true, "implied" : rec.implied, "set":iset };
+         oldMap.set(rec.primary, x);
+      });
+     // console.log("-- oldMap", oldMap);
 
+      var newMap = new Map();
+      el.sel_list.forEach(function(rec) {
+         var iset = new Set(rec.sec_idcs);
+         var x = {"valid" : true, "implied" : rec.implied, "set":iset };
+         newMap.set(rec.primary, x);
+      });
+      // console.log("-- newMap --", newMap);
+
+
+      // remove identicals from old and new map
+      for ( var id in oldMap ) {
+         if (id in newMap) {
+            var oldSet = oldMap[id].set;
+            var newSet = newMap[id].set;
+
+            var nm = 0;
+            for (var elem of oldSet) {
+               if (newSet.delete(elem)) {
+                  nm++;
+               }
+            }
+
+            // invalidate if sets are empty or identical
+            if (nm == oldSet.length && newSet.length == 0) {
+               oldMap[id].valid = false;
+               newMap[id].valid = false;
+               // console.log("EveManager.prototype.UT_Selection_Refresh_State identical sets for primary", id);
+            }
+         }
+      }
+
+      var pthis = this;
+      var changedSet = new Set();
+      for (var [id, value] of oldMap.entries()) {
+         this.UnselectElement(el, id);
+         var iel = pthis.GetElement(id);
+         changedSet.add(iel.fSceneId);
+         for (var imp of value.implied)
+         {
+            this.UnselectElement(el, imp);
+            changedSet.add(pthis.GetElement(imp).fSceneId);
+         }
+      }
+
+      for (var [id, value] of newMap.entries()) {
+         var secIdcs = Array.from(value.set);
+         var iel = pthis.GetElement(id);
+         if (!iel) {
+            console.log("EveManager.prototype.UT_Selection_Refresh_State this should not happen ", iel);
+            continue;
+         }
+         changedSet.add(iel.fSceneId);
+         this.SelectElement(el, id, secIdcs);
+
+         for (var imp of value.implied)
+         {
+            this.SelectElement(el, imp, secIdcs);
+            changedSet.add(pthis.GetElement(imp).fSceneId);
+         }
+      }
+
+      el.prev_sel_list = el.sel_list;
+      el.sel_list      = [];
+
+      // redraw
+      for (let item of changedSet) {
+         var scene = this.GetElement(item);
+         this.callSceneReceivers(scene, "endChanges");
+      }
 
       // XXXX Oh, blimy, on first arrival, if selection is set, the selected
       // elements have not yet been received and so this will fail. Also true
@@ -592,6 +672,31 @@ sap.ui.define([], function() {
       // So, we need something like reapply selections after new scenes arrive.
    }
 
+   EveManager.prototype.SelectElement = function(selection_obj, element_id, sec_idcs)
+   {
+      var element = this.GetElement(element_id);
+      if ( ! element) return;
+      var scene   = this.GetElement(element.fSceneId);
+
+      // XXXXX call on all receivers, assuming they are all actually EveScenes.
+      // Also, what is the $ there?
+      // And we should really really standardize member names, with _, capitalizations etc.
+      // And also for members coming from REve side.
+      scene.$receivers[0].SelectElement(selection_obj, element_id, sec_idcs);
+
+      console.log("EveManager.SelectElement", element, scene.$receivers[0].viewer.outlinePass.id2obj_map);
+   }
+
+   EveManager.prototype.UnselectElement = function(selection_obj, element_id)
+   {
+      var element = this.GetElement(element_id);
+      if ( ! element) return;
+      var scene   = this.GetElement(element.fSceneId);
+
+      scene.$receivers[0].UnselectElement(selection_obj, element_id);
+
+      console.log("EveManager.UnselectElement", element, scene.$receivers[0].viewer.outlinePass.id2obj_map);
+}
 
    //==============================================================================
    // END protoype functions

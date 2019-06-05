@@ -9,9 +9,9 @@ sap.ui.define([
 
    "use strict";
 
-   // for debug purposes - do not create geometry painter, just three.js renderer 
+   // for debug purposes - do not create geometry painter, just three.js renderer
    var direct_threejs = false;
-   
+
    var EveScene = null;
 
    return Controller.extend("rootui5.eve7.controller.GL", {
@@ -37,24 +37,24 @@ sap.ui.define([
 
          JSROOT.AssertPrerequisites("geom", this.onLoadScripts.bind(this));
       },
-      
+
       onLoadScripts: function()
       {
          var pthis = this;
-         
-         // one only can load EveScene after geometry painter 
-         sap.ui.define(['rootui5/eve7/lib/EveScene'], function (_EveScene) {
+
+         // one only can load EveScene after geometry painter
+         sap.ui.define(['rootui5/eve7/lib/EveScene', 'rootui5/eve7/lib/OutlinePass', 'rootui5/eve7/lib/FXAAShader'], function (_EveScene) {
             EveScene = _EveScene;
             pthis._load_scripts = true;
             pthis.checkViewReady();
          });
       },
-      
+
       _onObjectMatched: function(oEvent) {
          var args = oEvent.getParameter("arguments");
-         
+
          this.createXXX(Component.getOwnerComponentFor(this.getView()).getComponentData(), args.viewName, JSROOT.$eve7tmp);
-         
+
          delete JSROOT.$eve7tmp;
       },
 
@@ -72,9 +72,9 @@ sap.ui.define([
             this.elementid = moredata.elementid;
             this.kind = moredata.kind;
             this.standalone = viewName;
-            
+
             this.checkViewReady();
-            
+
          } else if (data.standalone && data.conn_handle) {
             this.mgr = new EveManager();
             this.mgr.UseConnection(data.conn_handle);
@@ -294,14 +294,37 @@ sap.ui.define([
          }
 
 
-         var options = "";
-         if (this.kind != "3D") options = "ortho_camera";
+         var options = "outline";
+         // options += " black, ";
+         if (this.kind != "3D") options += ", ortho_camera";
 
 
          // TODO: should be specified somehow in XML file
          this.getView().$().css("overflow", "hidden").css("width", "100%").css("height", "100%");
 
          this.geo_painter = JSROOT.Painter.CreateGeoPainter(this.getView().getDomRef(), null, options);
+
+         // function used by TGeoPainter to create OutlineShader - for the moment remove from JSROOT
+         this.geo_painter.createOutline = function(w,h) {
+            this._outlinePass = new THREE.OutlinePass( new THREE.Vector2( w, h ), this._scene, this._camera );
+            this._outlinePass.edgeStrength = 5.5;
+            this._outlinePass.edgeGlow = 0.7;
+            this._outlinePass.edgeThickness = 1.5;
+            this._outlinePass.usePatternTexture = false;
+            this._outlinePass.downSampleRatio = 1;
+            this._outlinePass.glowDownSampleRatio = 3;
+
+            // const sh = THREE.OutlinePass.selection_enum["select"]; // doesnt stand for spherical harmonics :P
+            // THREE.OutlinePass.selection_atts[sh].visibleEdgeColor.set('#dd1111');
+            // THREE.OutlinePass.selection_atts[sh].hiddenEdgeColor.set('#1111dd');
+
+            this._effectComposer.addPass( this._outlinePass );
+
+            this._effectFXAA = new THREE.ShaderPass( THREE.FXAAShader );
+            this._effectFXAA.uniforms[ 'resolution' ].value.set( 1 / w, 1 / h );
+            this._effectFXAA.renderToScreen = true;
+            this._effectComposer.addPass( this._effectFXAA );
+         }
 
          // assign callback function - when needed
          this.geo_painter.WhenReady(this.onGeoPainterReady.bind(this));
@@ -322,8 +345,80 @@ sap.ui.define([
             this.geo_painter._camera.updateProjectionMatrix();
          }
 
+         painter.eveGLcontroller = this;
+         painter._controls.ProcessMouseMove = function(intersects) {
+            var active_mesh = null, tooltip = null, resolve = null, names = [], geo_object, geo_index;
+
+            // try to find mesh from intersections
+            for (var k=0;k<intersects.length;++k) {
+               var obj = intersects[k].object, info = null;
+               if (!obj) continue;
+               if (obj.geo_object) info = obj.geo_name; else
+                  if (obj.stack) info = painter.GetStackFullName(obj.stack);
+               if (info===null) continue;
+
+               if (info.indexOf("<prnt>")==0)
+                  info = painter.GetItemName() + info.substr(6);
+
+               names.push(info);
+
+               if (!active_mesh) {
+                  active_mesh = obj;
+                  tooltip = info;
+                  geo_object = obj.geo_object;
+                  if (obj.get_ctrl) {
+                     geo_index = obj.get_ctrl().extractIndex(intersects[k]);
+                     if ((geo_index !== undefined) && (typeof tooltip == "string")) tooltip += " indx:" + JSON.stringify(geo_index);
+                  }
+                  if (active_mesh.stack) resolve = painter.ResolveStack(active_mesh.stack);
+               }
+            }
+
+            // painter.HighlightMesh(active_mesh, undefined, geo_object, geo_index); AMT override
+            if (active_mesh && active_mesh.get_ctrl()){
+               active_mesh.get_ctrl().setHighlight( 0xffaa33, geo_index);
+            }
+            else {
+               var sl = painter.eveGLcontroller.created_scenes;
+               for (var k=0; k < sl.length; ++k)
+                   sl[k].clearHighlight();
+            }
+
+
+            if (painter.options.update_browser) {
+               if (painter.options.highlight && tooltip) names = [ tooltip ];
+               painter.ActivateInBrowser(names);
+            }
+
+            if (!resolve || !resolve.obj) return tooltip;
+
+            var lines = JSROOT.GEO.provideInfo(resolve.obj);
+            lines.unshift(tooltip);
+
+            return { name: resolve.obj.fName, title: resolve.obj.fTitle || resolve.obj._typename, lines: lines };
+         }
+
          // this.geo_painter._highlight_handlers = [ this ]; // register ourself for highlight handling
          this.last_highlight = null;
+
+         // outlinePass passthrough
+         this.outlinePass = this.geo_painter._outlinePass;
+
+         // this is try to remap standard THREE.js OutlinePass with specialized
+         /* if (this.outlinePass) {
+            this.outlinePass.id2obj_map = {}; // FIXME:!!!!!!!!
+
+            this.outlinePass.oldRender = this.outlinePass.render;
+
+            this.outlinePass.render = function() {
+               this._selectedObjects = Object.values(this.id2obj_map).flat();
+               this.oldRender.apply(this, arguments);
+            }
+         }
+         */
+         var sz = this.geo_painter.size_for_3d();
+         this.geo_painter._effectComposer.setSize( sz.width, sz.height);
+         this.geo_painter._effectFXAA.uniforms[ 'resolution' ].value.set( 1 / sz.width, 1 / sz.height );
 
          // create only when geo painter is ready
          this.createScenes();
@@ -343,10 +438,13 @@ sap.ui.define([
 
          // TODO: should be specified somehow in XML file
          this.getView().$().css("overflow", "hidden").css("width", "100%").css("height", "100%");
-         if (this.geo_painter)
-            this.geo_painter.CheckResize();
-      }
 
+         if (this.geo_painter){
+            this.geo_painter.CheckResize();
+            if (this.geo_painter._effectFXAA)
+               this.geo_painter._effectFXAA.uniforms[ 'resolution' ].value.set( 1 / this.geo_painter._scene_width, 1 / this.geo_painter._scene_height );
+         }
+      },
    });
 
 });

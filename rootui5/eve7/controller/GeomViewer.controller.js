@@ -3,13 +3,12 @@ sap.ui.define(['sap/ui/core/Component',
                'sap/ui/core/Control',
                'sap/m/Text',
                'sap/m/CheckBox',
-               'sap/ui/layout/Splitter',
-               "sap/ui/core/ResizeHandler",
                "sap/ui/layout/HorizontalLayout",
                "sap/ui/table/Column",
-               "rootui5/eve7/model/BrowserModel"
-],function(Component, Controller, CoreControl, mText, mCheckBox, Splitter, ResizeHandler,
-           HorizontalLayout, tableColumn, BrowserModel) {
+               "sap/ui/model/json/JSONModel",
+               "rootui5/browser/model/BrowserModel"
+],function(Component, Controller, CoreControl, mText, mCheckBox,
+           HorizontalLayout, tableColumn, JSONModel, BrowserModel) {
 
    "use strict";
 
@@ -62,46 +61,6 @@ sap.ui.define(['sap/ui/core/Component',
 
    });
 
-   var GeomDraw = CoreControl.extend("rootui5.eve7.controller.GeomDraw", {
-
-      metadata : {
-         properties : {           // setter and getter are created behind the scenes, incl. data binding and type validation
-            "color" : {type: "sap.ui.core.CSSColor", defaultValue: "#fff"} // you can give a default value and more
-         }
-      },
-
-      // the part creating the HTML:
-      renderer : function(oRm, oControl) { // static function, so use the given "oControl" instance instead of "this" in the renderer function
-         oRm.write("<div");
-         oRm.writeControlData(oControl);  // writes the Control ID and enables event handling - important!
-         // oRm.addStyle("background-color", oControl.getColor());  // write the color property; UI5 has validated it to be a valid CSS color
-         oRm.addStyle("width", "100%");
-         oRm.addStyle("height", "100%");
-         oRm.addStyle("overflow", "hidden");
-         oRm.writeStyles();
-         oRm.writeClasses();              // this call writes the above class plus enables support for Square.addStyleClass(...)
-         oRm.write(">");
-         oRm.write("</div>"); // no text content to render; close the tag
-      },
-
-      onAfterRendering: function() {
-         ResizeHandler.register(this, this.onResize.bind(this));
-         this.geom_painter = null;
-      },
-
-      onResize: function() {
-         if (this.resize_tmout) clearTimeout(this.resize_tmout);
-         this.resize_tmout = setTimeout(this.onResizeTimeout.bind(this), 100); // minimal latency
-      },
-
-      onResizeTimeout: function() {
-         delete this.resize_tmout;
-         if (this.geo_painter)
-            this.geo_painter.CheckResize();
-      }
-   });
-
-
    /** Central geometry viewer contoller
     * All TGeo functionality is loaded after main ui5 rendering is performed,
     * To start drawing, following stages should be completed:
@@ -128,13 +87,13 @@ sap.ui.define(['sap/ui/core/Component',
 
          if (JSROOT.GetUrlOption('nobrowser') !== null) {
             // remove complete area - plain geometry drawing
-            this.getView().byId("mainSplitter").removeAllContentAreas();
+            this.byId("geomViewerApp").setMode(sap.m.SplitAppMode.HideMode);
          } else {
 
             // create model only for browser - no need for anybody else
             this.model = new BrowserModel();
 
-            var t = this.getView().byId("treeTable");
+            var t = this.byId("treeTable");
 
             t.setModel(this.model);
 
@@ -160,10 +119,6 @@ sap.ui.define(['sap/ui/core/Component',
 
          }
 
-         // placeholder for geometry painter
-         this.geomControl = new GeomDraw({color:"#f00"});
-         this.getView().byId("mainSplitter").addContentArea(this.geomControl);
-
          JSROOT.AssertPrerequisites("geom", function() {
             sap.ui.define(['rootui5/eve7/lib/EveElements'], function(EveElements) {
                this.creator = new EveElements();
@@ -188,15 +143,44 @@ sap.ui.define(['sap/ui/core/Component',
       },
 
       assignRowHandlers: function() {
-         var rows = this.getView().byId("treeTable").getRows();
+         var rows = this.byId("treeTable").getRows();
          for (var k=0;k<rows.length;++k) {
             rows[k].$().hover(this.onRowHover.bind(this, rows[k], true), this.onRowHover.bind(this, rows[k], false));
          }
       },
 
-      /** @brief function called then mouse-hover event over the row is invoked
+      /** @brief Send REveGeomRequest data to geometry viewer */
+      sendViewerRequest: function(_oper, args) {
+         var req = { oper: _oper, path: "", stack: [] };
+         JSROOT.extend(req, args);
+         this.websocket.Send("GVREQ:" + JSON.stringify(req));
+      },
+
+      /** Process reply on REveGeomRequest */
+      processViewerReply: function(repl) {
+         if (!repl || (typeof repl != "object") || !repl.oper)
+            return false;
+
+         if (repl.oper == "HOVER") {
+
+            this._hover_stack = repl.stack || null;
+            if (this.geo_painter)
+               this.geo_painter.HighlightMesh(null, 0x00ff00, null, undefined, this._hover_stack, true);
+
+         } else if (repl.oper == "HIGHL") {
+
+            this.highlighRowWithPath(repl.path);
+
+         }
+      },
+
+      /** @brief Handler for mouse-hover event
        * @desc Used to highlight correspondent volume on geometry drawing */
       onRowHover: function(row, is_enter) {
+
+         // ignore hover event when drawing not exists
+         if (!this.isDrawPageActive()) return;
+
          // property of current entry, not used now
          var ctxt = row.getBindingContext(),
              prop = ctxt ? ctxt.getProperty(ctxt.getPath()) : null;
@@ -206,7 +190,7 @@ sap.ui.define(['sap/ui/core/Component',
             // avoid multiple time submitting same request
             if (this._last_hover_req === req) return;
             this._last_hover_req = req;
-            return this.websocket.Send("HOVER:" + req);
+            return this.sendViewerRequest("HOVER", { path: req });
          }
 
          if (this.geo_painter && this.geo_clones) {
@@ -217,6 +201,7 @@ sap.ui.define(['sap/ui/core/Component',
 
             // remember current element with hover stack
             this._hover_stack = fullpath ? this.geo_clones.FindStackByName(fullpath) : null;
+
             this.geo_painter.HighlightMesh(null, 0x00ff00, null, undefined, this._hover_stack, true);
          }
       },
@@ -260,11 +245,11 @@ sap.ui.define(['sap/ui/core/Component',
       /** Callback from geo painter when mesh object is highlighted. Use for update of TreeTable */
       HighlightMesh: function(active_mesh, color, geo_object, geo_index, geo_stack) {
          if (!this.standalone) {
-            var req = geo_stack ? JSON.stringify(geo_stack) : "OFF";
+            var req = geo_stack ? geo_stack : [];
             // avoid multiple time submitting same request
-            if (this._last_highlight_req === req) return;
+            if (JSROOT.GEO.IsSameStack(this._last_highlight_req, req)) return;
             this._last_highlight_req = req;
-            return this.websocket.Send("HIGHL:" + req);
+            return this.sendViewerRequest("HIGHL", { stack: req });
          }
 
          var hpath = "---";
@@ -278,11 +263,11 @@ sap.ui.define(['sap/ui/core/Component',
       },
 
       highlighRowWithPath: function(path) {
-         var rows = this.getView().byId("treeTable").getRows(), best_cmp = 0, best_indx = 0;
+         var rows = this.byId("treeTable").getRows(), best_cmp = 0, best_indx = 0;
 
          for (var i=0;i<rows.length;++i) {
             rows[i].$().css("background-color", "");
-            if (path !== "OFF") {
+            if (path && (path !== "OFF")) {
                var ctxt = rows[i].getBindingContext(),
                    prop = ctxt ? ctxt.getProperty(ctxt.getPath()) : null,
                    cmp = 0;
@@ -302,8 +287,10 @@ sap.ui.define(['sap/ui/core/Component',
       createGeoPainter: function(drawopt) {
          if (this.geo_painter) return;
 
-         this.geo_painter = JSROOT.Painter.CreateGeoPainter(this.geomControl.getDomRef(), null, drawopt);
-         this.geomControl.geo_painter = this.geo_painter;
+         var geomDrawing = this.byId("geomDrawing");
+
+         this.geo_painter = JSROOT.Painter.CreateGeoPainter(geomDrawing.getDomRef(), null, drawopt);
+         geomDrawing.setGeomPainter(this.geo_painter);
 
          this.geo_painter.AddHighlightHandler(this);
          this.geo_painter.ActivateInBrowser = this.activateInTreeTable.bind(this);
@@ -315,7 +302,7 @@ sap.ui.define(['sap/ui/core/Component',
        * Draw message is vector of REveGeomVisible objects, including info where shape is in raw data */
       extractRawShapes: function(draw_msg) {
 
-         var nodes = null;
+         var nodes = null, old_gradpersegm = 0;
 
          // array for descriptors for each node
          // if array too large (>1M), use JS object while only ~1K nodes are expected to be used
@@ -338,6 +325,11 @@ sap.ui.define(['sap/ui/core/Component',
             this.geo_clones.name_prefix = this.geo_clones.GetNodeName(0);
          }
 
+         if (draw_msg.nsegm) {
+            old_gradpersegm = JSROOT.GEO.GradPerSegm;
+            JSROOT.GEO.GradPerSegm = 360 / Math.max(draw_msg.nsegm,6);
+         }
+
          for (var cnt = 0; cnt < draw_msg.visibles.length; ++cnt) {
             var item = draw_msg.visibles[cnt], rd = item.ri;
 
@@ -349,29 +341,54 @@ sap.ui.define(['sap/ui/core/Component',
                continue;
             }
 
-            // reconstruct render data
-            var off = draw_msg.offset + rd.rnr_offset;
-
-            if (rd.vert_size) {
-               rd.vtxBuff = new Float32Array(draw_msg.raw, off, rd.vert_size);
-               off += rd.vert_size*4;
-            }
-
-            if (rd.norm_size) {
-               rd.nrmBuff = new Float32Array(draw_msg.raw, off, rd.norm_size);
-               off += rd.norm_size*4;
-            }
-
-            if (rd.index_size) {
-               rd.idxBuff = new Uint32Array(draw_msg.raw, off, rd.index_size);
-               off += rd.index_size*4;
-            }
-
-            // shape handle is similar to created in JSROOT.GeoPainter
-            item.server_shape = rd.server_shape = { geom: this.creator.makeEveGeometry(rd), nfaces: (rd.index_size-2)/3, ready: true };
+            item.server_shape = rd.server_shape =
+               this.createServerShape(rd, draw_msg.raw, draw_msg.offset);
          }
 
+         if (old_gradpersegm)
+            JSROOT.GEO.GradPerSegm = old_gradpersegm;
+
          return true;
+      },
+
+      /** Create single shape from provided raw data */
+      createServerShape: function(rd, raw, off) {
+
+         if (rd.shape) {
+            // case when TGeoShape provided as is
+            var g = JSROOT.GEO.createGeometry(rd.shape);
+            return {
+               _typename: "$$Shape$$",
+               ready: true,
+               geom: g,
+               nfaces: JSROOT.GEO.numGeometryFaces(g)
+            }
+         }
+
+         off = (off || 0) + rd.rnr_offset;
+
+         if (rd.vert_size) {
+            rd.vtxBuff = new Float32Array(raw, off, rd.vert_size);
+            off += rd.vert_size*4;
+         }
+
+         if (rd.norm_size) {
+            rd.nrmBuff = new Float32Array(raw, off, rd.norm_size);
+            off += rd.norm_size*4;
+         }
+
+         if (rd.index_size) {
+            rd.idxBuff = new Uint32Array(raw, off, rd.index_size);
+            off += rd.index_size*4;
+         }
+
+         // shape handle is similar to created in JSROOT.GeoPainter
+         return {
+            _typename: "$$Shape$$", // indicate that shape can be used as is
+            ready: true,
+            geom: this.creator.makeEveGeometry(rd),
+            nfaces: (rd.index_size-2)/3
+         };
       },
 
       /** function to accumulate and process all drawings messages
@@ -474,7 +491,7 @@ sap.ui.define(['sap/ui/core/Component',
          var mhdr = msg.substr(0,6);
          msg = msg.substr(6);
 
-         // console.log(mhdr, msg.length, msg.substr(0,70), "...");
+         console.log(mhdr, msg.length, msg.substr(0,70), "...");
 
          switch (mhdr) {
          case "DESCR:":  // browser hierarchy
@@ -503,13 +520,11 @@ sap.ui.define(['sap/ui/core/Component',
          case "APPND:":
             this.checkDrawMsg("append", JSROOT.parse(msg));
             break;
-         case "HOVER:":
-            this._hover_stack = (msg == "OFF") ? null : JSON.parse(msg);
-            if (this.geo_painter)
-               this.geo_painter.HighlightMesh(null, 0x00ff00, null, undefined, this._hover_stack, true);
+         case "GVRPL:":
+            this.processViewerReply(JSROOT.parse(msg));
             break;
-         case "HIGHL:":
-            this.highlighRowWithPath(msg);
+         case "NINFO:":
+            this.provideNodeInfo(JSROOT.parse(msg));
             break;
          default:
             console.error('Non recognized msg ' + mhdr + ' len=' + msg.length);
@@ -738,7 +753,6 @@ sap.ui.define(['sap/ui/core/Component',
          }
       },
 
-
       appendNodes: function(nodes) {
          if (this.geo_painter) this.geo_painter.prepareObjectDraw(nodes, "__geom_viewer_append__");
       },
@@ -822,6 +836,81 @@ sap.ui.define(['sap/ui/core/Component',
          }
       },
 
+      onCellClick: function(oEvent) {
+
+         var tt = this.byId("treeTable"),
+             first = tt.getFirstVisibleRow() || 0,
+             rowindx = oEvent.getParameters().rowIndex - first,
+             row = (rowindx >=0) ? tt.getRows()[rowindx] : null,
+             ctxt = row ? row.getBindingContext() : null,
+             prop = ctxt ? ctxt.getProperty(ctxt.getPath()) : null;
+
+         if(prop && this.isInfoPageActive())
+            if (this.standalone) {
+               this.processInfoOffline(prop.fullpath, prop.id);
+            } else {
+               this.sendViewerRequest("INFO", { path: prop.fullpath });
+            }
+      },
+
+      /** Try to provide as much info as possible offline */
+      processInfoOffline: function(path, id) {
+         var model = new JSONModel({ fullpath: path });
+
+         this.byId("geomInfo").setModel(model);
+
+         if (this.geo_clones && path) {
+            var stack = this.geo_clones.FindStackByName(path.substr(1, path.length-2));
+
+            var info = stack ? this.geo_clones.ResolveStack(stack) : null;
+
+            var build_shape = null;
+
+            // console.log('id', id, info ? info.id : "---");
+
+            // this can be moved into GeoPainter later
+            if (info && (info.id !== undefined) && this.geo_painter && this.geo_painter._draw_nodes) {
+               for (var k=0;k<this.geo_painter._draw_nodes.length;++k) {
+                  var item = this.geo_painter._draw_nodes[k];
+                  if ((item.nodeid == info.id) && item.server_shape) {
+                     build_shape = item.server_shape;
+                     break;
+                  }
+               }
+            }
+
+            this.drawNodeShape(build_shape, true);
+         }
+      },
+
+      /** This is reply on INFO request */
+      provideNodeInfo: function(info) {
+
+         var model = new JSONModel(info);
+
+         this.byId("geomInfo").setModel(model);
+
+         var server_shape = null;
+
+         if (info.ri && info.rndr_binary)
+            server_shape = this.createServerShape(info.ri, info.rndr_binary.buffer, 0);
+
+         this.drawNodeShape(server_shape, false);
+      },
+
+      drawNodeShape: function(server_shape, skip_cleanup) {
+
+         var nodeDrawing = this.byId("nodeDrawing");
+
+         nodeDrawing.setGeomPainter(null);
+
+         if (server_shape) {
+            var node_painter = JSROOT.Painter.CreateGeoPainter(nodeDrawing.getDomRef(), server_shape, "");
+            nodeDrawing.setGeomPainter(node_painter, skip_cleanup);
+            node_painter.prepareObjectDraw(server_shape, "");
+         }
+      },
+
       /** Reload geometry description and base drawing, normally not required */
       onRealoadPress: function (oEvent) {
          this.doReload(true);
@@ -837,9 +926,30 @@ sap.ui.define(['sap/ui/core/Component',
          }
       },
 
+      isDrawPageActive: function() {
+         var app = this.byId("geomViewerApp");
+         var curr = app ? app.getCurrentDetailPage() : null;
+         return curr ? curr.getId() == this.createId("geomDraw") : false;
+      },
+
+      isInfoPageActive: function() {
+         var app = this.byId("geomViewerApp");
+         var curr = app ? app.getCurrentDetailPage() : null;
+         return curr ? curr.getId() == this.createId("geomInfo") : false;
+      },
+
+      onInfoPress: function() {
+         var app = this.byId("geomViewerApp");
+         if (this.isInfoPageActive())
+            app.toDetail(this.createId("geomDraw"));
+         else
+            app.toDetail(this.createId("geomInfo"));
+      },
+
       /** Quit ROOT session */
-      onQuitRootPress: function(oEvent) {
-         this.websocket.Send("QUIT_ROOT");
+      onQuitRootPress: function() {
+         if (!this.standalone)
+            this.websocket.Send("QUIT_ROOT");
       }
 
    });

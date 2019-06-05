@@ -4,7 +4,7 @@ sap.ui.define([
 ], function(Log, JSONListBinding) {
     "use strict";
 
-    var hRootListBinding = JSONListBinding.extend("rootui5.eve7.model.BrowserListBinding", {
+    var hRootListBinding = JSONListBinding.extend("rootui5.browser.model.BrowserListBinding", {
 
         // called by the TreeTable to know the amount of entries
         getLength: function() {

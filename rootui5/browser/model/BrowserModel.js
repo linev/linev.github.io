@@ -1,11 +1,11 @@
 sap.ui.define([
     "sap/ui/model/json/JSONModel",
-    "rootui5/eve7/model/BrowserListBinding",
+    "rootui5/browser/model/BrowserListBinding",
     "sap/base/Log"
 ], function(JSONModel, BrowserListBinding, Log) {
    "use strict";
 
-    var hRootModel = JSONModel.extend("rootui5.eve7.model.BrowserModel", {
+    var hRootModel = JSONModel.extend("rootui5.browser.model.BrowserModel", {
 
         constructor: function() {
             JSONModel.apply(this);
@@ -184,7 +184,6 @@ sap.ui.define([
            this.loadDataCounter++;
 
            var request = {
-              _typename: "ROOT::Experimental::RBrowserRequest",
               path: path,
               first: first || 0,
               number: number || this.threshold || 100,
@@ -334,14 +333,14 @@ sap.ui.define([
            function scan(lvl, elem, path) {
 
               // create elements with safety margin
-              if ((lvl >= 0) && (nodes !== null) && !nodes[id] && (id >= args.begin - threshold2) && (id < args.end + threshold2) )
+              if ((lvl >= 0) && (nodes !== null) && !nodes[id] && (id >= args.begin - threshold2) && (id < args.end + threshold2)) {
                  nodes[id] = {
                     name: elem.name,
                     fullpath: path,
                     index: id,
                     _elem: elem,
                     // these are required by list binding, should be eliminated in the future
-                    type: elem.nchilds || (id == 0) ? "folder" : "file",
+                    type: elem.nchilds ? "folder" : "file",
                     isLeaf: !elem.nchilds,
                     level: lvl,
                     context: pthis.getContext("/nodes/" + id),
@@ -351,6 +350,9 @@ sap.ui.define([
                        sum: false // ????
                     }
                  };
+                 if (typeof pthis.addNodeAttributes == 'function')
+                    pthis.addNodeAttributes(nodes[id], elem);
+              }
 
               if (lvl >= 0) id++;
 

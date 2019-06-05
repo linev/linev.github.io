@@ -28,6 +28,9 @@ sap.ui.define([
 
       // register ourself for scene events
       this.mgr.RegisterSceneReceiver(scene.fSceneId, this);
+
+      // AMT temporary solution ... resolve with callSceneReceivers in EveManager.js
+      scene.eve_scene = this;
    }
 
    EveScene.prototype.hasRenderData = function(elem)
@@ -135,6 +138,8 @@ sap.ui.define([
       for (var k = 0; k < res3d.length; ++k)
          cont.add(res3d[k]);
 
+      this.applySelectionOnSceneCreate(this.mgr.global_selection_id);
+      this.applySelectionOnSceneCreate(this.mgr.global_highlight_id);
       this.viewer.render();
       this.first_time = false;
    }
@@ -215,7 +220,7 @@ sap.ui.define([
       container.add(obj3d);
 
       this.id2obj_map[el.fElementId] = obj3d;
-      if (el.fMasterId) this.mid2obj_map[el.fMasterId] = obj3d;      
+      if (el.fMasterId) this.mid2obj_map[el.fMasterId] = obj3d;
    }
 
    EveScene.prototype.visibilityChanged = function(el)
@@ -249,8 +254,7 @@ sap.ui.define([
    EveScene.prototype.processElementSelected = function(obj3d, col, indx, evnt)
    {
       // MT BEGIN
-
-      console.log("EveScene.prototype.processElementSelected", obj3d, col, indx, evnt);
+      // console.log("EveScene.prototype.processElementSelected", obj3d, col, indx, evnt);
 
       var is_multi  = evnt && evnt.ctrlKey;
       var is_secsel = indx !== undefined;
@@ -264,11 +268,11 @@ sap.ui.define([
 
       this.mgr.SendMIR({ "mir":        fcall,
                          "fElementId": this.mgr.global_selection_id,
-                         "class":      "REX::REveSelection"
+                         "class":      "ROOT::Experimental::REveSelection"
                        });
 
-      // return true;
-
+      return true;
+/*
       // MT END -- Sergey's code below
 
       // first decide if element selected or not
@@ -336,27 +340,140 @@ sap.ui.define([
 
       // when true returns, controller will not try to render itself
       return true;
+*/
    }
 
    /** interactive handler */
    EveScene.prototype.processElementHighlighted = function(obj3d, col, indx, evnt)
    {
-      var id = obj3d.mstrId;
-      // id = obj3d.eveId;
+      // Need check for duplicates before call server, else server will un-higlight highlighted element
+      // console.log("EveScene.prototype.processElementHighlighted", obj3d.eveId, col, indx, evnt);
+      var is_multi  = false;
+      var is_secsel = indx !== undefined;
 
-      // MT XXXX
-    //  console.log("EveScene.prototype.processElementHighlighted", obj3d, col, indx, evnt);
+      var so = this.mgr.GetElement(this.mgr.global_highlight_id);
+      var a = so.prev_sel_list;
 
-      this.setElementHighlighted(id, col, indx, true);
+      // AMT presume there is no multiple highlight and multiple secondary selections
+      // if that is the case in the futre write data in set and comapre sets
 
-      this.mgr.invokeInOtherScenes(this, "setElementHighlighted", id, col, indx);
+      // console.log("EveScene.prototype.processElementHighlighted compare Reveselection ", a[0], "incoming ", obj3d.eveId,indx);
+      if (a.length == 1 ) {
+         var h = a[0];
+         if (h.primary == obj3d.eveId || h.primary == obj3d.mstrId ) {
+            if (indx) {
+               if (h.sec_idcs && h.sec_idcs[0] == indx) {
+                  // console.log("EveScene.prototype.processElementHighlighted processElementHighlighted same index ");
+                  return true;
+               }
+            }
+            if (!indx && !h.sec_idcs.length) {
+               // console.log("processElementHighlighted primARY SElection not changed ");
+               return true;
+            }
+         }
+      }
 
-      // when true returns, controller will not try to render itself
+      var fcall = "NewElementPicked(" + obj3d.eveId + `, ${is_multi}, ${is_secsel}`;
+      if (is_secsel)
+      {
+         fcall += ", { " + (Array.isArray(indx) ? indx.join(", ") : indx) + " }";
+      }
+      fcall += ")";
+
+
+      this.mgr.SendMIR({ "mir":        fcall,
+                         "fElementId": this.mgr.global_highlight_id,
+                         "class":      "ROOT::Experimental::REveSelection"
+                       });
+
       return true;
    }
 
+
+   EveScene.prototype.clearHighlight = function()
+   {
+      var so = this.mgr.GetElement(this.mgr.global_highlight_id);
+      if (so.prev_sel_list.length) {
+         console.log("clearHighlight", this);
+         this.mgr.SendMIR({ "mir":        "SelectionCleared()",
+                            "fElementId": this.mgr.global_highlight_id,
+                            "class":      "ROOT::Experimental::REveSelection"
+                          });
+      }
+
+      return true;
+   }
+
+   EveScene.prototype.applySelectionOnSceneCreate =  function(selection_id)
+   {
+      var selection_obj = this.mgr.GetElement(selection_id);
+      var pthis = this;
+      selection_obj.prev_sel_list.forEach(function(rec) {
+         var prl = pthis.mgr.GetElement(rec.primary);
+         if (prl && prl.fSceneId == pthis.id) {
+            pthis.SelectElement(selection_obj, rec.primary, rec.sec_idcs);
+         }
+         else {
+            for (var impId of rec.implied)
+            {
+               var eli =  pthis.mgr.GetElement(impId);
+               if (eli && eli.fSceneId == pthis.id) {
+               console.log("CHECK select IMPLIED", pthis);
+                  pthis.SelectElement(selection_obj, impId, rec.sec_idcs);
+               }
+            }
+         }
+      });
+   }
+
+   EveScene.prototype.SelectElement = function(selection_obj, element_id, sec_idcs)
+   {
+      this.viewer.outlinePass.id2obj_map[element_id] = this.viewer.outlinePass.id2obj_map[element_id] || [];
+
+      // if(this.viewer.outlinePass.id2obj_map[element_id][selection_obj.fElementId] !== undefined) return;
+
+      var stype = selection_obj.fName.endsWith("Selection") ? "select" : "highlight";
+      var estype = THREE.OutlinePass.selection_enum[stype];
+
+      console.log("EveScene.SelectElement ", selection_obj.fName, element_id, selection_obj.fElementId, this.viewer.outlinePass.id2obj_map);
+
+      let res = {
+         "sel_type": estype,
+         "sec_sel": false,
+         "geom": []
+      };
+      var obj3d = this.getObj3D( element_id );
+
+      if(sec_idcs === undefined || sec_idcs.length == 0)
+      {
+         // exit if you try to highlight an object that has already been selected
+         if(estype == THREE.OutlinePass.selection_enum["highlight"] && 
+            this.viewer.outlinePass.id2obj_map[element_id][this.mgr.global_selection_id] !== undefined
+         ) return;
+
+         this.viewer.outlinePass.id2obj_map[element_id] = [];
+         res.geom.push(obj3d);
+      }
+      else
+      {
+         var ctrl = obj3d.get_ctrl();
+         ctrl.DrawForSelection(sec_idcs, res.geom);
+         res.sec_sel = true;
+      }
+      this.viewer.outlinePass.id2obj_map[element_id][selection_obj.fElementId] = res;
+   }
+
+   EveScene.prototype.UnselectElement = function(selection_obj, element_id)
+   {
+      console.log("EveScene.UnselectElement ", selection_obj.fName, element_id, selection_obj.fElementId, this.viewer.outlinePass.id2obj_map);
+      if (this.viewer.outlinePass.id2obj_map[element_id] !== undefined)
+      {
+	      delete this.viewer.outlinePass.id2obj_map[element_id][selection_obj.fElementId];
+      }
+   }
    /** returns true if highlight index is differs from current */
-   EveScene.prototype.processCheckHighlight = function(obj3d, indx)
+/*   EveScene.prototype.processCheckHighlight = function(obj3d, indx)
    {
       var id = obj3d.mstrId;
       // id = obj3d.eveId;
@@ -366,17 +483,18 @@ sap.ui.define([
       // TODO: make precise checks with all combinations
       return (indx !== this.highlight.indx);
    }
-
+*/
    /** function called by changes from server or by changes from other scenes */
-   EveScene.prototype.setElementSelected = function(mstrid, col, indx, from_interactive)
+  /* EveScene.prototype.setElementSelected = function(mstrid, col, indx, from_interactive)
    {
       if ( ! from_interactive)
          this.selected[mstrid] = { id: mstrid, col: col, indx: indx };
 
       this.drawSpecial(mstrid);
-   }
+   }*/
 
    /** Called when processing changes from server or from interactive handler */
+   /*
    EveScene.prototype.setElementHighlighted = function(mstrid, col, indx, from_interactive)
    {
       // check if other element was highlighted at same time - redraw it
@@ -391,8 +509,8 @@ sap.ui.define([
          this.highlight = { id: mstrid, col: col, indx: indx };
 
       this.drawSpecial(mstrid, true);
-   }
-
+   }*/
+/*
    EveScene.prototype.drawSpecial = function(mstrid, prefer_highlight)
    {
       var obj3d = this.getObj3D( mstrid, true );
@@ -408,6 +526,7 @@ sap.ui.define([
       if (ctrl.separateDraw)
       {
          var p2 = "s", p1 = "h";
+         // swap h1-h2
          if (!prefer_highlight) { var h = h1; h1 = h2; h2 = h; p2 = "h"; p1 = "s"; }
          if (ctrl.drawSpecial(h2 ? h2.col : null, h2 ? h2.indx : undefined, p2)) did_change = true;
          if (ctrl.drawSpecial(h1 ? h1.col : null, h1 ? h1.indx : undefined, p1)) did_change = true;
@@ -418,11 +537,41 @@ sap.ui.define([
          did_change = ctrl.drawSpecial(h ? h.col : null, h ? h.indx : undefined);
       }
 
-      if (did_change && this.viewer)
+      if (did_change && this.viewer){
          this.viewer.render();
+         if(!prefer_highlight){
+            if(!this.selected[mstrid]){
+               // delete if its not selected anymore?
+               delete this.viewer.outlinePass.id2obj_map[mstrid];
+            } else {
+               // is secondary selection
+               let sec_sel = this.selected[mstrid].indx;
+
+               // if its not secondary selection pass the object
+               if(!sec_sel)
+                  this.viewer.outlinePass.id2obj_map[mstrid] = obj3d;
+               // if its secondary selection pass all the new objects returned by 'drawSpecial'
+               else {
+                  this.viewer.outlinePass.id2obj_map[mstrid] = []; // reset
+                  if(false){
+                     if(obj3d.sl_special) this.viewer.outlinePass.id2obj_map[mstrid].push(obj3d.sl_special);
+                     if(obj3d.sm_special) this.viewer.outlinePass.id2obj_map[mstrid].push(obj3d.sm_special);
+                  } else {
+                     for(const child of obj3d.children){
+                        if(child.jsroot_special)
+                           this.viewer.outlinePass.id2obj_map[mstrid].push(child);
+                     }
+                  }
+                  // print the new elements
+                  console.log(this.viewer.outlinePass.id2obj_map[mstrid]);
+               }
+            }
+         }
+      }
 
       return did_change;
    }
+*/
 
    EveScene.prototype.elementRemoved = function()
    {
@@ -457,15 +606,14 @@ sap.ui.define([
          if (!obj3d) {
             console.log("ERROOR cant find obj3d");
          }
-         
+
          var container = this.viewer.getThreejsContainer("scene" + this.id);
          container.remove(obj3d);
-         
-         // console.log("EveScene elementRemoved AFTER ",  container);
+
          delete this.id2obj_map[elId];
       }
    }
-   
+
    return EveScene;
 
 });
