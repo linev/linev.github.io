@@ -408,6 +408,7 @@ sap.ui.define([
    EveScene.prototype.applySelectionOnSceneCreate =  function(selection_id)
    {
       var selection_obj = this.mgr.GetElement(selection_id);
+      if (!selection_obj) return;
       var pthis = this;
       selection_obj.prev_sel_list.forEach(function(rec) {
          var prl = pthis.mgr.GetElement(rec.primary);
