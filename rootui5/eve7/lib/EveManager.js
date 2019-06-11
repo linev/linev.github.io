@@ -108,7 +108,7 @@ sap.ui.define([], function() {
       var obj = { "mir": cmd.func, "fElementId": cmd.elementid, "class": cmd.elementclass };
       // only for real connections send commands to server
       // only with NextEvent command meaningful handling is possible
-      if ((this.handle.kind != "file") && (cmd.name == "NextEvent"))
+      if ((this.handle.kind != "file") || (cmd.name == "NextEvent"))
          this.handle.Send(JSON.stringify(obj));
       if ((cmd.name == "QuitRoot") && window) window.close();
    }
