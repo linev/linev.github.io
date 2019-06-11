@@ -352,13 +352,13 @@ sap.ui.define([
       var is_secsel = indx !== undefined;
 
       var so = this.mgr.GetElement(this.mgr.global_highlight_id);
-      var a = so.prev_sel_list;
+      var a = so ? so.prev_sel_list : null;
 
       // AMT presume there is no multiple highlight and multiple secondary selections
       // if that is the case in the futre write data in set and comapre sets
 
       // console.log("EveScene.prototype.processElementHighlighted compare Reveselection ", a[0], "incoming ", obj3d.eveId,indx);
-      if (a.length == 1 ) {
+      if (a && (a.length == 1)) {
          var h = a[0];
          if (h.primary == obj3d.eveId || h.primary == obj3d.mstrId ) {
             if (indx) {
