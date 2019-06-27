@@ -12,5 +12,3 @@ These are different test web pages with use of OpenUI
 
 [FitPanel snapshot](fitPanel/)
 
-[TCanvas example](canvas6/)
-
