@@ -26,7 +26,7 @@
          loading scripts...
       </div>
    </body>
- 
+
    <script type='text/javascript'>
 
       function InitV6Canvas(handle, args) {
@@ -34,7 +34,7 @@
          var painter = new JSROOT.TCanvasPainter(null);
 
          painter.online_canvas = true;
-         painter.use_openui = (JSROOT.GetUrlOption("noopenui") === null); 
+         painter.use_openui = (JSROOT.GetUrlOption("noopenui") === null);
          painter.batch_mode = JSROOT.GetUrlOption("batch_mode") !== null;
          if (painter.batch_mode) JSROOT.BatchMode = true;
 
@@ -49,7 +49,7 @@
 
             return JSROOT.AssertPrerequisites('openui5', function() {
 
-               new JSROOT.sap.ui.xmlview({
+               new sap.ui.xmlview({
                   id: "TopCanvasId",
                   viewName: "sap.ui.jsroot.view.Canvas",
                   viewData: { canvas_painter: painter }
