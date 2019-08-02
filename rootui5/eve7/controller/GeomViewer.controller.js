@@ -342,7 +342,7 @@ sap.ui.define(['sap/ui/core/Component',
             }
 
             item.server_shape = rd.server_shape =
-               this.createServerShape(rd, draw_msg.raw, draw_msg.offset);
+               this.createServerShape(rd);
          }
 
          if (old_gradpersegm)
@@ -352,7 +352,7 @@ sap.ui.define(['sap/ui/core/Component',
       },
 
       /** Create single shape from provided raw data */
-      createServerShape: function(rd, raw, off) {
+      createServerShape: function(rd) {
 
          if (rd.shape) {
             // case when TGeoShape provided as is
@@ -365,21 +365,31 @@ sap.ui.define(['sap/ui/core/Component',
             }
          }
 
-         off = (off || 0) + rd.rnr_offset;
-
-         if (rd.vert_size) {
-            rd.vtxBuff = new Float32Array(raw, off, rd.vert_size);
-            off += rd.vert_size*4;
+         if (!rd.raw || (rd.raw.length==0)) {
+            console.error('No raw data at all');
+            return null;
          }
 
-         if (rd.norm_size) {
-            rd.nrmBuff = new Float32Array(raw, off, rd.norm_size);
-            off += rd.norm_size*4;
+         if (!rd.raw.buffer) {
+            console.error('No raw buffer');
+            return null;
          }
 
-         if (rd.index_size) {
-            rd.idxBuff = new Uint32Array(raw, off, rd.index_size);
-            off += rd.index_size*4;
+         var off = 0;
+
+         if (rd.v) {
+            rd.vtxBuff = new Float32Array(rd.raw.buffer, off, rd.v);
+            off += rd.v*4;
+         }
+
+         if (rd.n) {
+            rd.nrmBuff = new Float32Array(rd.raw.buffer, off, rd.n);
+            off += rd.n*4;
+         }
+
+         if (rd.i) {
+            rd.idxBuff = new Uint32Array(rd.raw.buffer, off, rd.i);
+            off += rd.i*4;
          }
 
          // shape handle is similar to created in JSROOT.GeoPainter
@@ -387,27 +397,15 @@ sap.ui.define(['sap/ui/core/Component',
             _typename: "$$Shape$$", // indicate that shape can be used as is
             ready: true,
             geom: this.creator.makeEveGeometry(rd),
-            nfaces: (rd.index_size-2)/3
+            nfaces: (rd.i-2)/3
          };
       },
 
       /** function to accumulate and process all drawings messages
        * if not all scripts are loaded, messages are quied and processed later */
 
-      checkDrawMsg: function(kind, msg, _raw, _offset) {
-         if (kind == "binary") {
-            for (var k = 0; k < this.queue.length; ++k) {
-               if (this.queue[k].binlen && !this.queue[k].raw) {
-                  this.queue[k].raw = _raw;
-                  this.queue[k].offset = _offset;
-                  _raw = null;
-                  break;
-               }
-            }
-
-            if (_raw)
-               return console.error("Did not process raw data " + _raw.byteLength + " offset " + _offset);
-         } else if (kind) {
+      checkDrawMsg: function(kind, msg) {
+         if (kind) {
             if (!msg)
                return console.error("No message is provided for " + kind);
 
@@ -419,10 +417,6 @@ sap.ui.define(['sap/ui/core/Component',
          if (!this.creator ||            // complete JSROOT/EVE7 TGeo functionality is loaded
             !this.queue.length ||        // drawing messages are created
             !this.renderingDone) return; // UI5 rendering is performed
-
-         // first message in the queue still waiting for raw data
-         if (this.queue[0].binlen && !this.queue[0].raw)
-            return;
 
          // only from here we can start to analyze messages and create TGeo painter, clones objects and so on
 
@@ -450,7 +444,7 @@ sap.ui.define(['sap/ui/core/Component',
             case "found":
                // only extend nodes and decode shapes
                if (this.extractRawShapes(msg))
-                  this.paintFoundNodes(msg.visibles, true, msg.binlen > 0);
+                  this.paintFoundNodes(msg.visibles, true);
                break;
 
             case "append":
@@ -486,7 +480,7 @@ sap.ui.define(['sap/ui/core/Component',
          // binary data can be send only as addition to draw message
          // here data can be placed in the queue and processed when all other prerequicities are done
          if (typeof msg != "string")
-            return this.checkDrawMsg("binary", null, msg, offset);
+            return console.error("Geom viewer do not uses binary messages len = " + mgs.byteLength);
 
          var mhdr = msg.substr(0,6);
          msg = msg.substr(6);
@@ -732,10 +726,10 @@ sap.ui.define(['sap/ui/core/Component',
       },
 
       /** Paint extra node - or remove them from painting */
-      paintFoundNodes: function(visibles, append_more, with_binaries) {
+      paintFoundNodes: function(visibles, append_more) {
          if (!this.geo_painter) return;
 
-         if (append_more && (with_binaries || !visibles))
+         if (append_more)
             this.geo_painter.appendMoreNodes(visibles || null);
 
          if (visibles && visibles.length && (visibles.length < 100)) {
@@ -892,8 +886,8 @@ sap.ui.define(['sap/ui/core/Component',
 
          var server_shape = null;
 
-         if (info.ri && info.rndr_binary)
-            server_shape = this.createServerShape(info.ri, info.rndr_binary.buffer, 0);
+         if (info.ri)
+            server_shape = this.createServerShape(info.ri);
 
          this.drawNodeShape(server_shape, false);
       },
