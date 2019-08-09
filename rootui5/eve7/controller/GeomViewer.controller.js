@@ -85,7 +85,9 @@ sap.ui.define(['sap/ui/core/Component',
          // if true, most operations are performed locally without involving server
          this.standalone = this.websocket.kind == "file";
 
-         if (JSROOT.GetUrlOption('nobrowser') !== null) {
+         var nobrowser = this.websocket.GetUserArgs('nobrowser') || (JSROOT.GetUrlOption('nobrowser') !== null);
+
+         if (nobrowser) {
             // remove complete area - plain geometry drawing
             this.byId("geomViewerApp").setMode(sap.m.SplitAppMode.HideMode);
          } else {
@@ -123,7 +125,7 @@ sap.ui.define(['sap/ui/core/Component',
             sap.ui.define(['rootui5/eve7/lib/EveElements'], function(EveElements) {
                this.creator = new EveElements();
                this.creator.useIndexAsIs = (JSROOT.GetUrlOption('useindx') !== null);
-               this.checkRequestMsg();
+               this.checkSendRequest();
             }.bind(this));
          }.bind(this));
       },
@@ -285,14 +287,18 @@ sap.ui.define(['sap/ui/core/Component',
       },
 
       createGeoPainter: function(drawopt) {
-         if (this.geo_painter) return;
+         if (this.geo_painter) {
+            this.geo_painter.ClearDrawings();
+         } else {
+            var geomDrawing = this.byId("geomDrawing");
+            this.geo_painter = JSROOT.Painter.CreateGeoPainter(geomDrawing.getDomRef(), null, drawopt);
+            this.geo_painter.setMouseTmout(0);
+            this.geo_painter.setDepthMethod("dflt");
+            geomDrawing.setGeomPainter(this.geo_painter);
 
-         var geomDrawing = this.byId("geomDrawing");
+            this.geo_painter.AddHighlightHandler(this);
+         }
 
-         this.geo_painter = JSROOT.Painter.CreateGeoPainter(geomDrawing.getDomRef(), null, drawopt);
-         geomDrawing.setGeomPainter(this.geo_painter);
-
-         this.geo_painter.AddHighlightHandler(this);
          this.geo_painter.ActivateInBrowser = this.activateInTreeTable.bind(this);
 
          this.geo_painter.assignClones(this.geo_clones);
@@ -300,13 +306,13 @@ sap.ui.define(['sap/ui/core/Component',
 
       /** Extract shapes from binary data using appropriate draw message
        * Draw message is vector of REveGeomVisible objects, including info where shape is in raw data */
-      extractRawShapes: function(draw_msg) {
+      extractRawShapes: function(draw_msg, recreate) {
 
          var nodes = null, old_gradpersegm = 0;
 
          // array for descriptors for each node
          // if array too large (>1M), use JS object while only ~1K nodes are expected to be used
-         if (!this.geo_clones) {
+         if (recreate) {
             if (draw_msg.kind !== "draw") return false;
             nodes = (draw_msg.numnodes > 1e6) ? { length: draw_msg.numnodes } : new Array(draw_msg.numnodes); // array for all nodes
          }
@@ -320,9 +326,15 @@ sap.ui.define(['sap/ui/core/Component',
                this.geo_clones.updateNode(node);
          }
 
-         if (!this.geo_clones) {
+         if (recreate) {
             this.geo_clones = new JSROOT.GEO.ClonedNodes(null, nodes);
             this.geo_clones.name_prefix = this.geo_clones.GetNodeName(0);
+            // normally only need when making selection, not used in geo viewer
+            this.geo_clones.SetMaxVisNodes(draw_msg.maxvisnodes);
+            this.geo_clones.SetVisLevel(draw_msg.vislevel);
+            // parameter need for visualization with transparency
+            // TODO: provide from server
+            this.geo_clones.maxdepth = 20;
          }
 
          if (draw_msg.nsegm) {
@@ -377,19 +389,19 @@ sap.ui.define(['sap/ui/core/Component',
 
          var off = 0;
 
-         if (rd.v) {
-            rd.vtxBuff = new Float32Array(rd.raw.buffer, off, rd.v);
-            off += rd.v*4;
+         if (rd.sz[0]) {
+            rd.vtxBuff = new Float32Array(rd.raw.buffer, off, rd.sz[0]);
+            off += rd.sz[0]*4;
          }
 
-         if (rd.n) {
-            rd.nrmBuff = new Float32Array(rd.raw.buffer, off, rd.n);
-            off += rd.n*4;
+         if (rd.sz[1]) {
+            rd.nrmBuff = new Float32Array(rd.raw.buffer, off, rd.sz[1]);
+            off += rd.sz[1]*4;
          }
 
-         if (rd.i) {
-            rd.idxBuff = new Uint32Array(rd.raw.buffer, off, rd.i);
-            off += rd.i*4;
+         if (rd.sz[2]) {
+            rd.idxBuff = new Uint32Array(rd.raw.buffer, off, rd.sz[2]);
+            off += rd.sz[2]*4;
          }
 
          // shape handle is similar to created in JSROOT.GeoPainter
@@ -429,7 +441,7 @@ sap.ui.define(['sap/ui/core/Component',
                this.last_draw_msg = msg;
 
                // here we should decode render data
-               this.extractRawShapes(msg);
+               this.extractRawShapes(msg, true);
 
                // after clones are existing - ensure geo painter is there
                this.createGeoPainter(msg.drawopt);
@@ -460,9 +472,8 @@ sap.ui.define(['sap/ui/core/Component',
          if (this.model)
             this.model.sendFirstRequest(this.websocket);
 
-         // when connection established, checked if we can submit requested
-         this.checkRequestMsg();
-
+         // when connection established, checked if we can submit request
+         this.checkSendRequest();
       },
 
       OnWebsocketClosed: function() {
@@ -520,6 +531,13 @@ sap.ui.define(['sap/ui/core/Component',
          case "NINFO:":
             this.provideNodeInfo(JSROOT.parse(msg));
             break;
+         case "RELOAD":
+            this.paintFoundNodes(null);
+            this.doReload(true);
+            break;
+         case "DROPT:":
+            this.applyDrawOptions(msg);
+            break;
          default:
             console.error('Non recognized msg ' + mhdr + ' len=' + msg.length);
          }
@@ -528,6 +546,7 @@ sap.ui.define(['sap/ui/core/Component',
       /** Format REveGeomNode data to be able use it in list of clones */
       formatNodeElement: function(elem) {
          elem.kind = 2; // special element for geom viewer, used in TGeoPainter
+         elem.vis = 2; // visibility is alwys on
          var m = elem.matr;
          delete elem.matr;
          if (!m || !m.length) return;
@@ -581,7 +600,7 @@ sap.ui.define(['sap/ui/core/Component',
 
          if (!arr || !this.geo_clones) return;
 
-         console.error('modifyDescription should be modified');
+         console.error('modifyDescription should be changed');
 
          return;
 
@@ -765,10 +784,12 @@ sap.ui.define(['sap/ui/core/Component',
       onAfterRendering: function() {
          this.renderingDone = true;
 
-         this.checkRequestMsg();
+         this.checkSendRequest();
       },
 
-      checkRequestMsg: function() {
+      checkSendRequest: function(force) {
+         if (force) this.ask_getdraw = false;
+
          if (this.isConnected && this.renderingDone) {
 
             if (this.creator && !this.ask_getdraw) {
@@ -805,6 +826,15 @@ sap.ui.define(['sap/ui/core/Component',
          delete this.search_handler;
 
          this.websocket.Send("SEARCH:" + (query || ""));
+      },
+
+      /** when new draw options send from server */
+      applyDrawOptions: function(opt) {
+         if (!this.geo_painter) return;
+
+         this.geo_painter.setAxesDraw(opt.indexOf("axis") >= 0);
+
+         this.geo_painter.setAutoRotate(opt.indexOf("rotate") >= 0);
       },
 
       /** when new query entered in the seach field */
@@ -914,9 +944,18 @@ sap.ui.define(['sap/ui/core/Component',
          if (this.standalone) {
             this.showTextInBrowser();
             this.paintFoundNodes(null);
-            this.model.setFullModel(this.fullModel);
+            if (this.model)
+               this.model.setFullModel(this.fullModel);
          } else {
-            this.model.reloadMainModel(force);
+            this.checkSendRequest(force);
+
+            if (this.model) {
+               this.model.clearFullModel();
+               console.log('Calling reload model');
+               this.model.reloadMainModel(force);
+
+            }
+
          }
       },
 
