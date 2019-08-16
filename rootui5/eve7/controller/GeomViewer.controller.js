@@ -766,8 +766,8 @@ sap.ui.define(['sap/ui/core/Component',
             this.geo_painter.appendMoreNodes(visibles || null);
 
          if (visibles && visibles.length && (visibles.length < 100)) {
-            var dflt = Math.max(this.geo_painter.options.transparency, 0.98);
-            this.geo_painter.changeGlobalTransparency(function(node) {
+            var dflt = Math.max(this.geo_painter.ctrl.transparency, 0.98);
+            this.geo_painter.changedGlobalTransparency(function(node) {
                if (node.stack)
                   for (var n=0;n<visibles.length;++n)
                      if (JSROOT.GEO.IsSameStack(node.stack, visibles[n].stack))
@@ -776,7 +776,7 @@ sap.ui.define(['sap/ui/core/Component',
             });
 
          } else {
-            this.geo_painter.changeGlobalTransparency();
+            this.geo_painter.changedGlobalTransparency();
          }
       },
 
