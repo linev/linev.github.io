@@ -88,8 +88,13 @@ sap.ui.define(['sap/ui/core/Component',
          var nobrowser = this.websocket.GetUserArgs('nobrowser') || (JSROOT.GetUrlOption('nobrowser') !== null);
 
          if (nobrowser) {
-            // remove complete area - plain geometry drawing
-            this.byId("geomViewerApp").setMode(sap.m.SplitAppMode.HideMode);
+            // remove main area - plain geometry drawing
+            // if master activated - immediately show control
+
+            var app = this.byId("geomViewerApp");
+            app.setMode(sap.m.SplitAppMode.HideMode);
+            app.setInitialMaster(this.createId("geomControl"));
+            this.byId("geomControl").setShowNavButton(false);
          } else {
 
             // create model only for browser - no need for anybody else
@@ -287,13 +292,22 @@ sap.ui.define(['sap/ui/core/Component',
       },
 
       createGeoPainter: function(drawopt) {
+
+
          if (this.geo_painter) {
             this.geo_painter.ClearDrawings();
          } else {
             var geomDrawing = this.byId("geomDrawing");
             this.geo_painter = JSROOT.Painter.CreateGeoPainter(geomDrawing.getDomRef(), null, drawopt);
             this.geo_painter.setMouseTmout(0);
-            this.geo_painter.setDepthMethod("dflt");
+            // this.geo_painter.setDepthMethod("dflt");
+            this.geo_painter.ctrl.notoolbar = true;
+            // this.geo_painter.showControlOptions = this.showControl.bind(this);
+
+            this.geom_model = new JSONModel(this.geo_painter.ctrl);
+
+            this.byId("geomControl").setModel(this.geom_model);
+
             geomDrawing.setGeomPainter(this.geo_painter);
 
             this.geo_painter.AddHighlightHandler(this);
@@ -983,8 +997,81 @@ sap.ui.define(['sap/ui/core/Component',
       onQuitRootPress: function() {
          if (!this.standalone)
             this.websocket.Send("QUIT_ROOT");
-      }
+      },
 
+      onPressMasterBack: function() {
+         this.byId("geomViewerApp").backMaster();
+      },
+
+      onPressDetailBack: function() {
+         this.byId("geomViewerApp").backDetail();
+      },
+
+      showControl: function() {
+         this.byId("geomViewerApp").toMaster(this.createId("geomControl"));
+      },
+
+
+      // different handlers of Config page
+
+      processPainterChange: function(func, arg) {
+         if (this.geo_painter && (typeof this.geo_painter[func] == 'function'))
+            this.geo_painter[func](arg);
+      },
+
+      sliderXchange: function() {
+         this.processPainterChange('changedClipping', 0);
+      },
+
+      sliderYchange: function() {
+         this.processPainterChange('changedClipping', 1);
+      },
+
+      sliderZchange: function() {
+         this.processPainterChange('changedClipping', 2);
+      },
+
+      clipChanged: function() {
+         this.processPainterChange('changedClipping', -1);
+      },
+
+      hightlightChanged: function() {
+         this.processPainterChange('changedHighlight');
+      },
+
+      transparencyChange: function() {
+         this.processPainterChange('changedGlobalTransparency');
+      },
+
+      wireframeChanged: function() {
+         this.processPainterChange('changedWireFrame');
+      },
+
+      backgroundChanged: function(oEvent) {
+         console.log('color ', oEvent.getParameter('value'));
+         this.processPainterChange('changedBackground', oEvent.getParameter('value'));
+      },
+
+      cameraReset: function() {
+         this.processPainterChange('focusCamera');
+      },
+
+      depthTestChanged: function() {
+         this.processPainterChange('changedDepthTest');
+      },
+
+      depthMethodChanged: function() {
+         this.processPainterChange('changedDepthMethod');
+      },
+
+      pressReset: function() {
+         this.processPainterChange('resetAdvanced');
+         if (this.geom_model) this.geom_model.refresh();
+      },
+
+      ssaoChanged: function() {
+         this.processPainterChange('changedSSAO');
+      }
    });
 
 });

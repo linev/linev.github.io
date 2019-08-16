@@ -3,25 +3,30 @@
    xmlns="sap.m"
    xmlns:mvc="sap.ui.core.mvc"
    xmlns:eve7="rootui5.eve7.lib"
+   xmlns:core="sap.ui.core"
    xmlns:l="sap.ui.layout"
    xmlns:t="sap.ui.table">
    <SplitApp id="geomViewerApp" initialMaster="geomHierarchy"
       initialDetail="geomDraw" orientationChange="onOrientationChange">
       <masterPages>
-         <Page id="geomHierarchy" title="" showNavButton="false"
-            showFooter="false" showSubHeader="false" showHeader="false">
+         <Page id="geomHierarchy" title="Hierarchy" showNavButton="false"
+            showFooter="false" showSubHeader="false" showHeader="true" icon="sap-icon://action" class="sapUiStdPage">
+            <headerContent>
+               <Button icon="sap-icon://settings" type="Transparent"
+                        tooltip="Show control page" press="showControl" />
+            </headerContent>
             <content>
                <Toolbar>
+                  <Button icon="sap-icon://log" type="Transparent"
+                          tooltip="Quit ROOT session" press="onQuitRootPress" />
                   <Button icon="sap-icon://synchronize" type="Transparent"
-                     tooltip="Reload geometry drawing" press="onRealoadPress" />
+                          tooltip="Reload geometry drawing" press="onRealoadPress" />
                   <Button icon="sap-icon://show" type="Transparent"
                      tooltip="Toggle with info page" press="onInfoPress" />
-                  <Button icon="sap-icon://log" type="Transparent"
-                     tooltip="Quit ROOT session" press="onQuitRootPress" />
                   <ToolbarSpacer />
                   <SearchField liveChange="onSearch" />
                </Toolbar>
-               <t:TreeTable id="treeTable" title="Browser"
+               <t:TreeTable id="treeTable"
                   columnHeaderVisible="false" editable="false"
                   enableSelectAll="false" selectionBehavior="RowOnly"
                   selectionMode="Single" visibleRowCountMode="Auto"
@@ -30,16 +35,107 @@
                </t:TreeTable>
             </content>
          </Page>
+         <Page id="geomControl" title="Control" showHeader="true" showFooter="false" showSubHeader="false"
+                showNavButton="true" navButtonText="Back to hierarchy" navButtonPress="onPressMasterBack"
+                class="sapUiStdPage">
+            <content>
+            <IconTabBar class="sapUiResponsiveContentPadding" expanded="true">
+                <items>
+                  <IconTabFilter text="Clipping">
+                    <VBox>
+                       <CheckBox text="Clip x" selected="{/clip/0/enabled}" select="clipChanged"/>
+                       <Slider min="{/clip/0/min}" max="{/clip/0/max}" value="{/clip/0/value}" width="100%"
+                               showAdvancedTooltip="true" showHandleTooltip="false" inputsAsTooltips="true"
+                               change="sliderXchange" liveChange="sliderXchange"/>
+                       <CheckBox text="Clip y" selected="{/clip/1/enabled}" select="clipChanged"/>
+                       <Slider min="{/clip/1/min}" max="{/clip/1/max}" value="{/clip/1/value}" width="100%"
+                               showAdvancedTooltip="true" showHandleTooltip="false" inputsAsTooltips="true"
+                               change="sliderYchange" liveChange="sliderYchange"/>
+                       <CheckBox text="Clip z" selected="{/clip/2/enabled}" select="clipChanged"/>
+                       <Slider min="{/clip/2/min}" max="{/clip/2/max}" value="{/clip/2/value}" width="100%"
+                               showAdvancedTooltip="true" showHandleTooltip="false" inputsAsTooltips="true"
+                               change="sliderZchange" liveChange="sliderZchange"/>
+                       <CheckBox text="Clip intersection" selected="{/clipIntersect}" select="clipChanged"/>
+                    </VBox>
+                  </IconTabFilter>
+               </items>
+            </IconTabBar>
+            <IconTabBar class="sapUiResponsiveContentPadding" expanded="false">
+                <items>
+                  <IconTabFilter text="Appearance">
+                    <VBox>
+                    <!-- CheckBox text="Highlight selection" selected="{/hightlight}" select="hightlightChanged"/-->
+                    <Text text="Transparency:"/>
+                    <Slider min="0" max="1" step="0.01" value="{/transparency}" width="100%"
+                               showAdvancedTooltip="true" showHandleTooltip="false" inputsAsTooltips="true"
+                               change="transparencyChange" liveChange="transparencyChange"/>
+                    <CheckBox text="Wireframe" selected="{/wireframe}" select="wireframeChanged"/>
+                    <Label text="Background"/>
+                    <ColorPalette colorSelect="backgroundChanged"/>
+                    <Button text="Reset camera" press="cameraReset" tooltip="Set default camera position"/>
+                    </VBox>
+                  </IconTabFilter>
+               </items>
+            </IconTabBar>
+            <IconTabBar class="sapUiResponsiveContentPadding" expanded="false">
+                <items>
+                  <IconTabFilter text="Advanced">
+                     <VBox>
+                     <CheckBox text="Depth test" selected="{/depthTest}" select="depthTestChanged"/>
+                     <Text text="Depth method:" />
+                     <ComboBox selectedKey="{/depthMethod}"
+                               change="depthMethodChanged"
+                               items="{ path: '/depthMethodItems' }">
+                                 <core:Item key="{value}" text="{name}" />
+                     </ComboBox>
+                     <Button text="Reset" press="pressReset" tooltip="Reset advanced settings to default"/>
+                     </VBox>
+                  </IconTabFilter>
+               </items>
+            </IconTabBar>
+            <IconTabBar class="sapUiResponsiveContentPadding" expanded="false">
+                <items>
+                  <IconTabFilter text="SSAO">
+                     <VBox>
+                     <CheckBox text="Smooth Lightning (SSAO)" selected="{/ssao/enabled}" select="ssaoChanged"/>
+                     <Text text="Output:" />
+                     <ComboBox selectedKey="{/ssao/output}"
+                               change="ssaoChanged"
+                               items="{ path: '/ssao/outputItems' }">
+                                 <core:Item key="{value}" text="{name}" />
+                     </ComboBox>
+                     <Button text="Reset"/>
+                     <Text text="kernelRadius"/>
+                     <Slider id="debugId1"  min="0" max="32" value="{/ssao/kernelRadius}" width="100%"
+                             showAdvancedTooltip="true" showHandleTooltip="false" inputsAsTooltips="true"
+                             change="ssaoChanged" liveChange="ssaoChanged"/>
+                     <Text text="minDistance:"/>
+                     <Slider id="debugId2" min="0.001" max="0.02" step="0.001" value="{/ssao/minDistance}" width="100%"
+                             showAdvancedTooltip="true" showHandleTooltip="false" inputsAsTooltips="true"
+                             change="ssaoChanged" liveChange="ssaoChanged"/>
+                     <Text text="maxDistance:"/>
+                     <Slider id="debugId3" min="0.01" max="0.3" step="0.01" value="{/ssao/maxDistance}" width="100%"
+                             showAdvancedTooltip="true" showHandleTooltip="false" inputsAsTooltips="true"
+                             change="ssaoChanged" liveChange="ssaoChanged"/>
+                     </VBox>
+                  </IconTabFilter>
+               </items>
+            </IconTabBar>
+
+            </content>
+         </Page>
+
       </masterPages>
       <detailPages>
-         <Page id="geomDraw" title="" showNavButton="false"
-            showFooter="false" showSubHeader="false" showHeader="false">
+         <Page id="geomDraw" title="GL drawing" showNavButton="false"
+            showFooter="false" showSubHeader="false" showHeader="true" class="sapUiStdPage">
             <content>
                <eve7:GeomDrawing id="geomDrawing" color="white"/>
             </content>
          </Page>
-         <Page id="geomInfo" title="Node information" showNavButton="false"
-            showFooter="false" showSubHeader="false" showHeader="true">
+         <Page id="geomInfo" title="Node information"
+                showNavButton="true" navButtonText="Back to GL view" navButtonPress="onPressDetailBack"
+            showFooter="false" showSubHeader="false" showHeader="true" class="sapUiStdPage">
             <content>
                <l:Splitter orientation="Vertical" width="100%" height="100%">
                   <VBox>

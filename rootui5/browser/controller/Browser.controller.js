@@ -1,19 +1,21 @@
 sap.ui.define(['sap/ui/core/Component',
                'sap/ui/core/mvc/Controller',
                'sap/ui/core/Control',
+               'sap/ui/core/Icon',
                'sap/m/Text',
-					'sap/m/CheckBox',
-					'sap/m/MessageBox',
-					'sap/m/MessageToast',
+               'sap/m/CheckBox',
+               'sap/m/MessageBox',
+               'sap/m/MessageToast',
+               'sap/m/TabContainerItem',
                'sap/ui/layout/Splitter',
                "sap/ui/core/ResizeHandler",
                "sap/ui/layout/HorizontalLayout",
                "sap/ui/table/Column",
-					"sap/ui/core/util/File",
-					"sap/ui/model/json/JSONModel",
+               "sap/ui/core/util/File",
+               "sap/ui/model/json/JSONModel",
                "rootui5/browser/model/BrowserModel"
-],function(Component, Controller, CoreControl, mText, mCheckBox, MessageBox, MessageToast, Splitter,
-	        ResizeHandler, HorizontalLayout, tableColumn, File, JSONModel, BrowserModel) {
+],function(Component, Controller, CoreControl, CoreIcon, mText, mCheckBox, MessageBox, MessageToast, TabContainerItem,
+           Splitter, ResizeHandler, HorizontalLayout, tableColumn, File, JSONModel, BrowserModel) {
 
    "use strict";
 
@@ -47,6 +49,7 @@ sap.ui.define(['sap/ui/core/Component',
             // copy extra attributes from element to node in the browser
             // later can be done automatically
             this.model.addNodeAttributes = function(node, elem) {
+               node.icon = elem.icon;
                node.fsize = elem.fsize;
                node.mtime = elem.mtime;
                node.ftype = elem.ftype;
@@ -61,107 +64,200 @@ sap.ui.define(['sap/ui/core/Component',
             this.model.assignTreeTable(t);
             t.addColumn(new tableColumn({
                label: "Name",
-					autoResizable: true,
-					visible: true,
+               autoResizable: true,
+               visible: true,
                template: new HorizontalLayout({
                   content: [
-                     new mText({text:"{name}", wrapping: false })
+                     new CoreIcon({src:"{icon}"}),
+                     new mText({text:" {name}", renderWhitespace: true, wrapping: false })
                   ]
                })
-				}));
+            }));
             t.addColumn(new tableColumn({
                label: "Size",
-					autoResizable: true,
-					visible: true,
+               autoResizable: true,
+               visible: true,
                template: new HorizontalLayout({
                   content: [
                      new mText({text:"{fsize}", wrapping: false })
                   ]
                })
-				}));
+            }));
             t.addColumn(new tableColumn({
                label: "Time",
-					autoResizable: true,
-					visible: false,
+               autoResizable: true,
+               visible: false,
                template: new HorizontalLayout({
                   content: [
                      new mText({text:"{mtime}", wrapping: false })
                   ]
                })
-				}));
+            }));
             t.addColumn(new tableColumn({
-					label: "Type",
-					autoResizable: true,
-					visible: false,
+               label: "Type",
+               autoResizable: true,
+               visible: false,
                template: new HorizontalLayout({
                   content: [
                      new mText({text:"{ftype}", wrapping: false })
                   ]
                })
-				}));
+            }));
             t.addColumn(new tableColumn({
-					label: "UID",
-					autoResizable: true,
-					visible: false,
+               label: "UID",
+               autoResizable: true,
+               visible: false,
                template: new HorizontalLayout({
                   content: [
                      new mText({text:"{fuid}", wrapping: false })
                   ]
                })
-				}));
+            }));
             t.addColumn(new tableColumn({
-					label: "GID",
-					autoResizable: true,
-					visible: false,
+               label: "GID",
+               autoResizable: true,
+               visible: false,
                template: new HorizontalLayout({
                   content: [
                      new mText({text:"{fgid}", wrapping: false })
                   ]
                })
-				}));
+            }));
 
             // catch re-rendering of the table to assign handlers
             t.addEventDelegate({
                onAfterRendering: function() { this.assignRowHandlers(); }
             }, this);
 
-				this.getView().byId("aCodeEditor").setModel(new JSONModel({
-					code: ""
-				}));
-			}
+            this.getView().byId("aCodeEditor").setModel(new JSONModel({
+               code: ""
+            }));
+         }
       },
 
-		onChangeFile: function(oEvent) {
-        var oModel = this.getView().byId("aCodeEditor").getModel();
-        var oReader = new FileReader();
-        oReader.onload = function() {
-          oModel.setProperty("/code", oReader.result);
-		  }
-		  var file = oEvent.getParameter("files")[0];
-		  var filename = file.name;
-		  if (filename.endsWith(".C") || filename.endsWith(".c") || filename.endsWith(".cc") ||
-		      filename.endsWith(".cpp") || filename.endsWith(".cxx") || filename.endsWith(".h") ||
-		      filename.endsWith(".hh") || filename.endsWith(".hxx"))
-          this.getView().byId("aCodeEditor").setType('c_cpp');
-        else if (filename.endsWith(".py"))
-          this.getView().byId("aCodeEditor").setType('python');
-        else if (filename.endsWith(".js"))
-          this.getView().byId("aCodeEditor").setType('javascript');
-        else if (filename.endsWith(".htm") || filename.endsWith(".html"))
-          this.getView().byId("aCodeEditor").setType('html');
-        else
-          this.getView().byId("aCodeEditor").setType('text');
-		  oReader.readAsText(file);
-		},
+      /** @brief Extract the file name and extension
+      * @desc Used to set the editor's model properties and display the file name on the tab element  */
+     setFileNameType: function(filename) {
+         var oEditor = this.getView().byId("aCodeEditor");
+         var oModel = oEditor.getModel();
+         var oTabElement = oEditor.getParent().getParent();
+         var ext = "txt";
+         if (filename.lastIndexOf('.') > 0)
+            ext = filename.substr(filename.lastIndexOf('.') + 1);
+         switch(ext.toLowerCase()) {
+            case "c":
+            case "cc":
+            case "cpp":
+            case "cxx":
+            case "h":
+            case "hh":
+            case "hxx":
+               oEditor.setType('c_cpp');
+               break;
+            case "f":
+               oEditor.setType('fortran');
+               break;
+            case "htm":
+            case "html":
+               oEditor.setType('html');
+               break;
+            case "js":
+               oEditor.setType('javascript');
+               break;
+            case "json":
+               oEditor.setType('json');
+               break;
+            case "md":
+               oEditor.setType('markdown');
+               break;
+            case "py":
+               oEditor.setType('python');
+               break;
+            case "tex":
+               oEditor.setType('latex');
+               break;
+            case "cmake":
+            case "log":
+            case "txt":
+               oEditor.setType('plain_text');
+               break;
+            case "xml":
+               oEditor.setType('xml');
+               break;
+            default: // unsupported type
+               if (filename.lastIndexOf('README') >= 0)
+                  oEditor.setType('plain_text');
+               else
+                  return false;
+               break;
+         }
+         oTabElement.setAdditionalText(filename);
+         if (filename.lastIndexOf('.') > 0)
+            filename = filename.substr(0, filename.lastIndexOf('.'));
+         oModel.setProperty("/filename", filename);
+         oModel.setProperty("/ext", ext);
+         return true;
+      },
 
+      /** @brief Handle the "Browse..." button press event */
+      onChangeFile: function(oEvent) {
+         var oEditor = this.getView().byId("aCodeEditor");
+         var oModel = oEditor.getModel();
+         var oReader = new FileReader();
+         oReader.onload = function() {
+            oModel.setProperty("/code", oReader.result);
+         }
+         var file = oEvent.getParameter("files")[0];
+         if (this.setFileNameType(file.name))
+            oReader.readAsText(file);
+      },
+
+      /** @brief Handle the "Save As..." button press event */
+      onSaveAs: function() {
+         var oEditor = this.getView().byId("aCodeEditor");
+         var oModel = oEditor.getModel();
+         var sText = oModel.getProperty("/code");
+         var filename = oModel.getProperty("/filename");
+         var ext = oModel.getProperty("/ext");
+         if (filename == undefined) filename = "untitled";
+         if (ext == undefined) ext = "txt";
+         File.save(sText, filename, ext);
+      },
+
+      /** @brief Assign the "double click" event handler to each row */
       assignRowHandlers: function() {
-			/*
-			var rows = this.getView().byId("treeTable").getRows();
+         var rows = this.byId("treeTable").getRows();
          for (var k=0;k<rows.length;++k) {
-            rows[k].$().hover(this.onRowHover.bind(this, rows[k], true), this.onRowHover.bind(this, rows[k], false));
-			}
-         */
+            rows[k].$().dblclick(this.onRowDblClick.bind(this, rows[k]));
+         }
       },
+
+      /** @brief Send RBrowserRequest to the browser */
+      sendBrowserRequest: function(_oper, args) {
+         var req = { path: "", first: 0, number: 0, sort: _oper };
+         JSROOT.extend(req, args);
+         this.websocket.Send("BRREQ:" + JSON.stringify(req));
+      },
+
+      /** @brief Double-click event handler */
+      onRowDblClick: function(row) {
+         if (row._bHasChildren) // ignore directories for now
+            return;
+         var fullpath = "";
+         var ctxt = row.getBindingContext(),
+             prop = ctxt ? ctxt.getProperty(ctxt.getPath()) : null;
+         if (prop && prop.fullpath) {
+            fullpath = prop.fullpath.substr(1, prop.fullpath.length-2);
+            var dirname = fullpath.substr(0, fullpath.lastIndexOf('/'));
+            if (dirname.endsWith(".root"))
+               return this.sendBrowserRequest("DBLCLK", { path: fullpath });
+         }
+         var oEditor = this.getView().byId("aCodeEditor");
+         var oModel = oEditor.getModel();
+         var filename = fullpath.substr(fullpath.lastIndexOf('/') + 1);
+         if (this.setFileNameType(filename))
+            return this.sendBrowserRequest("DBLCLK", { path: fullpath });
+       },
 
       OnWebsocketOpened: function(handle) {
          this.isConnected = true;
@@ -186,10 +282,8 @@ sap.ui.define(['sap/ui/core/Component',
       /** Entry point for all data from server */
       OnWebsocketMsg: function(handle, msg, offset) {
 
-         // binary data can be send only as addition to draw message
-         // here data can be placed in the queue and processed when all other prerequicities are done
          if (typeof msg != "string")
-            return this.checkDrawMsg("binary", null, msg, offset);
+            return console.error("Browser do not uses binary messages len = " + mgs.byteLength);
 
          var mhdr = msg.substr(0,6);
          msg = msg.substr(6);
@@ -202,6 +296,10 @@ sap.ui.define(['sap/ui/core/Component',
             break;
          case "FESCR:":  // searching hierarchy
             this.parseDescription(msg, false);
+            break;
+         case "FREAD:":  // file read
+            var model = this.getView().byId("aCodeEditor").getModel();
+            model.setProperty("/code", msg);
             break;
          case "BREPL:":   // browser reply
             if (this.model) {
@@ -218,12 +316,6 @@ sap.ui.define(['sap/ui/core/Component',
                   //    tt.autoResizeColumn(k);
                }
             }
-            break;
-         case "MODIF:":
-            this.modifyDescription(msg);
-            break;
-         case "APPND:":
-            this.checkDrawMsg("append", JSROOT.parse(msg));
             break;
          default:
             console.error('Non recognized msg ' + mhdr + ' len=' + msg.length);
@@ -269,7 +361,7 @@ sap.ui.define(['sap/ui/core/Component',
          }
       },
 
-      /** Reload geometry description and base drawing, normally not required */
+      /** Reload (refresh) file tree browser */
       onRealoadPress: function (oEvent) {
          this.doReload(true);
       },
@@ -287,26 +379,40 @@ sap.ui.define(['sap/ui/core/Component',
       /** Quit ROOT session */
       onQuitRootPress: function(oEvent) {
          this.websocket.Send("QUIT_ROOT");
-		},
+      },
 
-		tabCloseHandler: function(oEvent) {
-			// prevent the tab being closed by default
-			oEvent.preventDefault();
+      /** @brief Add Tab event handler */
+      addNewButtonPressHandler: function(oEvent) {
+         var oTabContainer = this.byId("myTabContainer");
+         var oTabContainerItem = new TabContainerItem({
+            name: "ROOT Canvas",
+            icon: "sap-icon://column-chart-dual-axis"
+         });
+         oTabContainer.addItem(oTabContainerItem);
+      },
 
-			var oTabContainer = this.byId("myTabContainer");
-			var oItemToClose = oEvent.getParameter('item');
+      /** @brief Close Tab event handler */
+      tabCloseHandler: function(oEvent) {
+         // prevent the tab being closed by default
+         oEvent.preventDefault();
 
-			MessageBox.confirm("Do you want to close the tab '" + oItemToClose.getName() + "'?", {
-				onClose: function (oAction) {
-					if (oAction === MessageBox.Action.OK) {
-						oTabContainer.removeItem(oItemToClose);
-						MessageToast.show("Item closed: " + oItemToClose.getName(), {duration: 500});
-					} else {
-						MessageToast.show("Item close canceled: " + oItemToClose.getName(), {duration: 500});
-					}
-				}
-			});
-		}
-	});
+         var oTabContainer = this.byId("myTabContainer");
+         var oItemToClose = oEvent.getParameter('item');
+         // prevent closing the Code Editor
+         if (oItemToClose.getName() == "Code Editor") {
+            MessageToast.show("Sorry, you cannot close the Code Editor", {duration: 1500});
+            return;
+         }
+
+         MessageBox.confirm('Do you really want to close the "' + oItemToClose.getName() + '" tab?', {
+            onClose: function (oAction) {
+               if (oAction === MessageBox.Action.OK) {
+                  oTabContainer.removeItem(oItemToClose);
+                  MessageToast.show('Closed the "' + oItemToClose.getName() + '" tab', {duration: 1500});
+               }
+            }
+         });
+      }
+   });
 
 });
