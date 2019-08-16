@@ -85,6 +85,10 @@ sap.ui.define(['sap/ui/core/Component',
          // if true, most operations are performed locally without involving server
          this.standalone = this.websocket.kind == "file";
 
+         this.cfg = { standalone: this.websocket.kind == "file" };
+         this.cfg_model = new JSONModel(this.cfg);
+         this.getView().setModel(this.cfg_model);
+
          var nobrowser = this.websocket.GetUserArgs('nobrowser') || (JSROOT.GetUrlOption('nobrowser') !== null);
 
          if (nobrowser) {
