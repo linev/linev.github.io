@@ -297,7 +297,6 @@ sap.ui.define(['sap/ui/core/Component',
 
       createGeoPainter: function(drawopt) {
 
-
          if (this.geo_painter) {
             this.geo_painter.ClearDrawings();
          } else {
@@ -308,12 +307,12 @@ sap.ui.define(['sap/ui/core/Component',
             this.geo_painter.ctrl.notoolbar = true;
             // this.geo_painter.showControlOptions = this.showControl.bind(this);
 
+            this.geo_painter.setCompleteHandler(this.completeGeoDrawing.bind(this));
+
             this.geom_model = new JSONModel(this.geo_painter.ctrl);
-
+            this.geo_painter.ctrl.cfg = {}; // dummy config until real config is received
             this.byId("geomControl").setModel(this.geom_model);
-
             geomDrawing.setGeomPainter(this.geo_painter);
-
             this.geo_painter.AddHighlightHandler(this);
          }
 
@@ -348,16 +347,22 @@ sap.ui.define(['sap/ui/core/Component',
             this.geo_clones = new JSROOT.GEO.ClonedNodes(null, nodes);
             this.geo_clones.name_prefix = this.geo_clones.GetNodeName(0);
             // normally only need when making selection, not used in geo viewer
-            this.geo_clones.SetMaxVisNodes(draw_msg.maxvisnodes);
-            this.geo_clones.SetVisLevel(draw_msg.vislevel);
+            // this.geo_clones.SetMaxVisNodes(draw_msg.maxvisnodes);
+            // this.geo_clones.SetVisLevel(draw_msg.vislevel);
             // parameter need for visualization with transparency
             // TODO: provide from server
             this.geo_clones.maxdepth = 20;
          }
 
-         if (draw_msg.nsegm) {
+         var nsegm = 0;
+         if (draw_msg.cfg)
+            nsegm = draw_msg.cfg.nsegm;
+         else if (this.geom_model)
+            nsegm = this.geom_model.getProperty("/cfg/nsegm");
+
+         if (nsegm) {
             old_gradpersegm = JSROOT.GEO.GradPerSegm;
-            JSROOT.GEO.GradPerSegm = 360 / Math.max(draw_msg.nsegm,6);
+            JSROOT.GEO.GradPerSegm = 360 / Math.max(nsegm,6);
          }
 
          for (var cnt = 0; cnt < draw_msg.visibles.length; ++cnt) {
@@ -366,13 +371,8 @@ sap.ui.define(['sap/ui/core/Component',
             // entry may be provided without shape - it is ok
             if (!rd) continue;
 
-            if (rd.server_shape) {
-               item.server_shape = rd.server_shape;
-               continue;
-            }
-
             item.server_shape = rd.server_shape =
-               this.createServerShape(rd);
+               this.createServerShape(rd, nsegm);
          }
 
          if (old_gradpersegm)
@@ -381,53 +381,55 @@ sap.ui.define(['sap/ui/core/Component',
          return true;
       },
 
-      /** Create single shape from provided raw data */
-      createServerShape: function(rd) {
+      /** Create single shape from provided raw data. If nsegm changed, shape will be recreated */
+      createServerShape: function(rd, nsegm) {
+
+         if (rd.server_shape && ((rd.nsegm===nsegm) || !rd.shape))
+            return rd.server_shape;
+
+         rd.nsegm = nsegm;
+
+         var g = null, off = 0;
 
          if (rd.shape) {
             // case when TGeoShape provided as is
-            var g = JSROOT.GEO.createGeometry(rd.shape);
-            return {
-               _typename: "$$Shape$$",
-               ready: true,
-               geom: g,
-               nfaces: JSROOT.GEO.numGeometryFaces(g)
+            g = JSROOT.GEO.createGeometry(rd.shape);
+         } else {
+
+            if (!rd.raw || (rd.raw.length==0)) {
+               console.error('No raw data at all');
+               return null;
             }
-         }
 
-         if (!rd.raw || (rd.raw.length==0)) {
-            console.error('No raw data at all');
-            return null;
-         }
+            if (!rd.raw.buffer) {
+               console.error('No raw buffer');
+               return null;
+            }
 
-         if (!rd.raw.buffer) {
-            console.error('No raw buffer');
-            return null;
-         }
+            if (rd.sz[0]) {
+               rd.vtxBuff = new Float32Array(rd.raw.buffer, off, rd.sz[0]);
+               off += rd.sz[0]*4;
+            }
 
-         var off = 0;
+            if (rd.sz[1]) {
+               rd.nrmBuff = new Float32Array(rd.raw.buffer, off, rd.sz[1]);
+               off += rd.sz[1]*4;
+            }
 
-         if (rd.sz[0]) {
-            rd.vtxBuff = new Float32Array(rd.raw.buffer, off, rd.sz[0]);
-            off += rd.sz[0]*4;
-         }
+            if (rd.sz[2]) {
+               rd.idxBuff = new Uint32Array(rd.raw.buffer, off, rd.sz[2]);
+               off += rd.sz[2]*4;
+            }
 
-         if (rd.sz[1]) {
-            rd.nrmBuff = new Float32Array(rd.raw.buffer, off, rd.sz[1]);
-            off += rd.sz[1]*4;
-         }
-
-         if (rd.sz[2]) {
-            rd.idxBuff = new Uint32Array(rd.raw.buffer, off, rd.sz[2]);
-            off += rd.sz[2]*4;
+            g = this.creator.makeEveGeometry(rd);
          }
 
          // shape handle is similar to created in JSROOT.GeoPainter
          return {
             _typename: "$$Shape$$", // indicate that shape can be used as is
             ready: true,
-            geom: this.creator.makeEveGeometry(rd),
-            nfaces: (rd.i-2)/3
+            geom: g,
+            nfaces: JSROOT.GEO.numGeometryFaces(g)
          };
       },
 
@@ -462,7 +464,14 @@ sap.ui.define(['sap/ui/core/Component',
                this.extractRawShapes(msg, true);
 
                // after clones are existing - ensure geo painter is there
-               this.createGeoPainter(msg.drawopt);
+               this.createGeoPainter(msg.cfg ? msg.cfg.drawopt : "");
+
+               // assign configuration to the control
+               if (msg.cfg) {
+                  this.geo_painter.ctrl.cfg = msg.cfg;
+                  this.geo_painter.ctrl.show_config = true;
+                  this.geom_model.refresh();
+               }
 
                this.geo_painter.prepareObjectDraw(msg.visibles, "__geom_viewer_selection__");
 
@@ -482,6 +491,11 @@ sap.ui.define(['sap/ui/core/Component',
                this.appendNodes(msg.visibles);
                break;
          }
+      },
+
+      completeGeoDrawing: function() {
+         if (this.geom_model)
+            this.geom_model.refresh();
       },
 
       OnWebsocketOpened: function(handle) {
@@ -555,6 +569,9 @@ sap.ui.define(['sap/ui/core/Component',
             break;
          case "DROPT:":
             this.applyDrawOptions(msg);
+            break;
+         case "IMAGE:":
+            this.produceImage(msg);
             break;
          default:
             console.error('Non recognized msg ' + mhdr + ' len=' + msg.length);
@@ -935,7 +952,7 @@ sap.ui.define(['sap/ui/core/Component',
          var server_shape = null;
 
          if (info.ri)
-            server_shape = this.createServerShape(info.ri);
+            server_shape = this.createServerShape(info.ri, 0);
 
          this.drawNodeShape(server_shape, false);
       },
@@ -946,15 +963,49 @@ sap.ui.define(['sap/ui/core/Component',
 
          nodeDrawing.setGeomPainter(null);
 
-         if (server_shape) {
-            var node_painter = JSROOT.Painter.CreateGeoPainter(nodeDrawing.getDomRef(), server_shape, "");
-            nodeDrawing.setGeomPainter(node_painter, skip_cleanup);
-            node_painter.prepareObjectDraw(server_shape, "");
+         this.node_painter_active = false;
+         if (this.node_painter) {
+            this.node_painter.ClearDrawings();
+            delete this.node_painter;
+            delete this.node_model;
          }
+
+         if (!server_shape) {
+            this.byId("geomControl").setModel(this.geom_model);
+            return;
+         }
+
+         this.node_painter = JSROOT.Painter.CreateGeoPainter(nodeDrawing.getDomRef(), server_shape, "");
+         this.node_painter.setMouseTmout(0);
+         this.node_painter.ctrl.notoolbar = true;
+         this.node_painter_active = true;
+
+         // this.node_painter.setDepthMethod("dflt");
+         this.node_model = new JSONModel(this.node_painter.ctrl);
+
+         nodeDrawing.setGeomPainter(this.node_painter, skip_cleanup);
+         this.byId("geomControl").setModel(this.node_model);
+         this.node_painter.prepareObjectDraw(server_shape, "");
+      },
+
+      /** Save as png image */
+      pressSaveButton: function() {
+         this.produceImage("");
+      },
+
+      produceImage: function(name) {
+         var painter = (this.node_painter_active && this.node_painter) ? this.node_painter : this.geo_painter;
+         if (!painter) return;
+
+         var dataUrl = painter.createSnapshot(this.standalone ? "geometry.png" : "asis");
+         if (!dataUrl) return;
+         var separ = dataUrl.indexOf("base64,");
+         if ((separ>=0) && this.websocket && !this.standalone)
+            this.websocket.Send("IMAGE:" + name + "::" + dataUrl.substr(separ+7));
       },
 
       /** Reload geometry description and base drawing, normally not required */
-      onRealoadPress: function (oEvent) {
+      onRealoadPress: function () {
          this.doReload(true);
       },
 
@@ -971,9 +1022,7 @@ sap.ui.define(['sap/ui/core/Component',
                this.model.clearFullModel();
                console.log('Calling reload model');
                this.model.reloadMainModel(force);
-
             }
-
          }
       },
 
@@ -990,11 +1039,23 @@ sap.ui.define(['sap/ui/core/Component',
       },
 
       onInfoPress: function() {
-         var app = this.byId("geomViewerApp");
-         if (this.isInfoPageActive())
+         var app = this.byId("geomViewerApp"), ctrlmodel;
+
+         if (this.isInfoPageActive()) {
             app.toDetail(this.createId("geomDraw"));
-         else
+            this.node_painter_active = false;
+            ctrlmodel = this.geom_model;
+         } else {
             app.toDetail(this.createId("geomInfo"));
+            this.node_painter_active = true;
+            ctrlmodel = this.node_model;
+         }
+
+         if (ctrlmodel) {
+            this.byId("geomControl").setModel(ctrlmodel);
+            ctrlmodel.refresh();
+         }
+
       },
 
       /** Quit ROOT session */
@@ -1016,11 +1077,32 @@ sap.ui.define(['sap/ui/core/Component',
       },
 
 
-      // different handlers of Config page
+      sendConfig: function() {
+         if (!this.standalone && this.geo_painter && this.geo_painter.ctrl.cfg) {
+            var cfg = this.geo_painter.ctrl.cfg;
+            cfg.build_shapes = parseInt(cfg.build_shapes);
+            this.websocket.Send("CFG:" + JSROOT.toJSON(cfg));
+         }
+      },
+
+      // configuration handler changes, after short timeout send updated config to server
+      configChanged: function() {
+         if (this.config_tmout)
+            clearTimeout(this.config_tmout);
+
+         this.config_tmout = setTimeout(this.sendConfig.bind(this), 500);
+      },
+
 
       processPainterChange: function(func, arg) {
-         if (this.geo_painter && (typeof this.geo_painter[func] == 'function'))
-            this.geo_painter[func](arg);
+         var painter = (this.node_painter_active && this.node_painter) ? this.node_painter : this.geo_painter;
+
+         if (painter && (typeof painter[func] == 'function'))
+            painter[func](arg);
+      },
+
+      lightChanged: function() {
+         this.processPainterChange('changedLight');
       },
 
       sliderXchange: function() {
@@ -1052,8 +1134,15 @@ sap.ui.define(['sap/ui/core/Component',
       },
 
       backgroundChanged: function(oEvent) {
-         console.log('color ', oEvent.getParameter('value'));
          this.processPainterChange('changedBackground', oEvent.getParameter('value'));
+      },
+
+      axesChanged: function() {
+         this.processPainterChange('changedAxes');
+      },
+
+      autorotateChanged: function() {
+         this.processPainterChange('changedAutoRotate');
       },
 
       cameraReset: function() {
@@ -1068,9 +1157,17 @@ sap.ui.define(['sap/ui/core/Component',
          this.processPainterChange('changedDepthMethod');
       },
 
+      sliderTransChange: function() {
+         this.processPainterChange('changedTransformation');
+      },
+
+      pressTransReset: function() {
+         this.processPainterChange('changedTransformation', 'reset');
+      },
+
       pressReset: function() {
          this.processPainterChange('resetAdvanced');
-         if (this.geom_model) this.geom_model.refresh();
+         this.byId("geomControl").getModel().refresh();
       },
 
       ssaoChanged: function() {
