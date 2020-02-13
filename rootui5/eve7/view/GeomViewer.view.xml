@@ -33,23 +33,20 @@
                      <ToolbarSpacer />
                      <SearchField liveChange="onSearch" />
                   </Toolbar>
-                  <VBox id="treeTableBox">
-                     <layoutData>
+                  <t:TreeTable id="treeTable"
+                     columnHeaderVisible="false" editable="false"
+                     enableSelectAll="false" selectionBehavior="RowOnly"
+                     selectionMode="Single" visibleRowCountMode="Auto"
+                     cellClick="onCellClick"
+                     rows="{/nodes}">
+                     <t:layoutData>
                         <FlexItemData growFactor="1"/>
-                     </layoutData>
-
-                     <t:TreeTable id="treeTable"
-                        columnHeaderVisible="false" editable="false"
-                        enableSelectAll="false" selectionBehavior="RowOnly"
-                        selectionMode="Single" visibleRowCountMode="Auto"
-                        cellClick="onCellClick"
-                        rows="{/nodes}">
-                     </t:TreeTable>
-                  </VBox>
+                     </t:layoutData>
+                  </t:TreeTable>
                </FlexBox>
             </content>
          </Page>
-         <Page id="geomControl" title="Control" showHeader="true" showFooter="false" showSubHeader="false" enableScrolling="false"
+         <Page id="geomControl" title="Control" showHeader="true" showFooter="false" showSubHeader="false" enableScrolling="true"
                 showNavButton="true" navButtonText="Back to hierarchy" navButtonPress="onPressMasterBack"
                 class="sapUiStdPage">
             <content>
@@ -84,18 +81,26 @@
 
                   <IconTabFilter text="Light">
                     <VBox>
-                       <HBox class="sapUiTinyMargin" justifyContent="SpaceBetween" alignItems="Center">
+                       <ComboBox selectedKey="{/light/kind}" change="lightChanged">
+                           <core:Item key="points" text="Points"/>
+                           <core:Item key="ambient" text="Ambient"/>
+                           <core:Item key="hemisphere" text="Hemisphere"/>
+                       </ComboBox>
+                       <HBox class="sapUiTinyMargin" justifyContent="SpaceBetween" alignItems="Center" visible="{= ${/light/kind} === &apos;points&apos;}">
                           <CheckBox text="Top" selected="{/light/top}" select="lightChanged"/>
                           <CheckBox text="Bottom" selected="{/light/bottom}" select="lightChanged"/>
                        </HBox>
-                       <HBox class="sapUiTinyMargin" justifyContent="SpaceBetween" alignItems="Center">
+                       <HBox class="sapUiTinyMargin" justifyContent="SpaceBetween" alignItems="Center" visible="{= ${/light/kind} === &apos;points&apos;}">
                           <CheckBox text="Left" selected="{/light/left}" select="lightChanged"/>
                           <CheckBox text="Right" selected="{/light/right}" select="lightChanged"/>
                        </HBox>
-                       <HBox class="sapUiTinyMargin" justifyContent="SpaceBetween" alignItems="Center">
+                       <HBox class="sapUiTinyMargin" justifyContent="SpaceBetween" alignItems="Center" visible="{= ${/light/kind} === &apos;points&apos;}">
                           <CheckBox text="Front" selected="{/light/front}" select="lightChanged"/>
                           <CheckBox text="Specular" selected="{/light/specular}" select="lightChanged"/>
                        </HBox>
+                       <Slider min="0" max="3" step="0.01" value="{/light/power}" width="100%"
+                               showAdvancedTooltip="true" showHandleTooltip="false" inputsAsTooltips="true"
+                               change="lightChanged" liveChange="lightChanged"/>
                     </VBox>
                   </IconTabFilter>
 
