@@ -1,9 +1,7 @@
-<!--  this file used for ROOT6 Canvas display with TWebWindow -->
 <!DOCTYPE html>
 <html lang="en">
    <head>
       <meta charset="UTF-8">
-      <meta http-equiv="X-UA-Compatible" content="IE=edge">
       <title>ROOT6 TCanvas</title>
       <script type="text/javascript" src="https://jsroot.gsi.de/dev/scripts/JSRootCore.js"></script>
    </head>
@@ -29,45 +27,63 @@
 
    <script type='text/javascript'>
 
-      function InitV6Canvas(handle, args) {
+      let url = JSROOT.decodeUrl(),
+          is_batch = url.has("batch_mode"),
+          is_ui5 = !url.has("noopenui") && !is_batch,
+          _prereq = 'v6';
 
-         var painter = new JSROOT.TCanvasPainter(null);
+      if (is_batch) JSROOT.BatchMode = true;
+
+      if (is_ui5)
+         _prereq += ";openui5";
+      else if (!is_batch)
+         _prereq += ";jq2d";  // jq2d need for BrowserLayout
+
+      JSROOT.connectWebWindow({
+         prereq: _prereq,
+         prereq_logdiv: "CanvasDiv",
+         socket_kind: "file",
+         openui5src: "https://openui5.hana.ondemand.com/1.82.2/",
+      }).then(handle => {
+
+         sap.ui.loader.config({ paths: { rootui5: "../rootui5/" } });  // used for offline
+
+         let painter = new JSROOT.TCanvasPainter(null);
 
          painter.online_canvas = true;
-         painter.use_openui = (JSROOT.GetUrlOption("noopenui") === null);
-         painter.batch_mode = JSROOT.GetUrlOption("batch_mode") !== null;
-         if (painter.batch_mode) JSROOT.BatchMode = true;
+         painter.use_openui = is_ui5;
+         painter.batch_mode = is_batch;
 
          if (window) {
             window.onbeforeunload = painter.WindowBeforeUnloadHanlder.bind(painter);
             if (JSROOT.browser.qt5) window.onqt5unload = window.onbeforeunload;
          }
 
-         if (painter.use_openui && !painter.batch_mode) {
+         if (is_ui5) {
 
             painter._window_handle = handle;
 
-            return JSROOT.AssertPrerequisites('openui5', function() {
-
-               new sap.ui.xmlview({
-                  id: "TopCanvasId",
-                  viewName: "sap.ui.jsroot.view.Canvas",
-                  viewData: { canvas_painter: painter }
-               }).placeAt("CanvasDiv");
+            sap.ui.require(["sap/ui/core/ComponentContainer"], function(ComponentContainer) {
+               new ComponentContainer({
+                  name: "rootui5.canv",
+                  manifest: true,
+                  async: true,
+                  settings: {
+                     componentData: {
+                        canvas_painter: painter
+                     }
+                  },
+                  height: "100%"
+               }).placeAt("CanvasDiv")
             });
+
+         } else {
+
+            painter.SetDivId("CanvasDiv", -1); // just assign id, nothing else happens
+
+            painter.UseWebsocket(handle); // when connection activated, ROOT must send new instance of the canvas
          }
 
-         painter.SetDivId("CanvasDiv", -1); // just assign id, nothing else happens
-
-         painter.UseWebsocket(handle); // when connection activated, ROOT must send new instance of the canvas
-      }
-
-      JSROOT.ConnectWebWindow({
-         openui5src: "https://openui5.hana.ondemand.com/",
-         socket_kind: "file",
-         prereq: "jq2d;v6;",
-         prereq_logdiv: "CanvasDiv",
-         callback: InitV6Canvas
       });
 
    </script>

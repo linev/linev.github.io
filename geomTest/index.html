@@ -4,8 +4,7 @@
       <meta charset="UTF-8">
       <meta http-equiv="X-UA-Compatible" content="IE=edge">
       <title>Geometry viewer</title>
-      <!--  script type="text/javascript" src="https://jsroot.gsi.de/dev/scripts/JSRootCore.js"></script-->
-      <script type="text/javascript" src="../../jsroot/scripts/JSRootCore.js"></script>
+      <script type="text/javascript" src="https://jsroot.gsi.de/dev/scripts/JSRootCore.js"></script>
       <style>
          html { height: 100%; }
          body { min-height: 100%; margin: 0; overflow: hidden }
@@ -17,7 +16,7 @@
             right: 0;
             padding: 1
          }
-         
+
          .eveColorBox {                  /* style the CSS class that has been written by the renderer method */
             display: inline-block;   /* enable squares to appear next to each other within one line */
             border: 1px solid white;   /* add some border, so the square can actually be seen */
@@ -29,7 +28,7 @@
             -moz-box-sizing: border-box; /* consider padding+border part of the width/height */
             box-sizing: border-box;
          }
-         
+
        </style>
 
    </head>
@@ -54,14 +53,13 @@
            }).placeAt("GeomDiv");
         }
 
-        JSROOT.ConnectWebWindow({
+        JSROOT.connectWebWindow({
            socket_kind: "file",
            prereq: "openui5;geom;user:" + evedir + "EveManager.js;" + evedir + "EveElements.js;",
-           openui5src: "https://openui5.hana.ondemand.com/",    // or "jsroot"
+           openui5src: "https://openui5.hana.ondemand.com/1.82.2/",    // or "jsroot"
 //           openui5libs: "sap.m, sap.ui.layout, sap.ui.unified", // customize openui5 libs
-           prereq_logdiv: "GeomDiv",
-           callback: InitUI
-        });
+           prereq_logdiv: "GeomDiv"
+        }).then(InitUI);
 
       </script>
 
