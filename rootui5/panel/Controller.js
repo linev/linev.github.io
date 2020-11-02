@@ -6,6 +6,12 @@ sap.ui.define([
 
    return Controller.extend("rootui5.panel.Controller", {
 
+      // one could define in derived classes followin methods
+      //   onPanelInit: function() {},
+      //   onPanelReceive: function(msg, offset) {},
+      //   onPanelExit: function(),
+
+
       onInit: function() {
          var data = this.getView().getViewData();
 
@@ -14,21 +20,25 @@ sap.ui.define([
             this.websocket.SetReceiver(this); // redirect websocket handling on controller itself
             this.websocket.Send("PANEL_READY"); // confirm panel creation, only then GUI can send commands
          }
-         
+
          // TODO: use more specific API between Canvas and Panel
          if (data && data.masterPanel) {
             this.masterPanel = data.masterPanel;
          }
 
-         if (this.onPanelInit) this.onPanelInit();
+         if (typeof this.onPanelInit == "function")
+            this.onPanelInit();
       },
 
       OnWebsocketOpened: function(handle) {
          console.log('Connection established - should never happen');
       },
 
-      OnWebsocketMsg: function(handle, msg) {
-          console.log('GuiPanel Get message ' + msg);
+      OnWebsocketMsg: function(handle, msg, offset) {
+         if (typeof this.onPanelReceive == 'function')
+            this.onPanelReceive(msg, offset);
+         else
+            console.log('GuiPanel Get message ' + msg);
       },
 
       OnWebsocketClosed: function(handle) {
@@ -37,8 +47,20 @@ sap.ui.define([
           delete this.websocket; // remove reference on websocket
       },
 
+      setPanelTitle: function(title) {
+         if (!this.masterPanel && document)
+            document.title = title;
+      },
+
+      panelSend: function(msg) {
+         if (this.websocket)
+            this.websocket.Send(msg);
+         else
+            console.error('No connection available to send message');
+      },
+
       onExit: function() {
-         if (this.onPanelExit) 
+         if (typeof this.onPanelExit == 'function')
             this.onPanelExit();
          if (this.websocket) {
             this.websocket.Close();
@@ -46,8 +68,9 @@ sap.ui.define([
          }
       },
 
+      /** Method should be used to close panel
+       * Depending from used window manager different functionality can be used here */
       closePanel: function() {
-         
          if (this.masterPanel) {
             if (this.masterPanel.showLeftArea) this.masterPanel.showLeftArea("");
          } else {

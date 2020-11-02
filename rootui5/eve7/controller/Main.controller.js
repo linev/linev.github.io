@@ -6,9 +6,8 @@ sap.ui.define(['sap/ui/core/Component',
                'sap/m/library',
                'sap/m/Button',
                'sap/m/MenuItem',
-               'sap/m/MessageStrip',
                'rootui5/eve7/lib/EveManager'
-              ], function(Component, UIComponent, Controller, Splitter, SplitterLayoutData, MobileLibrary, mButton, mMenuItem, mMessageStrip, EveManager) {
+], function(Component, UIComponent, Controller, Splitter, SplitterLayoutData, MobileLibrary, mButton, mMenuItem, EveManager) {
 
    "use strict";
 
@@ -45,7 +44,7 @@ sap.ui.define(['sap/ui/core/Component',
          for (var k = cmds.length-1; k>=0; --k) {
             var btn = new mButton({
                icon: cmds[k].icon,
-               tooltip: cmds[k].name,
+               text: cmds[k].name,
                press: this.executeCommand.bind(this, cmds[k])
             });
             toolbar.insertContentLeft(btn, 0);

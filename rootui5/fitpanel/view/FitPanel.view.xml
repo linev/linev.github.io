@@ -5,7 +5,7 @@
    <Page title="Simple Fit Panel" showHeader="false">
       <VBox class="sapUiSizeCompact sapUiSmallMarginStart" width="100%">
          <l:Grid class="sapUiSizeCompact" hSpacing="0.5" vSpacing="0">
-           <Text text="Data Set:">
+           <Text text="Data:">
                <layoutData>
                   <l:GridData span="XL4 L4 M4 S4" />
                </layoutData>
@@ -18,7 +18,7 @@
                   <l:GridData span="XL8 L8 M8 S8" />
                </layoutData>
            </ComboBox>
-           <Text text="Function:">
+           <Text text="Func:">
                <layoutData>
                   <l:GridData span="XL4 L4 M4 S4" />
                </layoutData>
@@ -178,7 +178,7 @@
                      </RadioButtonGroup>
                   </VBox>
                </IconTabFilter>
-               <IconTabFilter key="Pars" text="Pars" visible="{/fFuncPars/haspars}">
+               <IconTabFilter key="Pars" text="Pars" enabled="{/fFuncPars/haspars}">
                    <Text text="Func: {/fFuncPars/name}"/>
                    <Table items="{ path: '/fFuncPars/pars' }">
                       <columns>
@@ -203,7 +203,7 @@
                       </items>
                    </Table>
                </IconTabFilter>
-               <IconTabFilter key="Advanced" text="Advanced" visible="{/fHasAdvanced}">
+               <IconTabFilter key="Advanced" text="Advanced" enabled="{/fHasAdvanced}">
                   <IconTabBar headerMode="Inline" expandable="false" selectedKey="{/fAdvancedTab}">
                      <items>
                         <IconTabFilter key="Contour" text="Contour">

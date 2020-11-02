@@ -4,7 +4,7 @@ sap.ui.define([
    'rootui5/eve7/lib/OrbitControlsEve',
    'rootui5/eve7/lib/OutlinePass',
    'rootui5/eve7/lib/FXAAShader'
-],  function(GlViewer, EveElements) {
+], function(GlViewer, EveElements) {
 
    "use strict";
 
@@ -24,10 +24,10 @@ sap.ui.define([
          let gh = mgr.GetElement(mgr.global_highlight_id);
 
          if (gs && gh) {
-            sa[0].visibleEdgeColor.setStyle(JSROOT.Painter.root_colors[gs.fVisibleEdgeColor]);
-            sa[0].hiddenEdgeColor .setStyle(JSROOT.Painter.root_colors[gs.fHiddenEdgeColor]);
-            sa[1].visibleEdgeColor.setStyle(JSROOT.Painter.root_colors[gh.fVisibleEdgeColor]);
-            sa[1].hiddenEdgeColor .setStyle(JSROOT.Painter.root_colors[gh.fHiddenEdgeColor]);
+            sa[0].visibleEdgeColor.setStyle(JSROOT.Painter.getColor(gs.fVisibleEdgeColor));
+            sa[0].hiddenEdgeColor .setStyle(JSROOT.Painter.getColor(gs.fHiddenEdgeColor));
+            sa[1].visibleEdgeColor.setStyle(JSROOT.Painter.getColor(gh.fVisibleEdgeColor));
+            sa[1].hiddenEdgeColor .setStyle(JSROOT.Painter.getColor(gh.fHiddenEdgeColor));
          }
       },
 
@@ -101,14 +101,14 @@ sap.ui.define([
 
          this.raycaster = new THREE.Raycaster();
          this.raycaster.params.Points.threshold = 4;   // ???
-         this.raycaster.linePrecision           = 2.5; // ???
+         this.raycaster.params.Line.threshold = 2.5;   // new three.js r121
 
          // Lights are positioned in resetRenderer
 
          this.point_lights = new THREE.Object3D;
-         this.point_lights.add( new THREE.PointLight( 0xff5050, 0.7 )); // R
-         this.point_lights.add( new THREE.PointLight( 0x50ff50, 0.7 )); // G
-         this.point_lights.add( new THREE.PointLight( 0x5050ff, 0.7 )); // B
+         this.point_lights.add( new THREE.PointLight( 0xffffff, 0.7 )); // R
+         this.point_lights.add( new THREE.PointLight( 0xffffff, 0.7 )); // G
+         this.point_lights.add( new THREE.PointLight( 0xffffff, 0.7 )); // B
          this.scene.add(this.point_lights);
 
          // var plane = new THREE.GridHelper(20, 20, 0x80d080, 0x8080d0);
@@ -292,9 +292,10 @@ sap.ui.define([
          lc[1].position.set(-extR, extR,  extR);
          lc[2].position.set( extR, extR,  extR);
 
+         let s = 1.02;
          if (this.camera.isPerspectiveCamera)
          {
-            let posC = new THREE.Vector3(-0.7 * extR, 0.5 * extR, -0.7 * extR);
+            let posC = new THREE.Vector3(-s * extR, s * extR, -s * extR);
 
             this.camera.position.copy(posC);
 
@@ -307,9 +308,23 @@ sap.ui.define([
             let posC = new THREE.Vector3(0, 0, 1000);
 
             this.camera.position.copy(posC);
+            let ex, ey;
+            if (extV.x > extV.y)
+            {
+               ex = extV.x;
+               ey = ex / this.get_width() * this.get_height();
+               if (ey < extV.y)
+                  s *= extV.y/ey;
+            }
+            else {
+               ey = extV.y;
+               ex = ey / this.get_height() * this.get_width();
+               if (ex < extV.x)
+                  s *= extV.x/ex;
+            }
 
-            let ey = 1.02 * extV.y;
-            let ex = ey / this.get_height() * this.get_width();
+            ex *= s;
+            ey *= s;
             this.camera.left   = -ex;
             this.camera.right  =  ex;
             this.camera.top    =  ey;
@@ -443,7 +458,7 @@ sap.ui.define([
          this.highlighted_scene = c.obj3d.scene;
 
          if (c.obj3d && c.obj3d.eve_el)
-            this.ttip_text.innerHTML = c.obj3d.eve_el.fTitle || c.obj3d.eve_el.fName || "";
+            this.ttip_text.innerHTML = c.getTooltipText(intersect);
          else
             this.ttip_text.innerHTML = "";
 
@@ -467,7 +482,10 @@ sap.ui.define([
 
          this.ttip.style.display= "block";
       },
-
+      remoteToolTip: function (msg)
+      {
+         this.ttip_text.innerHTML = msg;
+      },
       getRelativeOffsets: function(elem)
       {
          // Based on:

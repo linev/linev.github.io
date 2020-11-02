@@ -1,8 +1,7 @@
 sap.ui.define([
     "sap/ui/model/json/JSONModel",
-    "rootui5/browser/model/BrowserListBinding",
-    "sap/base/Log"
-], function(JSONModel, BrowserListBinding, Log) {
+    "rootui5/browser/model/BrowserListBinding"
+], function(JSONModel, BrowserListBinding) {
    "use strict";
 
     var hRootModel = JSONModel.extend("rootui5.browser.model.BrowserModel", {
@@ -76,8 +75,6 @@ sap.ui.define([
         },
 
         bindTree: function(sPath, oContext, aFilters, mParameters, aSorters) {
-           Log.warning("root.model.hModel#bindTree() " + sPath);
-
            console.log('BINDING TREE!!!!!!!!!!!!! ' + sPath);
 
            this.oBinding = new BrowserListBinding(this, sPath, oContext, aFilters, mParameters, aSorters);
@@ -125,7 +122,7 @@ sap.ui.define([
               if (!curr.childs) {
                  // request childs for current element
                  // TODO: we do not know child index, but simply can suply search child as argument
-                 if (!this.fullModel && curr.nchilds) {
+                 if (!this.fullModel && curr.nchilds && (curr.nchilds > 0)) {
                     curr.expanded = true;
                     this.reset_nodes = true;
                     this._expanding_path = path;
@@ -198,7 +195,7 @@ sap.ui.define([
               first: first || 0,
               number: number || this.threshold || 100,
               sort: this.sortOrder || "",
-              filter: this.itemsFilter || ""
+              regex: this.itemsFilter ? "^(" + this.itemsFilter + ".*)$" : ""
            };
            this._websocket.Send("BRREQ:" + JSON.stringify(request));
         },
@@ -348,9 +345,9 @@ sap.ui.define([
                     fullpath: path,
                     index: id,
                     _elem: elem,
+                    isLeaf: !elem.nchilds,
                     // these are required by list binding, should be eliminated in the future
                     type: elem.nchilds ? "folder" : "file",
-                    isLeaf: !elem.nchilds,
                     level: lvl,
                     context: pthis.getContext("/nodes/" + id),
                     nodeState: {
@@ -371,7 +368,8 @@ sap.ui.define([
                  // add new request - can we check if only special part of childs is required?
 
                  // TODO: probably one could guess more precise request
-                 pthis.submitRequest(elem, path);
+                 if ((elem.nchilds === undefined) || (elem.nchilds !== 0))
+                   pthis.submitRequest(elem, path);
 
                  return;
               }

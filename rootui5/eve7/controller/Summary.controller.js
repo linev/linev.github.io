@@ -8,7 +8,7 @@ sap.ui.define([
    "sap/m/Text",
    "sap/m/Button",
    "sap/ui/layout/SplitterLayoutData",
-   "rootui5/eve7/controller/Ged.controller",
+   "rootui5/eve7/controller/Ged.controller"
 ], function(Controller, JSONModel, XMLView, CustomTreeItem,
             FlexBox, mCheckBox, mText, mButton, SplitterLayoutData, GedController) {
 
@@ -92,12 +92,19 @@ sap.ui.define([
 
          var selected = oEvent.getSource().getSelected();
 
-         var elem = this.mgr.GetElement(item.getElementId());
+         var id = item.getElementId();
 
-         if (item.getShowRnrChildren())
-             this.mgr.SendMIR("SetRnrChildren(" + selected + ")", elem.fElementId, elem._typename);
-         else
-             this.mgr.SendMIR("SetRnrSelf(" + selected + ")", elem.fElementId, elem._typename);
+         if (id === undefined)
+            return console.log('clickItemSelected: fail to extract element id');
+
+         var elem = this.mgr.GetElement(id);
+
+         if (!elem)
+            return console.log('clickItemSelected: fail to find element', id);
+
+         var method = item.getShowRnrChildren() ? "SetRnrChildren" : GedController.GetRnrSelfMethod(elem._typename)
+
+         this.mgr.SendMIR(method + "(" + selected + ")", elem.fElementId, elem._typename);
       },
 
       pressGedButton: function(oEvent) {
@@ -117,7 +124,7 @@ sap.ui.define([
 
       OnEveManagerInit: function() {
          var model = this.getView().getModel("treeModel");
-         model.setData(this.createSummaryModel());
+         model.setData(this.createModel());
          model.refresh();
 
          var oTree = this.getView().byId("tree");
@@ -158,7 +165,7 @@ sap.ui.define([
                   item = items[n]; break;
                }
 
-            if (item) objid = item.getElementId();
+            if (item) objid = item.getElementId() || 0;
          }
 
          // FIXME: provide more generic code which should
@@ -191,7 +198,9 @@ sap.ui.define([
          if (item) {
             var color = this.GetSelectionColor(selection_obj);
             item.$().css("background-color", color);
+            if (this.ged && (this.mgr.global_selection_id == selection_obj.fElementId)) this.ged.getController().updateSecondarySelectionGED(element_id, sec_idcs);
          }
+
       },
 
       UnselectElement: function (selection_obj, element_id) {
@@ -201,6 +210,7 @@ sap.ui.define([
             var cc = item.$().css("background-color");
             if (cc == color)
                item.$().css("background-color", "");
+             if (this.ged && (this.mgr.global_selection_id == selection_obj.fElementId)) this.ged.getController().updateSecondarySelectionGED();
          }
       },
 
@@ -268,19 +278,26 @@ sap.ui.define([
             }
 
             if (elem.fMainColor) {
-               newelem.fMainColor = JSROOT.Painter.root_colors[elem.fMainColor];
+               newelem.fMainColor = JSROOT.Painter.getColor(elem.fMainColor);
             }
          }
       },
 
-      createSummaryModel: function(tgt, src, path) {
-         if (tgt === undefined) {
-            tgt = [];
-            src = this.mgr.childs;
-            this.summaryElements = {};
-            path = "/";
-            // console.log('original model', src);
+      createModel: function() {
+         this.summaryElements = {};
+
+         /*
+         var src = this.mgr.childs[0].childs[2].childs;
+         for (var i = 0; i < src.length; i++) {
+            if (src[i].fName == "Collections")
+               src = src[i].childs;
          }
+         */
+         let src = this.mgr.childs;
+         return this.createSummaryModel([], src, "/");
+      },
+
+      createSummaryModel: function(tgt, src, path) {
          for (var n=0;n<src.length;++n) {
             var elem = src[n];
 
@@ -337,7 +354,7 @@ sap.ui.define([
             oTree.unbindItems();
 
             var model = this.getView().getModel("treeModel");
-            model.setData(this.createSummaryModel());
+            model.setData(this.createModel());
             model.refresh();
 
             this.getView().setModel(model, "treeModel");
