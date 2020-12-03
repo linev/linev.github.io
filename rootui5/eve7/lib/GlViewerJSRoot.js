@@ -22,7 +22,7 @@ sap.ui.define([
          //super.init(controller);
 
          this.creator = new EveElements(controller);
-         this.creator.useIndexAsIs = (JSROOT.GetUrlOption('useindx') !== null);
+         this.creator.useIndexAsIs = JSROOT.decodeUrl().has('useindx');
 
          this.createGeoPainter();
       },
@@ -80,14 +80,12 @@ sap.ui.define([
             this._effectComposer.addPass( this.fxaa_pass );
          }
 
-         // assign callback function - when needed
-         this.geo_painter.WhenReady(this.onGeoPainterReady.bind(this));
-
          this.geo_painter.setMouseTmout(this.controller.htimeout);
 
          this.geo_painter.AssignObject(null);
 
-         this.geo_painter.prepareObjectDraw(null); // and now start everything
+         this.geo_painter.prepareObjectDraw(null) // and now start everything
+             .then(() => this.onGeoPainterReady(this.geo_painter));
       },
 
       onGeoPainterReady: function(painter)
@@ -250,6 +248,12 @@ sap.ui.define([
       },
 
       //==============================================================================
+      remoteToolTip: function ()
+      {
+         // to be implemented
+      },
+
+      //==============================================================================
 
       render: function()
       {
@@ -260,7 +264,7 @@ sap.ui.define([
 
       onResizeTimeout: function()
       {
-         this.geo_painter.CheckResize();
+         this.geo_painter.checkResize();
          if (this.geo_painter.fxaa_pass)
             this.geo_painter.fxaa_pass.uniforms[ 'resolution' ].value.set( 1 / this.geo_painter._scene_width, 1 / this.geo_painter._scene_height );
       },
