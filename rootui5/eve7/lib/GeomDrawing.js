@@ -16,7 +16,7 @@ sap.ui.define(['sap/ui/core/Control',
          // remove Canvas and painter from DOM
          if (this.geom_painter) {
             this.geom_painter.clear_3d_canvas();
-            this.geom_painter.accessTopPainter(false);
+            this.geom_painter.clearTopPainter();
          }
       },
 
@@ -40,14 +40,15 @@ sap.ui.define(['sap/ui/core/Control',
          if (this.geom_painter) {
             // this should be moved to GeomPainter itself !!!
 
-            this.geom_painter.SetDivId(this.getDomRef(), 5);
+            // work with and without canvas
+            this.geom_painter.setDom(this.getDomRef());
 
             var size = this.geom_painter.size_for_3d();
 
             this.geom_painter.add_3d_canvas(size, this.geom_painter._renderer.domElement);
 
-            // set top painter only when first child exists
-            this.geom_painter.accessTopPainter(true);
+            // set as main canvas painter or just top painter
+            this.geom_painter.setAsMainPainter();
 
             this.geom_painter.Render3D();
          }
@@ -62,7 +63,7 @@ sap.ui.define(['sap/ui/core/Control',
                this.geom_painter._clones_owner = false;
             }
 
-            this.geom_painter.Cleanup();
+            this.geom_painter.cleanup();
             delete this.geom_painter;
             delete this.geom_skip_cleanup;
          }

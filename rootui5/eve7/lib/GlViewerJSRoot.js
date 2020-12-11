@@ -82,7 +82,7 @@ sap.ui.define([
 
          this.geo_painter.setMouseTmout(this.controller.htimeout);
 
-         this.geo_painter.AssignObject(null);
+         this.geo_painter.assignObject(null);
 
          this.geo_painter.prepareObjectDraw(null) // and now start everything
              .then(() => this.onGeoPainterReady(this.geo_painter));
@@ -137,7 +137,7 @@ sap.ui.define([
                if (info===null) continue;
 
                if (info.indexOf("<prnt>")==0)
-                  info = painter.GetItemName() + info.substr(6);
+                  info = painter.getItemName() + info.substr(6);
 
                names.push(info);
 
@@ -167,7 +167,7 @@ sap.ui.define([
 
             if (painter.options.update_browser) {
                if (painter.options.highlight && tooltip) names = [ tooltip ];
-               painter.ActivateInBrowser(names);
+               painter.activateInBrowser(names);
             }
 
             if (!resolve || !resolve.obj) return tooltip;
@@ -203,7 +203,7 @@ sap.ui.define([
 
          var browseHandler = this.controller.invokeBrowseOf.bind(this.controller);
 
-         JSROOT.Painter.createMenu(this.geo_painter, function(menu) {
+         JSROOT.Painter.createMenu(this.geo_painter, evnt).then(menu => {
             var numitems = 0, cnt = 0;
             if (intersects)
                for (var n=0;n<intersects.length;++n)
@@ -243,7 +243,7 @@ sap.ui.define([
             }
 
             // show menu
-            menu.show(evnt);
+            menu.show();
          });
       },
 

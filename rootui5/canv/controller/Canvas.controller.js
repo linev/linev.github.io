@@ -159,7 +159,7 @@ sap.ui.define([
       showMethodsDialog : function(painter, method, menu_obj_id) {
 
          // TODO: deliver class name together with menu items
-         method.fClassName = painter.GetClassName();
+         method.fClassName = painter.getClassName();
          if ((menu_obj_id.indexOf("#x")>0) || (menu_obj_id.indexOf("#y")>0) || (menu_obj_id.indexOf("#z")>0)) method.fClassName = "TAxis";
 
          let items = [];
@@ -499,7 +499,7 @@ sap.ui.define([
          this.getView().getModel().setProperty("/TooltipIcon", new_state ? "sap-icon://accept" : "");
 
          let p = this.getCanvasPainter(true);
-         if (p) p.SetTooltipAllowed(new_state);
+         if (p) p.setTooltipAllowed(new_state);
       },
 
       setShowMenu: function(new_state) {
