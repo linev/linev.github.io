@@ -66,6 +66,33 @@ sap.ui.define([
          page.addContent(fragm);
       },
 
+     /** @summary Produce exec string for WebCanas to set color value
+       * @desc Color can be id or string, but should belong to list of known colors
+       * For higher color numbers TColor::GetColor(r,g,b) will be invoked to ensure color will be created on server side
+       * @private */
+      getColorExec: function(painter, col, method) {
+         let id = -1, arr = JSROOT.Painter.root_colors;
+         if (typeof col == "string") {
+            if (!col || (col == "none")) id = 0; else
+               for (let k = 1; k < arr.length; ++k)
+                  if (arr[k] == col) { id = k; break; }
+            if ((id < 0) && (col.indexOf("rgb") == 0)) id = 9999;
+         } else if (!isNaN(col) && arr[col]) {
+            id = col;
+            col = arr[id];
+         }
+
+         if (id < 0) return "";
+
+         if (id >= 50) {
+            // for higher color numbers ensure that such color exists
+            let c = d3.color(col);
+            id = "TColor::GetColor(" + c.r + "," + c.g + "," + c.b + ")";
+         }
+
+         return "exec:" + method + "(" + id + ")";
+      },
+
       /// function called when user changes model property
       /// data object includes _kind, _painter and _handle (optionally)
       modelPropertyChange : function(evnt, data) {
@@ -94,19 +121,19 @@ sap.ui.define([
                else if (item == "attline/style")
                   exec = "exec:SetLineStyle(" + pars.value + ")";
                else if (item == "attline/color")
-                  exec = data._painter.GetColorExec(pars.value, "SetLineColor");
+                  exec = this.getColorExec(data._painter, pars.value, "SetLineColor");
             } else if ((data._kind === "TAttFill") && (obj.fFillColor!==undefined) && (obj.fFillStyle!==undefined))  {
                if (item == "attfill/pattern")
                   exec = "exec:SetFillStyle(" + pars.value + ")";
                else if (item == "attfill/color")
-                  exec = data._painter.GetColorExec(pars.value, "SetFillColor");
+                  exec = this.getColorExec(data._painter, pars.value, "SetFillColor");
             }
          }
 
          if (data._painter)
-            data._painter.InteractiveRedraw("pad", exec); // TODO: some objects can readraw directly, no need to redraw pad
+            data._painter.interactiveRedraw("pad", exec); // TODO: some objects can readraw directly, no need to redraw pad
          else if (this.currentPadPainter)
-            this.currentPadPainter.Redraw();
+            this.currentPadPainter.redraw();
       },
 
 
@@ -161,11 +188,11 @@ sap.ui.define([
                break;
             case "axiscolor":
                axis.fAxisColor = this.currentPadPainter.addColor(pars.value);
-               exec = painter.GetColorExec(pars.value, "SetAxisColor");
+               exec = this.getColorExec(painter, pars.value, "SetAxisColor");
                break;
             case "color_label":
                axis.fLabelColor = this.currentPadPainter.addColor(pars.value);
-               exec = painter.GetColorExec(pars.value, "SetLabelColor");
+               exec = this.getColorExec(painter, pars.value, "SetLabelColor");
                break;
             case "center_label":
                axis.InvertBit(JSROOT.EAxisBits.kCenterLabels);
@@ -183,7 +210,7 @@ sap.ui.define([
                break;
             case "color_title":
                axis.fLabelColor = this.currentPadPainter.addColor(pars.value);
-               exec = painter.GetColorExec(pars.value, "SetTitleColor");
+               exec = this.getColorExec(painter, pars.value, "SetTitleColor");
                break;
             case "center_title":
                axis.InvertBit(JSROOT.EAxisBits.kCenterTitle);
@@ -209,9 +236,9 @@ sap.ui.define([
 
          if (main && main.snapid) {
             console.log('Invoke interactive redraw ', main.snapid, kind)
-            main.InteractiveRedraw("pad", exec, kind);
+            main.interactiveRedraw("pad", exec, kind);
          } else {
-            this.currentPadPainter.Redraw();
+            this.currentPadPainter.redraw();
          }
       },
 
@@ -243,21 +270,22 @@ sap.ui.define([
          if (!handle) return;
 
          switch(item) {
-            case "logbase": handle.ChangeLog((pars.value == 3) ? Math.exp(1) : pars.value); break;
-            case "handle/ticksColor": handle.ChangeAxisAttr(1, "ticks_color_name", pars.value); break;
-            case "ticks_size": handle.ChangeAxisAttr(1, "ticks_size", pars.value); break;
-            case "handle/ticksSide": handle.ChangeAxisAttr(1, "ticks_side", pars.value); break;
-            case "labels_offset": handle.ChangeAxisAttr(1, "labels_offset", pars.value); break;
-            case "labels_rotate": handle.ChangeAxisAttr(1, "labels_angle", pars.value ? 180 : 0); break;
-            case "handle/fTitle": handle.ChangeAxisAttr(1, "title", pars.value); break;
-            case "title_offset": handle.ChangeAxisAttr(1, "title_offset", pars.value); break;
-            case "handle/titlePos": handle.ChangeAxisAttr(1, "title_position", pars.value); break;
-            case "title_rotate": handle.ChangeAxisAttr(1, "title_angle", pars.value ? 180 : 0); break;
+            case "logbase": handle.changeAxisLog((pars.value == 3) ? Math.exp(1) : pars.value); break;
+            case "handle/ticksColor": handle.changeAxisAttr(1, "ticks_color_name", pars.value); break;
+            case "ticks_size": handle.changeAxisAttr(1, "ticks_size", pars.value); break;
+            case "handle/ticksSide": handle.changeAxisAttr(1, "ticks_side", pars.value); break;
+            case "labels_offset": handle.changeAxisAttr(1, "labels_offset", pars.value); break;
+            case "labels_rotate": handle.changeAxisAttr(1, "labels_angle", pars.value ? 180 : 0); break;
+            case "handle/fTitle": handle.changeAxisAttr(1, "title", pars.value); break;
+            case "title_offset": handle.changeAxisAttr(1, "title_offset", pars.value); break;
+            case "handle/titlePos": handle.changeAxisAttr(1, "title_position", pars.value); break;
+            case "title_rotate": handle.changeAxisAttr(1, "title_angle", pars.value ? 180 : 0); break;
          }
       },
 
       processHistModelChange : function(evnt, data) {
-         let pars = evnt.getParameters(), opts = data.options;
+         // let pars = evnt.getParameters();
+         let opts = data.options;
 
          opts.Mode3D = opts.Mode3Dindx > 0;
 
@@ -271,8 +299,8 @@ sap.ui.define([
          opts.Contor = parseInt(opts.Contor);
          opts.ErrorKind = parseInt(opts.ErrorKind);
 
-         if (this.currentPadPainter)
-            this.currentPadPainter.InteractiveRedraw("pad","drawopt");
+         if (this.currentPainter)
+            this.currentPainter.interactiveRedraw("pad","drawopt");
       },
 
 
@@ -288,13 +316,13 @@ sap.ui.define([
 
          if (place == "xaxis" && painter.x_handle) {
             painter = painter.x_handle;
-            selectedClass = painter.GetAxisType();
+            selectedClass = painter.getAxisType();
          } else if (place == "yaxis" && painter.y_handle) {
             painter = painter.y_handle;
-            selectedClass = painter.GetAxisType();
+            selectedClass = painter.getAxisType();
          } else if (place == "zaxis" && painter.z_handle) {
             painter = painter.z_handle;
-            selectedClass = painter.GetAxisType();
+            selectedClass = painter.getAxisType();
          } else {
             selectedClass = obj ? obj._typename : painter.getObjectHint();
          }
@@ -350,7 +378,7 @@ sap.ui.define([
             model.attachPropertyChange({ _kind: "TAxis" }, this.processAxisModelChange, this);
          }
 
-         if (typeof painter.GetHisto == 'function') {
+         if (typeof painter.getHisto == 'function') {
 
             painter.options.Mode3Dindx = painter.options.Mode3D ? 1 : 0;
 

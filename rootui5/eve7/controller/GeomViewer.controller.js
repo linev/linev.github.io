@@ -79,8 +79,8 @@ sap.ui.define(['sap/ui/core/Component',
          // this is code for the Components.js
          // this.websocket = Component.getOwnerComponentFor(this.getView()).getComponentData().conn_handle;
 
-         this.websocket.SetReceiver(this);
-         this.websocket.Connect();
+         this.websocket.setReceiver(this);
+         this.websocket.connect();
 
          this.queue = []; // received draw messages
 
@@ -91,7 +91,7 @@ sap.ui.define(['sap/ui/core/Component',
          this.cfg_model = new JSONModel(this.cfg);
          this.getView().setModel(this.cfg_model);
 
-         var nobrowser = this.websocket.GetUserArgs('nobrowser') || JSROOT.decodeUrl().has('nobrowser');
+         var nobrowser = this.websocket.getUserArgs('nobrowser') || JSROOT.decodeUrl().has('nobrowser');
 
          if (nobrowser) {
             // remove main area - plain geometry drawing
@@ -152,7 +152,7 @@ sap.ui.define(['sap/ui/core/Component',
          var msg = "SETVI" + (oEvent.getParameter("selected") ? "1:" : "0:") + JSON.stringify(nodeid);
 
          // send info message to client to change visibility
-         this.websocket.Send(msg);
+         this.websocket.send(msg);
       },
 
       assignRowHandlers: function() {
@@ -166,7 +166,7 @@ sap.ui.define(['sap/ui/core/Component',
       sendViewerRequest: function(_oper, args) {
          var req = { oper: _oper, path: "", stack: [] };
          JSROOT.extend(req, args);
-         this.websocket.Send("GVREQ:" + JSON.stringify(req));
+         this.websocket.send("GVREQ:" + JSON.stringify(req));
       },
 
       /** Process reply on REveGeomRequest */
@@ -178,7 +178,7 @@ sap.ui.define(['sap/ui/core/Component',
 
             this._hover_stack = repl.stack || null;
             if (this.geo_painter)
-               this.geo_painter.HighlightMesh(null, 0x00ff00, null, undefined, this._hover_stack, true);
+               this.geo_painter.highlightMesh(null, 0x00ff00, null, undefined, this._hover_stack, true);
 
          } else if (repl.oper == "HIGHL") {
 
@@ -213,9 +213,9 @@ sap.ui.define(['sap/ui/core/Component',
                fullpath = prop.fullpath.substr(1, prop.fullpath.length-2);
 
             // remember current element with hover stack
-            this._hover_stack = fullpath ? this.geo_clones.FindStackByName(fullpath) : null;
+            this._hover_stack = fullpath ? this.geo_clones.findStackByName(fullpath) : null;
 
-            this.geo_painter.HighlightMesh(null, 0x00ff00, null, undefined, this._hover_stack, true);
+            this.geo_painter.highlightMesh(null, 0x00ff00, null, undefined, this._hover_stack, true);
          }
       },
 
@@ -252,15 +252,15 @@ sap.ui.define(['sap/ui/core/Component',
       /** try to produce stack out of row path */
       getRowStack: function(row) {
          var ids = this.getRowIds(row);
-         return ids ? this.geo_clones.MakeStackByIds(ids) : null;
+         return ids ? this.geo_clones.buildStackByIds(ids) : null;
       },
 
       /** Callback from geo painter when mesh object is highlighted. Use for update of TreeTable */
-      HighlightMesh: function(active_mesh, color, geo_object, geo_index, geo_stack) {
+      highlightMesh: function(active_mesh, color, geo_object, geo_index, geo_stack) {
          if (!this.standalone) {
             var req = geo_stack ? geo_stack : [];
             // avoid multiple time submitting same request
-            if (geo.IsSameStack(this._last_highlight_req, req)) return;
+            if (geo.isSameStack(this._last_highlight_req, req)) return;
             this._last_highlight_req = req;
             return this.sendViewerRequest("HIGHL", { stack: req });
          }
@@ -268,7 +268,7 @@ sap.ui.define(['sap/ui/core/Component',
          var hpath = "---";
 
          if (this.geo_clones && geo_stack) {
-            var info = this.geo_clones.ResolveStack(geo_stack);
+            var info = this.geo_clones.resolveStack(geo_stack);
             if (info && info.name) hpath = "/" + info.name + "/";
          }
 
@@ -300,10 +300,10 @@ sap.ui.define(['sap/ui/core/Component',
       createGeoPainter: function(drawopt) {
 
          if (this.geo_painter) {
-            this.geo_painter.ClearDrawings();
+            this.geo_painter.clearDrawings();
          } else {
             var geomDrawing = this.byId("geomDrawing");
-            this.geo_painter = JSROOT.Painter.CreateGeoPainter(geomDrawing.getDomRef(), null, drawopt);
+            this.geo_painter = JSROOT.Painter.createGeoPainter(geomDrawing.getDomRef(), null, drawopt);
             this.geo_painter.setMouseTmout(0);
             // this.geo_painter.setDepthMethod("dflt");
             this.geo_painter.ctrl.notoolbar = true;
@@ -315,7 +315,7 @@ sap.ui.define(['sap/ui/core/Component',
             this.geo_painter.ctrl.cfg = {}; // dummy config until real config is received
             this.byId("geomControl").setModel(this.geom_model);
             geomDrawing.setGeomPainter(this.geo_painter);
-            this.geo_painter.AddHighlightHandler(this);
+            this.geo_painter.addHighlightHandler(this);
          }
 
          this.geo_painter.activateInBrowser = this.activateInTreeTable.bind(this);
@@ -347,10 +347,10 @@ sap.ui.define(['sap/ui/core/Component',
 
          if (recreate) {
             this.geo_clones = new geo.ClonedNodes(null, nodes);
-            this.geo_clones.name_prefix = this.geo_clones.GetNodeName(0);
+            this.geo_clones.name_prefix = this.geo_clones.getNodeName(0);
             // normally only need when making selection, not used in geo viewer
-            // this.geo_clones.SetMaxVisNodes(draw_msg.maxvisnodes);
-            // this.geo_clones.SetVisLevel(draw_msg.vislevel);
+            // this.geo_clones.setMaxVisNodes(draw_msg.maxvisnodes);
+            // this.geo_clones.setVisLevel(draw_msg.vislevel);
             // parameter need for visualization with transparency
             // TODO: provide from server
             this.geo_clones.maxdepth = 20;
@@ -500,7 +500,7 @@ sap.ui.define(['sap/ui/core/Component',
             this.geom_model.refresh();
       },
 
-      OnWebsocketOpened: function(handle) {
+      onWebsocketOpened: function(handle) {
          this.isConnected = true;
 
          if (this.model)
@@ -510,7 +510,7 @@ sap.ui.define(['sap/ui/core/Component',
          this.checkSendRequest();
       },
 
-      OnWebsocketClosed: function() {
+      onWebsocketClosed: function() {
          // when connection closed, close panel as well
          console.log('CLOSE WINDOW WHEN CONNECTION CLOSED');
 
@@ -520,7 +520,7 @@ sap.ui.define(['sap/ui/core/Component',
       },
 
       /** Entry point for all data from server */
-      OnWebsocketMsg: function(handle, msg, offset) {
+      onWebsocketMsg: function(handle, msg, offset) {
 
          // binary data can be send only as addition to draw message
          // here data can be placed in the queue and processed when all other prerequicities are done
@@ -666,7 +666,7 @@ sap.ui.define(['sap/ui/core/Component',
             }
 
             if (!moditem.vis && this.geo_painter)
-               this.geo_painter.RemoveDrawnNode(moditem.id);
+               this.geo_painter.removeDrawnNode(moditem.id);
          }
 
          if (can_refresh) {
@@ -712,7 +712,7 @@ sap.ui.define(['sap/ui/core/Component',
          if (this.last_draw_msg && this.last_draw_msg.visibles && this.geo_clones)
             for (var k=0;k<this.last_draw_msg.visibles.length;++k) {
                var item = this.last_draw_msg.visibles[k];
-               var res = this.geo_clones.ResolveStack(item.stack);
+               var res = this.geo_clones.resolveStack(item.stack);
                if (func(res.node))
                   matches.push({ stack: item.stack, color: item.color });
             }
@@ -793,7 +793,7 @@ sap.ui.define(['sap/ui/core/Component',
             this.geo_painter.changedGlobalTransparency(function(node) {
                if (node.stack)
                   for (var n=0;n<visibles.length;++n)
-                     if (geo.IsSameStack(node.stack, visibles[n].stack))
+                     if (geo.isSameStack(node.stack, visibles[n].stack))
                         return 0;
                return dflt;
             });
@@ -811,7 +811,7 @@ sap.ui.define(['sap/ui/core/Component',
          if (!this.geo_painter) return;
          this.geo_painter.appendMoreNodes(matches);
          if (this._hover_stack)
-            this.geo_painter.HighlightMesh(null, 0x00ff00, null, undefined, this._hover_stack, true);
+            this.geo_painter.highlightMesh(null, 0x00ff00, null, undefined, this._hover_stack, true);
       },
 
       omBeforeRendering: function() {
@@ -833,7 +833,7 @@ sap.ui.define(['sap/ui/core/Component',
          if (this.isConnected && this.renderingDone) {
 
             if (this.creator && !this.ask_getdraw) {
-               this.websocket.Send("GETDRAW");
+               this.websocket.send("GETDRAW");
                this.ask_getdraw = true;
             }
          }
@@ -865,7 +865,7 @@ sap.ui.define(['sap/ui/core/Component',
 
          delete this.search_handler;
 
-         this.websocket.Send("SEARCH:" + (query || ""));
+         this.websocket.send("SEARCH:" + (query || ""));
       },
 
       /** when new draw options send from server */
@@ -924,9 +924,9 @@ sap.ui.define(['sap/ui/core/Component',
          this.byId("geomInfo").setModel(model);
 
          if (this.geo_clones && path) {
-            var stack = this.geo_clones.FindStackByName(path.substr(1, path.length-2));
+            var stack = this.geo_clones.findStackByName(path.substr(1, path.length-2));
 
-            var info = stack ? this.geo_clones.ResolveStack(stack) : null;
+            var info = stack ? this.geo_clones.resolveStack(stack) : null;
 
             var build_shape = null;
 
@@ -970,7 +970,7 @@ sap.ui.define(['sap/ui/core/Component',
 
          this.node_painter_active = false;
          if (this.node_painter) {
-            this.node_painter.ClearDrawings();
+            this.node_painter.clearDrawings();
             delete this.node_painter;
             delete this.node_model;
          }
@@ -980,7 +980,7 @@ sap.ui.define(['sap/ui/core/Component',
             return;
          }
 
-         this.node_painter = JSROOT.Painter.CreateGeoPainter(nodeDrawing.getDomRef(), server_shape, "");
+         this.node_painter = JSROOT.Painter.createGeoPainter(nodeDrawing.getDomRef(), server_shape, "");
          this.node_painter.setMouseTmout(0);
          this.node_painter.ctrl.notoolbar = true;
          this.node_painter_active = true;
@@ -1006,7 +1006,7 @@ sap.ui.define(['sap/ui/core/Component',
          if (!dataUrl) return;
          var separ = dataUrl.indexOf("base64,");
          if ((separ>=0) && this.websocket && !this.standalone)
-            this.websocket.Send("IMAGE:" + name + "::" + dataUrl.substr(separ+7));
+            this.websocket.send("IMAGE:" + name + "::" + dataUrl.substr(separ+7));
       },
 
       /** Reload geometry description and base drawing, normally not required */
@@ -1066,7 +1066,7 @@ sap.ui.define(['sap/ui/core/Component',
       /** Quit ROOT session */
       onQuitRootPress: function() {
          if (!this.standalone)
-            this.websocket.Send("QUIT_ROOT");
+            this.websocket.send("QUIT_ROOT");
       },
 
       onPressMasterBack: function() {
@@ -1086,7 +1086,7 @@ sap.ui.define(['sap/ui/core/Component',
          if (!this.standalone && this.geo_painter && this.geo_painter.ctrl.cfg) {
             var cfg = this.geo_painter.ctrl.cfg;
             cfg.build_shapes = parseInt(cfg.build_shapes);
-            this.websocket.Send("CFG:" + JSROOT.toJSON(cfg));
+            this.websocket.send("CFG:" + JSROOT.toJSON(cfg));
          }
       },
 
