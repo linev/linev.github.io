@@ -7,51 +7,43 @@ sap.ui.define([
 
    "use strict";
 
-   function GlViewerJSRoot(viewer_class)
-   {
-      GlViewer.call(this, viewer_class);
-   };
+   class GlViewerJSRoot extends GlViewer {
 
-   GlViewerJSRoot.prototype = Object.assign(Object.create(GlViewer.prototype), {
-
-      constructor: GlViewerJSRoot,
-
-      init: function(controller)
+      init(controller)
       {
-         GlViewer.prototype.init.call(this, controller);
-         //super.init(controller);
+         super.init(controller);
 
          this.creator = new EveElements(controller);
-         this.creator.useIndexAsIs = JSROOT.decodeUrl().has('useindx');
+         this.creator.useIndexAsIs = EVE.JSR.decodeUrl().has('useindx');
 
          this.createGeoPainter();
-      },
+      }
 
-      cleanup: function()
+      cleanup()
       {
          if (this.geo_painter) {
             this.geo_painter.cleanup();
             delete this.geo_painter;
          }
 
-         GlViewer.prototype.cleanup.call(this);
-      },
+         super.cleanup();
+      }
 
       //==============================================================================
 
-      make_object: function(name)
+      make_object(/* name */)
       {
          return new THREE.Object3D;
-      },
+      }
 
-      get_top_scene: function()
+      get_top_scene()
       {
          return this.geo_painter.getExtrasContainer();
-      },
+      }
 
       //==============================================================================
 
-      createGeoPainter: function()
+      createGeoPainter()
       {
          let options = "outline";
          options += ", mouse_click"; // process mouse click events
@@ -62,7 +54,7 @@ sap.ui.define([
          // MT-RCORE - why have I removed this ???
          this.get_view().$().css("overflow", "hidden").css("width", "100%").css("height", "100%");
 
-         this.geo_painter = JSROOT.Painter.createGeoPainter(this.get_view().getDomRef(), null, options);
+         this.geo_painter = EVE.JSR.createGeoPainter(this.get_view().getDomRef(), null, options);
 
          this.geo_painter._geom_viewer = true; // disable several JSROOT features
 
@@ -99,9 +91,9 @@ sap.ui.define([
 
          this.geo_painter.prepareObjectDraw(null) // and now start everything
              .then(() => this.onGeoPainterReady(this.geo_painter));
-      },
+      }
 
-      onGeoPainterReady: function(painter)
+      onGeoPainterReady(painter)
       {
          // AMT temporary here, should be set in camera instantiation time
          if (this.geo_painter._camera.type == "OrthographicCamera")
@@ -184,7 +176,7 @@ sap.ui.define([
 
                if (!resolve || !resolve.obj) return tooltip;
 
-               let lines = JSROOT.GEO.provideInfo(resolve.obj);
+               let lines = EVE.JSR.provideObjectInfo(resolve.obj);
                lines.unshift(tooltip);
 
                return { name: resolve.obj.fName, title: resolve.obj.fTitle || resolve.obj._typename, lines: lines };
@@ -211,14 +203,14 @@ sap.ui.define([
          this.render();
 
          this.controller.glViewerInitDone();
-      },
+      }
 
       /** @summary Used together with the geo painter for processing context menu */
-      jsrootOrbitContext: function(evnt, intersects) {
+      jsrootOrbitContext(evnt, intersects) {
 
          let browseHandler = this.controller.invokeBrowseOf.bind(this.controller);
 
-         JSROOT.Painter.createMenu(evnt, this.geo_painter).then(menu => {
+         EVE.JSR.createMenu(evnt, this.geo_painter).then(menu => {
             let numitems = 0;
             if (intersects)
                for (let n=0;n<intersects.length;++n)
@@ -260,33 +252,34 @@ sap.ui.define([
             // show menu
             menu.show();
          });
-      },
+      }
 
       //==============================================================================
-      remoteToolTip: function ()
+      remoteToolTip()
       {
          // to be implemented
-      },
+      }
 
       //==============================================================================
 
-      render: function()
+      render()
       {
          //let outline_pass = this.geo_painter.outline_pass;
          //if (outline_pass) outline_pass._selectedObjects = Object.values(outline_pass.id2obj_map).flat();
 
          this.geo_painter.render3D();
-      },
+      }
 
       //==============================================================================
 
-      onResizeTimeout: function()
+      onResizeTimeout()
       {
          this.geo_painter.checkResize();
          if (this.geo_painter.fxaa_pass)
             this.geo_painter.fxaa_pass.uniforms[ 'resolution' ].value.set( 1 / this.geo_painter._scene_width, 1 / this.geo_painter._scene_height );
-      },
-   });
+      }
+
+   } // class GlViewerJSRoot
 
    return GlViewerJSRoot;
 });
