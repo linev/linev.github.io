@@ -155,7 +155,7 @@ sap.ui.define([
                   if (value[value.length-1] != '"') value += '"';
                }
 
-               args += (k>0 ? "," : "") + value;
+               args += (k > 0 ? "," : "") + value;
             }
          }
 
@@ -170,9 +170,12 @@ sap.ui.define([
             // invoked only when user press Ok button
             console.log('execute method for object ' + menu_obj_id + ' exec= ' + exec);
 
-            let canvp = this.getCanvasPainter();
+            let canvp = this.getCanvasPainter(),
+                p = menu_obj_id.indexOf("#");
 
-            if (canvp)
+            if (canvp?.v7canvas)
+               canvp.submitExec(painter, exec, (p > 0) ? menu_obj_id.slice(p+1) : "");
+            else if (canvp)
                canvp.sendWebsocket('OBJEXEC:' + menu_obj_id + ":" + exec);
          }
       },
@@ -181,11 +184,12 @@ sap.ui.define([
 
          // TODO: deliver class name together with menu items
          method.fClassName = painter.getClassName();
-         if ((menu_obj_id.indexOf("#x")>0) || (menu_obj_id.indexOf("#y")>0) || (menu_obj_id.indexOf("#z")>0)) method.fClassName = "TAxis";
+         if ((menu_obj_id.indexOf("#x") > 0) || (menu_obj_id.indexOf("#y") > 0) || (menu_obj_id.indexOf("#z") > 0))
+            method.fClassName = "TAxis";
 
          let items = [];
 
-         for (let n=0;n<method.fArgs.length;++n) {
+         for (let n = 0; n < method.fArgs.length; ++n) {
             let arg = method.fArgs[n];
             arg.fValue = arg.fDefault;
             if (arg.fValue == '\"\"') arg.fValue = "";
@@ -307,7 +311,7 @@ sap.ui.define([
       },
 
       toggleGedEditor : function() {
-         this.showGeEditor(!this.isGedEditor());
+         return this.showGeEditor(!this.isGedEditor());
       },
 
       showPanelInLeftArea: function(panel_name, panel_handle) {
@@ -370,7 +374,8 @@ sap.ui.define([
          this.getView().getModel().setProperty("/LeftArea", panel_name);
          this.getView().getModel().setProperty("/GedIcon", chk_icon(panel_name=="Ged"));
 
-         if (!panel_name) return Promise.resolve(null);
+         if (!panel_name)
+            return Promise.resolve(null);
 
          let oLd = new SplitterLayoutData({
             resizable: true,
@@ -384,12 +389,16 @@ sap.ui.define([
 
          let can_elem = this.getView().byId("MainPanel");
 
-         return XMLView.create({
-            viewName: viewName,
-            viewData: { masterPanel: this },
-            layoutData: oLd,
-            height: (panel_name == "Panel") ? "100%" : undefined
-         }).then(oView => {
+         let imp = [ import('./jsrootsys/modules/main.mjs') ];
+         if (panel_name == "Ged")
+            imp.push(import('./jsrootsys/modules/base/colors.mjs'), import('./jsrootsys/modules/gpad/TAxisPainter.mjs'), import('./jsrootsys/modules/d3.mjs'));
+
+         return Promise.all(imp).then(arr => XMLView.create({
+                     viewName: viewName,
+                     viewData: { masterPanel: this, jsroot: Object.assign({}, arr[0], arr[1], arr[2]), d3: arr[3] },
+                     layoutData: oLd,
+                     height: (panel_name == "Panel") ? "100%" : undefined
+         })).then(oView => {
 
             // workaround, while CanvasPanel.onBeforeRendering called too late
             can_elem.getController().preserveCanvasContent();
@@ -480,11 +489,13 @@ sap.ui.define([
             size      : "200px"
          });
 
-         return XMLView.create({
+         return import('./jsrootsys/modules/main.mjs').then(imp_main =>
+         XMLView.create({
             viewName : "rootui5.canv.view.Panel",
+            viewData: { jsroot: imp_main },
             layoutData: oLd,
             height: "100%"
-         }).then(oView => {
+         })).then(oView => {
             vsplit.addContentArea(oView);
             return oView.getController();
          });

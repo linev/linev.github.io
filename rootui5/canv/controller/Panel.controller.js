@@ -26,9 +26,10 @@ sap.ui.define([
             }
 
             this.object = obj;
-            d3.select(this.getView().getDomRef()).style('overflow','hidden');
+            let elem = this.getView().getDomRef();
+            elem.style.overflow = "hidden";
 
-            JSROOT.draw(this.getView().getDomRef(), obj, options).then(painter => {
+            this.jsroot.draw(this.getView().getDomRef(), obj, options).then(painter => {
                console.log("object painting finished");
                this.object_painter = painter;
                let arr = this.draw_callbacks;
@@ -48,10 +49,10 @@ sap.ui.define([
          if (model.object) {
             this.drawObject(model.object, model.opt);
          } else if (model.jsonfilename) {
-            JSROOT.httpRequest(model.jsonfilename, 'object')
+            this.jsroot.httpRequest(model.jsonfilename, 'object')
                   .then(obj => this.drawObject(obj, model.opt));
          } else if (model.filename) {
-            JSROOT.openFile(model.filename)
+            this.jsroot.openFile(model.filename)
                   .then(file => file.readObject(model.itemname))
                   .then(obj => this.drawObject(obj, model.opt));
          }
@@ -96,7 +97,7 @@ sap.ui.define([
          if (this.panel_data) this.drawModel(this.panel_data);
       },
 
-      onResize: function(event) {
+      onResize: function() {
          // use timeout
          if (this.resize_tmout) clearTimeout(this.resize_tmout);
          this.resize_tmout = setTimeout(this.onResizeTimeout.bind(this), 300); // minimal latency
@@ -114,6 +115,9 @@ sap.ui.define([
 
          this.rendering_perfromed = false;
 
+         let data = this.getView().getViewData();
+         this.jsroot = data?.jsroot; // imported JSROOT functionality
+
          let id = this.getView().getId();
 
          console.log("Initialization of JSROOT Panel", id);
@@ -128,8 +132,6 @@ sap.ui.define([
       },
 
       onExit: function() {
-         console.log("Exit from JSROOT Panel", this.getView().getId());
-
          if (this.object_painter) {
             this.object_painter.cleanup();
             delete this.object_painter;

@@ -27,6 +27,8 @@ sap.ui.define([
             this.reverseOrder = false;
             this.itemsFilter = "";
             this.showHidden = false;
+            this.appendToCanvas = false;
+            this.onlyLastCycle = 0; // 0 - not changed, -1 off , +1 on
 
             this.threshold = 100; // default threshold to prefetch items
         },
@@ -46,6 +48,16 @@ sap.ui.define([
 
         /** @summary Is show hidden flag set */
         isShowHidden: function() { return this.showHidden; },
+
+        /** @summary Set show hidden flag */
+        setAppendToCanvas: function(flag) { this.appendToCanvas = flag; },
+
+        /** @summary Is show hidden flag set */
+        isAppendToCanvas: function() { return this.appendToCanvas; },
+
+        getOnlyLastCycle: function() { return this.onlyLastCycle; },
+
+        setOnlyLastCycle: function(v) { this.onlyLastCycle = v; },
 
         /** @summary Set reverse order */
         setReverseOrder: function(on) { this.reverseOrder = on; },
@@ -99,8 +111,6 @@ sap.ui.define([
         },
 
         bindTree: function(sPath, oContext, aFilters, mParameters, aSorters) {
-           console.log('BINDING TREE!!!!!!!!!!!!! ' + sPath);
-
            this.oBinding = new BrowserListBinding(this, sPath, oContext, aFilters, mParameters, aSorters);
            return this.oBinding;
         },
@@ -146,7 +156,6 @@ sap.ui.define([
                  if (curr.childs[indx] && (curr.childs[indx].name == name)) {
                     curr = curr.childs[indx];
                     find = true;
-                    console.log(`Match index ${indx} with name ${name}`);
                  }
               }
 
@@ -186,7 +195,7 @@ sap.ui.define([
                  return -1;
               }
 
-              for (let k=0;k<curr.childs.length;++k) {
+              for (let k = 0; k < curr.childs.length; ++k) {
                  if (curr.childs[k].name == name) {
                     this.reset_nodes = true;
                     curr.expanded = true;
@@ -253,8 +262,9 @@ sap.ui.define([
               sort: this.sortMethod || "",
               reverse: this.reverseOrder || false,
               hidden: this.showHidden ? true : false,
+              lastcycle: this.onlyLastCycle,
               reload: force_reload ? true : false,  // rescan items by server even when path was not changed
-              regex: this.itemsFilter ? "^(" + this.itemsFilter + ".*)$" : ""
+              regex: this.itemsFilter ? "^(" + this.itemsFilter + ".*)$" : "",
            };
            this._websocket.send("BRREQ:" + JSON.stringify(request));
         },
@@ -502,14 +512,14 @@ sap.ui.define([
         },
 
         // toggle expand state of specified node
-        toggleNode: function(index) {
+        toggleNode: function(index, do_expand) {
 
            let node = this.getNodeByIndex(index),
                elem = node ? node._elem : null;
 
            if (!node || !elem) return;
 
-           if (elem.expanded) {
+           if (elem.expanded && (do_expand === false)) {
               delete elem.expanded;
               if (!this.fullModel)
                  delete elem.childs; // TODO: for the future keep childs but make request if expand once again
@@ -520,7 +530,7 @@ sap.ui.define([
 
               return true;
 
-           } else if (elem.nchilds || !elem.index) {
+           } else if ((elem.nchilds || !elem.index) && (do_expand === true)) {
 
               elem.expanded = true;
               // structure is changing but not immediately

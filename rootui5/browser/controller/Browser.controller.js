@@ -72,6 +72,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
             SortMethod: "name",
             ReverseOrder: false,
             ShowHiddenFiles: false,
+            AppendToCanvas: false,
             DBLCLKRun: false,
             TH1: [
                {name: "hist"},
@@ -144,7 +145,9 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
             ]
          });
 
-        this.websocket = this.getView().getViewData().conn_handle;
+        let data = this.getView().getViewData();
+        this.websocket = data?.conn_handle;
+        this.jsroot = data?.jsroot;
 
          // this is code for the Components.js
          // this.websocket = Component.getOwnerComponentFor(this.getView()).getComponentData().conn_handle;
@@ -533,6 +536,8 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
       onSettingPress: async function () {
          let menu = await this._getSettingsMenu();
 
+         this._oSettingsModel.setProperty("/AppendToCanvas", this.model.isAppendToCanvas());
+         this._oSettingsModel.setProperty("/OnlyLastCycle", (this.model.getOnlyLastCycle() > 0));
          this._oSettingsModel.setProperty("/ShowHiddenFiles", this.model.isShowHidden());
          this._oSettingsModel.setProperty("/SortMethod", this.model.getSortMethod());
          this._oSettingsModel.setProperty("/ReverseOrder", this.model.isReverseOrder());
@@ -546,14 +551,24 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
       },
 
       handleSeetingsConfirm: function() {
-         let hidden = this._oSettingsModel.getProperty("/ShowHiddenFiles"),
+         let append = this._oSettingsModel.getProperty("/AppendToCanvas"),
+             lastcycle = this._oSettingsModel.getProperty("/OnlyLastCycle"),
+             hidden = this._oSettingsModel.getProperty("/ShowHiddenFiles"),
              sort = this._oSettingsModel.getProperty("/SortMethod"),
              reverse = this._oSettingsModel.getProperty("/ReverseOrder"),
              changed = false;
 
+         if (append != this.model.isAppendToCanvas())
+            this.model.setAppendToCanvas(append);
+
+         if (lastcycle != (this.model.getOnlyLastCycle() > 0)) {
+            changed = true;
+            this.model.setOnlyLastCycle(lastcycle ? 1 : -1);
+         }
+
          if (hidden != this.model.isShowHidden()) {
             changed = true;
-            this.model.setShowHidden(hiden);
+            this.model.setShowHidden(hidden);
          }
 
          if (reverse != this.model.isReverseOrder()) {
@@ -566,9 +581,8 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
             this.model.setSortMethod(sort);
          }
 
-         if (changed) {
+         if (changed)
             this.doReload();
-         }
       },
 
       /** @summary Add Tab event handler */
@@ -699,9 +713,28 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          return this.websocket.send("GETLOGS:");
       },
 
+      formatLine: function(line) {
+         let res = "", p = line.indexOf("\u001b");
+
+         while (p >= 0) {
+            if (p > 0)
+               res += line.slice(0, p);
+            line = line.slice(p+1);
+            // cut of colors codes
+            if (line[0] == '[') {
+               p = 0;
+               while ((p < line.length) && (line[p] != 'm')) p++;
+               line = line.slice(p+1);
+            }
+            p = line.indexOf("\u001b");
+         }
+
+         return res + line;
+      },
+
       updateLogs: function(logs) {
          let str = "";
-         logs.forEach(line => str += line+"\n");
+         logs.forEach(line => str += this.formatLine(line)+"\n");
          this.getView().byId("output_log").setValue(str);
       },
 
@@ -752,23 +785,24 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
       /** @summary Double-click event handler */
       onRowDblClick: function (row) {
          let ctxt = row.getBindingContext(),
-            prop = ctxt ? ctxt.getProperty(ctxt.getPath()) : null;
+             prop = ctxt ? ctxt.getProperty(ctxt.getPath()) : null;
 
          if (!prop || !prop.path) return;
 
          let className = this.getBaseClass(prop.className),
              opt = className ? this.drawingOptions[className] : "",
+             append = this.model.isAppendToCanvas() ? "true" : "false",
              exec = "";
 
-         if (this._oSettingsModel.getProperty("/DBLCLKRun")) exec = "exec";
-         if (!opt) opt = "";
+         if (this._oSettingsModel.getProperty("/DBLCLKRun"))
+            exec = "exec";
 
          let args = prop.path.slice(); // make copy of array
-         args.push(opt, exec);
+         args.push(opt || "", append, exec);
 
          this.websocket.send("DBLCLK:" + JSON.stringify(args));
 
-         this.invokeWarning("Processing double click on: " + prop.name, 200);
+         this.invokeWarning("Processing double click on: " + prop.name, 500);
       },
 
       invokeWarning: function(msg, tmout) {
@@ -997,7 +1031,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
 
       /** @summary process initial message, now it is list of existing canvases */
       processInitMsg: function(msg) {
-         let arr = JSROOT.parse(msg);
+         let arr = this.jsroot.parse(msg);
          if (!arr) return;
 
          this.updateBReadcrumbs(arr[0]);
@@ -1031,13 +1065,13 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
       createCatchedWidget: function(url, name, catched_kind) {
          switch(catched_kind) {
             case "rcanvas": this.createCanvas("rcanvas", url, name, "Catched RCanvas"); break;
-            case "tcanvas": this.createCanvas("tcanvas", url, name, "Catched RCanvas"); break;
+            case "tcanvas": this.createCanvas("tcanvas", url, name, "Catched TCanvas"); break;
             case "geom": this.createGeomViewer(url, name, "Catched geom viewer"); break;
             default: console.error("Not supported cacthed kind", catched_kind);
          }
       },
 
-      createGeomViewer: function(url, name, title) {
+      createGeomViewer: function(url, name /*, title */) {
          let oTabContainer = this.byId("tabContainer");
          let item = new TabContainerItem({
             name: "Geom viewer",
@@ -1049,14 +1083,19 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          oTabContainer.addItem(item);
          // oTabContainer.setSelectedItem(item);
 
-         JSROOT.connectWebWindow({
-            kind: this.websocket.kind,
-            href: this.websocket.getHRef(url),
-            user_args: { nobrowser: true }
-         }).then(handle => XMLView.create({
-            viewName: "rootui5.eve7.view.GeomViewer",
-            viewData: { conn_handle: handle, embeded: true }
-         })).then(oView => item.addContent(oView));
+         import('/rootui5sys/eve7/eve.mjs')
+           .then(h => h.initEVE(this.jsroot.source_dir))
+           .then(() =>
+              this.jsroot.connectWebWindow({
+                 kind: this.websocket.kind,
+                 href: this.websocket.getHRef(url),
+                 user_args: { nobrowser: true }
+              }))
+           .then(handle => XMLView.create({
+             viewName: "rootui5.eve7.view.GeomViewer",
+             viewData: { conn_handle: handle, embeded: true, jsroot: this.jsroot }
+           }))
+           .then(oView => item.addContent(oView));
       },
 
       createCanvas: async function(kind, url, name, title) {
@@ -1071,12 +1110,20 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
 
          this.byId("tabContainer").addItem(item);
 
-         let conn = new JSROOT.WebWindowHandle(this.websocket.kind);
+         let conn = new this.jsroot.WebWindowHandle(this.websocket.kind);
          conn.setHRef(this.websocket.getHRef(url)); // argument for connect, makes relative path
 
+         let draw = await import(this.jsroot.source_dir + 'modules/draw.mjs');
+
          let painter = await ((kind == "rcanvas")
-                ? JSROOT.require("v7").then(() => new JSROOT.v7.RCanvasPainter(null, null))
-                : JSROOT.require("v6").then(() => new JSROOT.TCanvasPainter(null, null)));
+                ? import(this.jsroot.source_dir + 'modules/gpad/RCanvasPainter.mjs').then(h => {
+                   draw.assignPadPainterDraw(h.RPadPainter);
+                   return new h.RCanvasPainter(null, null);
+                })
+                : import(this.jsroot.source_dir + 'modules/gpad/TCanvasPainter.mjs').then(h => {
+                     draw.assignPadPainterDraw(h.TPadPainter);
+                     return new h.TCanvasPainter(null, null);
+                }));
 
          painter.online_canvas = true; // indicates that canvas gets data from running server
          painter.embed_canvas = true;  // use to indicate that canvas ui should not close complete window when closing
