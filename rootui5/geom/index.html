@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
    <head>
-      <meta charset="UTF-8"/>
+      <meta charset="utf-8">
       <title>Geometry viewer</title>
       <style>
          html { height: 100%; }
@@ -35,6 +35,7 @@
          }
 
        </style>
+
    </head>
 
    <body>
@@ -44,25 +45,21 @@
 
    <script type='module'>
 
-     import { connectWebWindow } from 'https://jsroot.gsi.de/dev/modules/webwindow.mjs';
-     import { parse, decodeUrl, toJSON, source_dir } from 'https://jsroot.gsi.de/dev/modules/core.mjs';
+     import { connectWebWindow } from './jsrootsys/modules/webwindow.mjs';
+     import { parse, decodeUrl, toJSON, source_dir } from './jsrootsys/modules/core.mjs';
+
+     // create global EVE and THREE handles
 
      connectWebWindow({
         ui5: true,
-        socket_kind: "file",
-        user_args: { show_columns: true },
-        //   openui5src: "jsroot",    // use ROOT provided package
-        openui5src: "https://openui5.hana.ondemand.com/1.98.0/",   // latest official openui5 release
-        //    openui5theme: "sap_fiori_3",                        // optional theme
         openui5libs: "sap.m, sap.ui.layout, sap.ui.unified, sap.ui.table" // customize openui5 libs later
      }).then(handle => {
-        sap.ui.loader.config({ paths: { rootui5: "../rootui5/" } });  // used for offline
-        sap.ui.require(["sap/ui/core/mvc/XMLView"], XMLView => {
-           XMLView.create({
-              viewName: "rootui5.geom.view.GeomViewer",
-              viewData: { conn_handle: handle, jsroot: { parse, decodeUrl, toJSON, source_dir } }
-           }).then(oView => oView.placeAt("GeomDiv"));
-        });
+         sap.ui.require(["sap/ui/core/mvc/XMLView"], XMLView => {
+             XMLView.create({
+                viewName: "rootui5.geom.view.GeomViewer",
+                viewData: { conn_handle: handle, jsroot: { parse, decodeUrl, toJSON, source_dir } }
+             }).then(oView => oView.placeAt("GeomDiv"));
+          });
      });
 
    </script>
