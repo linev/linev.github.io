@@ -126,13 +126,14 @@ sap.ui.define([
          this.checkViewReady();
       },
 
+      /*
       // Function called from GuiPanelController.
       onExit: function()
       {
          // QQQQ EveManager does not have Unregister ... nor UnregisterController
          if (this.mgr) this.mgr.Unregister(this);
          // QQQQ plus, we should unregister this as gl-controller, too
-      },
+      },*/
 
       // Checks if all initialization is performed and startup renderer.
       checkViewReady: function()
@@ -193,6 +194,8 @@ sap.ui.define([
          // only when rendering completed - register for modify events
          let element = this.mgr.GetElement(this.eveViewerId);
 
+         let tlabel = this.getView().byId("titleLabel");
+         tlabel.setText(element.fName);
          // loop over scene and add dependency
          for (let scene of element.childs)
          {
@@ -220,7 +223,9 @@ sap.ui.define([
       onResize: function(event)
       {
          // TODO: should be specified somehow in XML file
-         this.getView().$().css("overflow", "hidden").css("width", "100%").css("height", "100%");
+         if (this.viewer_class != "RCore") {
+            this.getView().$().css("overflow", "hidden").css("width", "100%").css("height", "100%");
+         }
 
          if (this.resize_tmout) clearTimeout(this.resize_tmout);
 
@@ -247,7 +252,31 @@ sap.ui.define([
       isEveCameraPerspective: function() {
          let vo = this.mgr.GetElement(this.eveViewerId);
          return vo.CameraType.startsWith("PerspXOZ");
+      },
 
+      switchSingle: function()
+      {
+         let oRouter = UIComponent.getRouterFor(this);
+         EVE.$eve7tmp = { mgr: this.mgr, eveViewerId: this.eveViewerId};
+         oRouter.navTo("View", { viewName: this.mgr.GetElement(this.eveViewerId).fName });
+      },
+
+      swap: function ()
+      {
+         this.mgr.controllers[0].switchViewSides(this.mgr.GetElement(this.eveViewerId));
+      },
+
+      detachViewer: function()
+      {
+         this.mgr.controllers[0].removeView(this.mgr.GetElement(this.eveViewerId));
+         this.destroy();
+      },
+
+      updateViewerAttributes : function()
+      {
+         if (this.viewer) {
+            this.viewer.updateViewerAttributes();
+         }
       }
 
    });

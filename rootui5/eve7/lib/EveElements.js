@@ -27,7 +27,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(/*EveManager*/) {
 
          let s = this.obj3d.scene;
          if (s && (typeof s[fname] == "function"))
-            return s[fname](this.obj3d, arg, this.event);
+            return s[fname](this.obj3d.eve_el, arg, this.event);
          return false;
       }
 
@@ -594,6 +594,8 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(/*EveManager*/) {
    class EveElements {
 
       constructor() { }
+
+      GenerateTypeName(obj) { return "THREE." + obj.type; }
 
       /** Test if render data has vertex buffer. Make logging if not. Only for debug purposes */
       TestRnr(name, obj, rnrData) {
@@ -1228,9 +1230,10 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(/*EveManager*/) {
          let geom = this.makeEveGeometry(rnr_data);
 
          let fcol = EVE.JSR.getColor(egs.fFillColor);
+         let mop = 1 - egs.fMainTransparency/100;
 
          let material = new THREE.MeshPhongMaterial({// side: THREE.DoubleSide,
-                             depthWrite: false, color:fcol, transparent: true, opacity: 0.2 });
+                             depthWrite: false, color:fcol, transparent: true, opacity: mop });
 
          let mesh = new THREE.Mesh(geom, material);
 
@@ -1249,9 +1252,10 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(/*EveManager*/) {
          let ib_len = rnr_data.idxBuff.length;
 
          let fcol = EVE.JSR.getColor(psp.fMainColor);
+         let mop = Math.min( 1, 1 - psp.fMainTransparency/100);
          var line_mat = new THREE.LineBasicMaterial({color:fcol });
          var mesh_mat = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, depthWrite: false,
-                                                      color:fcol, transparent: true, opacity: 0.4 });
+                                                      color:fcol, transparent: true, opacity: mop });
 
          for (let ib_pos = 0; ib_pos < ib_len; )
          {

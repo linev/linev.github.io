@@ -44,10 +44,8 @@ sap.ui.define([], function() {
       globExceptionHandler(msg, url, lineNo, columnNo, error) {
          // NOTE: currently NOT connected, see onWebsocketOpened() below.
 
-         console.log("EveManager got global error", msg, url, lineNo, columnNo, error);
+         console.error("EveManager got global error", msg, url, lineNo, columnNo, error);
 
-         EVE.alert("Global Exception handler: " + msg + "\n" + url +
-            " line:" + lineNo + " col:" + columnNo);
          let suppress_alert = false;
          return suppress_alert;
       }
@@ -56,6 +54,7 @@ sap.ui.define([], function() {
       UseConnection(handle)
       {
          this.handle = handle;
+         this.is_rcore = (handle.getUserArgs("GLViewer") == "RCore");
 
          handle.setReceiver(this);
          handle.connect();
@@ -146,8 +145,15 @@ sap.ui.define([], function() {
             }
             else if (resp.content == "EndChanges") {
                this.ServerEndRedrawCallback();
-               if (resp.log)
-                  console.log(resp.log);
+               if (resp.log) {
+                  resp.log.forEach((item) => {
+                     // use console error above warning serverity
+                     if (item.lvl < 3)
+                        console.error(item.msg);
+                     else
+                        console.log(item.msg);
+                  });
+               }
             }
             else if (resp.content == "BrowseElement") {
                this.BrowseElement(resp.id);
@@ -199,6 +205,18 @@ sap.ui.define([], function() {
 
          if (elem.$receivers.indexOf(receiver)<0)
             elem.$receivers.push(receiver);
+      }
+
+      /** Disconnect scene from the updates */
+      UnRegisterSceneReceiver(id, receiver){
+         let elem = this.GetElement(id);
+
+         if (!elem) return;
+         let idx = elem.$receivers.indexOf(receiver);
+         if (idx > -1) { // only splice array when item is found
+            console.log("unregister scene receiver");
+            elem.$receivers.splice(idx, 1); // 2nd parameter means remove one item only
+          }
       }
 
       /** Returns list of scene elements */
@@ -296,6 +314,17 @@ sap.ui.define([], function() {
 
             delete this.map[elId];
          }
+      }
+
+      recursiveDestroy(el) {
+         if (el.childs) {
+            let mc = el.childs;
+            for (let i = 0; i < mc.length; ++i) {
+               this.recursiveDestroy(mc[i]);
+            }
+         }
+         // delete this.map[el.fElementId];
+         delete this.map[el.fElementId];
       }
 
       //______________________________________________________________________________
@@ -427,10 +456,20 @@ sap.ui.define([], function() {
 
          let lastoff = offset;
 
-         for (let n=1; n<arr.length;++n) {
+         // Start at 1, EveScene does not have render data.
+         for (let n = 1; n < arr.length; ++n)
+         {
             let elem = arr[n];
 
             if (!elem.render_data) continue;
+
+            // in the scene change update check change bits are kCBElementAdded or kCBObjProps
+           //  see REveScene::StreamRepresentationChanges binary stream
+            if (this.scene_changes) {
+               if (!(elem.changeBit & this.EChangeBits.kCBObjProps
+                  || elem.changeBit & this.EChangeBits.kCBAdded))
+                  continue;
+            }
 
             let rd = elem.render_data,
                 off = offset + rd.rnr_offset,
@@ -476,8 +515,13 @@ sap.ui.define([], function() {
          // call controllers when all the last scene is imported
          let world     = this.map[1];
          let scenes    = world.childs[2];
-         let lastChild = scenes.childs.length -1;
+         let lastChild = 0;
+         for (let i = 0; i < scenes.childs.length; ++i){
+            if (scenes.childs[i].Mandatory)
+            lastChild = i;
+         }
 
+         // AMT:: TODO rename nEveManagerInit in the controllers
          if (scenes.childs[lastChild].fElementId == msg.fSceneId)
             this.controllers.forEach(ctrl => {
                if (ctrl.onEveManagerInit)
@@ -579,9 +623,11 @@ sap.ui.define([], function() {
             if (EVE.DebugSelection)
                console.log("UnSel prim", id, this.GetElement(id), this.GetElement(id).fSceneId);
 
-            this.UnselectElement(sel, id);
-            let iel = this.GetElement(id);
-            changedSet.add(iel.fSceneId);
+            let primEl = this.GetElement(id);
+            if (primEl) {
+               this.UnselectElement(sel, primEl);
+               changedSet.add(primEl.fSceneId);
+            }
 
             for (let imp of value.implied)
             {
@@ -590,7 +636,7 @@ sap.ui.define([], function() {
                   if (EVE.DebugSelection)
                      console.log("UnSel impl", imp, impEl, impEl.fSceneId);
 
-                  this.UnselectElement(sel, imp);
+                  this.UnselectElement(sel, impEl);
                   changedSet.add(impEl.fSceneId);
                }
             }
@@ -602,21 +648,22 @@ sap.ui.define([], function() {
                console.log("Sel prim", id, this.GetElement(id), this.GetElement(id).fSceneId);
 
             let secIdcs = Array.from(value.set);
-            let iel = this.GetElement(id);
-            if ( ! iel) {
-               console.log("EveManager.UT_Selection_Refresh_State this should not happen ", iel);
-               continue;
+            let primEl = this.GetElement(id);
+            if (primEl) {
+               changedSet.add(primEl.fSceneId);
+               this.SelectElement(sel, primEl, secIdcs, value.extra);
             }
-            changedSet.add(iel.fSceneId);
-            this.SelectElement(sel, id, secIdcs, value.extra);
 
-            for (let imp of value.implied)
+            for (let impId of value.implied)
             {
-               if (EVE.DebugSelection)
-                  console.log("Sel impl", imp, this.GetElement(imp), this.GetElement(imp).fSceneId);
+               let impEl = this.GetElement(impId);
+               if (impEl) {
+                  if (EVE.DebugSelection)
+                     console.log("Sel impl", impId, impEl, impEl.fSceneId);
 
-               this.SelectElement(sel, imp, secIdcs, value.extra);
-               changedSet.add(this.GetElement(imp).fSceneId);
+                  this.SelectElement(sel, impEl, secIdcs, value.extra);
+                  changedSet.add(impEl.fSceneId);
+               }
             }
          }
 
@@ -649,33 +696,27 @@ sap.ui.define([], function() {
          // So, we need something like reapply selections after new scenes arrive.
       }
 
-      SelectElement(selection_obj, element_id, sec_idcs, extra)
+      SelectElement(selection_obj, element, sec_idcs, extra)
       {
-         let element = this.GetElement(element_id);
-         if ( ! element) return;
-
          let scene = this.GetElement(element.fSceneId);
          if (scene.$receivers) {
             for (let r of scene.$receivers)
             {
-               r.SelectElement(selection_obj, element_id, sec_idcs, extra);
+               r.SelectElement(selection_obj, element.fElementId, sec_idcs, extra);
             }
          }
 
          // console.log("EveManager.SelectElement", element, scene.$receivers[0].viewer.outline_pass.id2obj_map);
       }
 
-      UnselectElement(selection_obj, element_id)
+      UnselectElement(selection_obj, element)
       {
-         let element = this.GetElement(element_id);
-         if ( ! element) return;
-
          let scene = this.GetElement(element.fSceneId);
 
          if (scene.$receivers) {
             for (let r of scene.$receivers)
             {
-               r.UnselectElement(selection_obj, element_id);
+               r.UnselectElement(selection_obj, element.fElementId);
             }
          }
 
@@ -686,25 +727,41 @@ sap.ui.define([], function() {
       {
          // console.log("ServerEndRedrawCallback ", this.listScenesToRedraw);
          let recs = new Set();
+         let viewers = new Set();
          for ( let i =0; i < this.listScenesToRedraw.length; i++) {
             let scene = this.listScenesToRedraw[i];
             if (scene.$receivers) {
                for (let r=0; r < scene.$receivers.length; r++) {
-                  recs.add( scene.$receivers[r]);
+                  let sr = scene.$receivers[r];
+                  recs.add(sr);
+                  if (sr.glctrl) { viewers.add(sr.glctrl.viewer)};
                }
             }
          }
+
+         if (this.is_rcore)
+         {
+            for (let v of viewers ) {
+               v.timeStampAttributesAndTextures();
+            }
+         }
+
          for (let item of recs) {
             try {
                item.endChanges();
             } catch (e) {
-               EVE.alert("EveManager: Exception caught during update processing: " + e + "\n" +
-                  "You might want to reload the page in browser and / or check error consoles.");
                console.error("EveManager: Exception caught during update processing", e);
-
                // XXXX We might want to send e.name, e.message, e.stack back to the server.
             }
          }
+
+         if (this.is_rcore)
+         {
+            for (let v of viewers ) {
+               v.clearAttributesAndTextures();
+            }
+         }
+
 
          if (this.handle.kind != "file")
             this.handle.send("__REveDoneChanges");
@@ -743,6 +800,23 @@ sap.ui.define([], function() {
          }
       }
 
+      UT_EveViewerUpdate(el) {
+         if (el.hasOwnProperty('pendInstance')) {
+            this.controllers[0].makeEveViewController(el);
+            return;
+         }
+
+         // function can be called from import scene, or scene update
+         if (el.changeBit === undefined || el.changeBit === 0)
+            return;
+
+         for (const evl of this.controllers) {
+            if (typeof evl.eveViewerId !== 'undefined' && evl.eveViewerId == el.fElementId)
+            {
+               evl.updateViewerAttributes();
+            }
+         }
+      }
 
       //==============================================================================
       // Offline handling

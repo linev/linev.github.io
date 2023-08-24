@@ -4,7 +4,7 @@ function initEVE(source_dir) {
    if (globalThis.EVE)
       return Promise.resolve(globalThis.EVE);
 
-   let mpath = source_dir + "modules/";
+   let mpath = source_dir + 'modules/';
 
    return Promise.all([import(mpath+'three.mjs'),
                        import(mpath+'core.mjs'),

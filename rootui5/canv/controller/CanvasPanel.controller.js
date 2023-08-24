@@ -1,45 +1,46 @@
 sap.ui.define([
    'sap/ui/core/mvc/Controller',
    'sap/ui/core/ResizeHandler'
-], function (Controller, ResizeHandler) {
+], function (Controller,
+             ResizeHandler) {
    "use strict";
 
-   return Controller.extend("rootui5.canv.controller.CanvasPanel", {
+   return Controller.extend('rootui5.canv.controller.CanvasPanel', {
 
-      preserveCanvasContent: function () {
+      preserveCanvasContent() {
          // workaround, openui5 does not preserve DOM elements when calling onBeforeRendering
          let dom = this.getView().getDomRef();
-         if (this.canvas_painter && dom && dom.children.length && !this._mainChild) {
-            this._mainChild = dom.children[0];
+         if (this.canvas_painter && dom?.children.length && !this._mainChild) {
+            this._mainChild = dom.lastChild;
             dom.removeChild(this._mainChild);
          }
       },
 
-      onBeforeRendering: function() {
+      onBeforeRendering() {
          this.preserveCanvasContent();
          this._has_after_rendering = false;
       },
 
-      setPainter: function(painter) {
+      setPainter(painter) {
          this.canvas_painter = painter;
       },
 
-      getPainter: function() {
+      getPainter() {
          return this.canvas_painter;
       },
 
-      onAfterRendering: function() {
+      onAfterRendering() {
          // workaround for openui5 problem - called before actual dimension of HTML element is assigned
          // using timeout and resize event to handle it correctly
          this._has_after_rendering = true;
          this.invokeResizeTimeout(10);
       },
 
-      hasValidSize: function() {
+      hasValidSize() {
          return (this.getView().$().width() > 0) && (this.getView().$().height() > 0);
       },
 
-      invokeResizeTimeout: function(tmout) {
+      invokeResizeTimeout(tmout) {
         if (this.resize_tmout) {
             clearTimeout(this.resize_tmout);
             delete this.resize_tmout;
@@ -51,12 +52,29 @@ sap.ui.define([
            this.resize_tmout = setTimeout(this.onResizeTimeout.bind(this), tmout);
       },
 
+      /** @summary Set fixed size for canvas container */
+      setFixedSize(w, h, on) {
+         let dom = this.getView().getDomRef();
+         if (!dom?.lastChild) return false;
+
+         if (!this.isFixedSize && !on) return false;
+
+         this.isFixedSize = w && h && on;
+
+         if (this.isFixedSize)
+            dom.lastChild.style = `position:relative;left:0px;top:0px;width:${w}px;height:${h}px`;
+         else
+            dom.lastChild.style = 'position:relative;inset:0px;height:100%;width:100%';
+
+         return this.isFixedSize;
+      },
+
       /** @summary Handle openui5 resize glitch
         * @desc onAfterRendering method does not provide valid dimension of the HTML element
         * One should wait either resize event or timeout and check if valid size is there
         * Only then normal rendering can be started
         * Method also used to check resize events  */
-      onResizeTimeout: function() {
+      onResizeTimeout() {
          delete this.resize_tmout;
 
          if (!this.hasValidSize())
@@ -78,14 +96,15 @@ sap.ui.define([
             }
 
             if (dom && !dom.children.length) {
-               let d = document.createElement("div");
-               d.style = "position:relative;left:0;right:0;top:0;bottom:0;height:100%;width:100%";
+               let d = document.createElement('div');
+               d.style = 'position:relative;inset:0px;height:100%;width:100%';
                dom.appendChild(d);
+               this.isFixedSize = false;
             }
 
             if (this.canvas_painter) {
                this.canvas_painter.setDom(dom.lastChild);
-               this.canvas_painter.setPadName("");
+               this.canvas_painter.setPadName('');
             }
 
             if (this.canvas_painter && this.canvas_painter._window_handle) {
@@ -98,11 +117,11 @@ sap.ui.define([
             this.canvas_painter.checkCanvasResize();
       },
 
-      onInit: function() {
+      onInit() {
          ResizeHandler.register(this.getView(), this.invokeResizeTimeout.bind(this, 200));
       },
 
-      onExit: function() {
+      onExit() {
          if (this.canvas_painter) {
             this.canvas_painter.cleanup();
             delete this.canvas_painter;
