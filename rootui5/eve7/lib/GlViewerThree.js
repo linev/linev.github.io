@@ -102,11 +102,11 @@ sap.ui.define([
 
          // Lights are positioned in resetRenderer
 
-         this.ambient_light = new THREE.AmbientLight(0xefefef, 1);
-         this.scene.add(this.ambient_light);
-         //this.point_lights.add(new THREE.DirectionalLight(0xffffff, 0.7)); // R
-         //this.point_lights.add(new THREE.DirectionalLight(0xffffff, 0.7)); // G
-         //this.point_lights.add(new THREE.DirectionalLight(0xffffff, 0.7)); // B
+         this.point_lights = new THREE.Object3D();
+         this.point_lights.add(new THREE.AmbientLight(0xffffff, 1)); // R
+         this.point_lights.add(new THREE.AmbientLight(0xffffff, 1)); // G
+         this.point_lights.add(new THREE.AmbientLight(0xffffff, 1)); // B
+         this.scene.add(this.point_lights);
 
 
          // let plane = new THREE.GridHelper(20, 20, 0x80d080, 0x8080d0);
@@ -313,12 +313,10 @@ sap.ui.define([
          let extV = new THREE.Vector3; extV = negV; extV.negate(); extV.max(posV);
          let extR = extV.length();
 
-         //let lc = this.point_lights.children;
-         //lc[0].position.set(extR, extR, -extR);
-         //lc[1].position.set(-extR, extR, extR);
-         //lc[2].position.set(extR, extR, extR);
-
-         this.ambient_light.position.set(extR, extR, extR);
+         let lc = this.point_lights.children;
+         lc[0].position.set(extR, extR, -extR);
+         lc[1].position.set(-extR, extR, extR);
+         lc[2].position.set(extR, extR, extR);
 
          let s = 1.02;
          if (this.camera.isPerspectiveCamera) {
