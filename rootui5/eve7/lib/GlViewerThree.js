@@ -103,9 +103,9 @@ sap.ui.define([
          // Lights are positioned in resetRenderer
 
          this.point_lights = new THREE.Object3D();
-         this.point_lights.add(new THREE.AmbientLight(0xffffff, 1)); // R
-         this.point_lights.add(new THREE.AmbientLight(0xffffff, 1)); // G
-         this.point_lights.add(new THREE.AmbientLight(0xffffff, 1)); // B
+         this.point_lights.add(new THREE.DirectionalLight(0xffffff, 1)); // R
+         this.point_lights.add(new THREE.DirectionalLight(0xffffff, 1)); // G
+         this.point_lights.add(new THREE.DirectionalLight(0xffffff, 1)); // B
          this.scene.add(this.point_lights);
 
 
