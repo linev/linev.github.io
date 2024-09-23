@@ -2,14 +2,14 @@
 
 These are different test web pages with use of OpenUI
 
-[Geometry viewer](geomCMS/)
+[Geometry viewer](https://linev.github.io/geomCMS/)
 
-[Eve7 demo](eve7/)
+[Eve7 demo](https://linev.github.io/eve7/)
 
-[Only WebGL in Eve7](eve7/#/view/Default)
+[Only WebGL in Eve7](https://linev.github.io/eve7/#/view/Default)
 
-[Lines set](lines/)
+[Lines set](https://linev.github.io/lines/)
 
-[FitPanel snapshot](fitPanel/)
+[FitPanel snapshot](https://linev.github.io/fitPanel/)
 
-[hsimple](hsimple/)
+[hsimple](https://linev.github.io/hsimple/)
