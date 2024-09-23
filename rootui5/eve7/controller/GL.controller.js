@@ -44,8 +44,8 @@ sap.ui.define([
          // console.log('COMPONENT DATA', Component.getOwnerComponentFor(this.getView()).getComponentData());
 
          this.setupManagerAndViewType(Component.getOwnerComponentFor(this.getView()).getComponentData(),
-                                      args.viewName, EVE.$eve7tmp);
-
+            args.viewName, EVE.$eve7tmp);
+         this.mgr.controllers[0].setToolbarExpandedAction(this);
          delete EVE.$eve7tmp;
 
          this.checkViewReady();
@@ -168,9 +168,10 @@ sap.ui.define([
       //==============================================================================
 
       /** returns container for 3d objects */
-      getSceneContainer: function(scene_name)
+      getSceneContainer: function(scene)
       {
-         let parent = this.viewer.get_top_scene();
+         let parent = scene.IsOverlay ? this.viewer.get_overlay_scene() : this.viewer.get_top_scene();
+         let scene_name = "scene" + scene.id;
 
          for (let k = 0; k < parent.children.length; ++k)
          {
