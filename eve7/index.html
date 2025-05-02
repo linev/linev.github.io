@@ -3,6 +3,26 @@
    <head>
       <meta charset="utf-8">
       <title>Eve7</title>
+      <script type="importmap">
+         {
+           "imports": {
+             "jsroot": "https://jsroot.gsi.de/dev//modules/main.mjs",
+             "jsroot/core": "https://jsroot.gsi.de/dev//modules/core.mjs",
+             "jsroot/d3": "https://jsroot.gsi.de/dev/modules/d3.mjs",
+             "jsroot/draw": "https://jsroot.gsi.de/dev/modules/draw.mjs",
+             "jsroot/geom": "https://jsroot.gsi.de/dev/modules/geom/TGeoPainter.mjs",
+             "jsroot/gui": "https://jsroot.gsi.de/dev/modules/gui.mjs",
+             "jsroot/hpainter": "https://jsroot.gsi.de/dev/modules/gui/HierarchyPainter.mjs",
+             "jsroot/io": "https://jsroot.gsi.de/dev/modules/io.mjs",
+             "jsroot/three": "https://jsroot.gsi.de/dev/modules/three.mjs",
+             "jsroot/three_addons": "https://jsroot.gsi.de/dev/modules/three_addons.mjs",
+             "jsroot/tree": "https://jsroot.gsi.de/dev//modules/tree.mjs",
+             "jsroot/webwindow": "https://jsroot.gsi.de/dev/modules/webwindow.mjs",
+             "jsrootsys/": "https://jsroot.gsi.de/dev/",
+             "rootui5sys/": "../rootui5/"
+           }
+         }
+      </script>
       <style>
          html { height: 100%; }
          body { min-height: 100%; margin: 0; overflow: hidden }
@@ -25,8 +45,8 @@
 
    <script type='module'>
 
-      import { connectWebWindow } from 'https://jsroot.gsi.de/dev/modules/webwindow.mjs';
-      import { initEVE } from '../rootui5/eve7/eve.mjs';
+      import { connectWebWindow } from 'jsroot/webwindow';
+      import { initEVE } from 'rootui5sys/eve7/eve.mjs';
 
       initEVE().then(() => connectWebWindow({
          socket_kind: "file",  // used for offline
@@ -36,14 +56,21 @@
       })).then(handle => {
          sap.ui.loader.config({ paths: { rootui5: "../rootui5/" } });  // used for offline
 
+         const urlParams = new URLSearchParams(window.location.search);
+         let mode_mm = urlParams.get('Single');
+         let manifestPath = true;
+         if (mode_mm && mode_mm.length >= 0)
+            manifestPath = "rootui5sys/eve7/manifest-mini.json";
+
          sap.ui.require(["sap/ui/core/ComponentContainer"], ComponentContainer => {
             new ComponentContainer({
                name: "rootui5.eve7",
-               manifest: true,
+               manifest: manifestPath,
                async: true,
                settings: {
                   componentData: {
-                     conn_handle: handle
+                     conn_handle: handle,
+                     sgv_undock: mode_mm
                   }
                },
                height: "100%"
