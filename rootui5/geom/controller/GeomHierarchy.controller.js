@@ -197,7 +197,8 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
       assignRowHandlers() {
          let rows = this.byId("treeTable").getRows();
          for (let k = 0; k < rows.length; ++k)
-            rows[k].$().hover(this.onRowHover.bind(this, rows[k], true), this.onRowHover.bind(this, rows[k], false));
+            rows[k].$().hover(this.onRowHover.bind(this, rows[k], true), this.onRowHover.bind(this, rows[k], false))
+                       .css('user-select', 'none');
       },
 
       /** @brief Handler for mouse-hover event
@@ -463,7 +464,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
             this.selectedStack = this.getStackByPath(this.fullModel, path);
       },
 
-      /** @summary Show special message insted of nodes hierarchy */
+      /** @summary Show special message instead of nodes hierarchy */
       showTextInBrowser(text) {
          let br = this.byId("treeTable");
          br.collapseAll();

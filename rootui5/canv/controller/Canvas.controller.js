@@ -94,7 +94,7 @@ sap.ui.define([
 
             model.setProperty('/canResize', !cp.embed_canvas && cp.online_canvas);
 
-            let ws = cp._websocket || cp._window_handle;
+            let ws = cp.getWebsocket() || cp._window_handle;
             if (!cp.embed_canvas && ws?.addReloadKeyHandler)
                ws.addReloadKeyHandler();
          }
@@ -159,7 +159,7 @@ sap.ui.define([
       getCanvasPainter(also_without_websocket) {
          let p = this.getView().byId('MainPanel')?.getController().getPainter();
 
-         return (p && (p._websocket || also_without_websocket)) ? p : null;
+         return (p && (p.getWebsocket() || also_without_websocket)) ? p : null;
       },
 
       setFixedCanvasSize(cw, ch, fixed) {
@@ -288,8 +288,8 @@ sap.ui.define([
                p.sendWebsocket('INTERRUPT');
                break;
             case 'Reload':
-               if (typeof p._websocket?.askReload == 'function')
-                  p._websocket.askReload();
+               if (typeof p.getWebsocket()?.askReload == 'function')
+                  p.getWebsocket().askReload();
                break;
             case 'Quit ROOT':
                p.sendWebsocket('QUIT');
@@ -311,7 +311,7 @@ sap.ui.define([
                   filters.push('C++ (*.cxx *.cpp *.c)');
 
                FileDialogController.SaveAs({
-                  websocket: p._websocket,
+                  websocket: p.getWebsocket(),
                   filename: canname + '.png',
                   title: 'Select file name to save canvas',
                   filter: 'Png files',
@@ -408,7 +408,7 @@ sap.ui.define([
          if (!split || (!curr && !panel_name) || (curr === panel_name))
             return Promise.resolve(null);
 
-         const adjust_window_width = is_flex ^ was_flex;
+         const adjust_window_width = (is_flex ^ was_flex) && !canvp?._ignore_section_resize;
 
          if (adjust_window_width)
             can_elem?.getController().rememberAreaSize();
@@ -580,23 +580,31 @@ sap.ui.define([
          this.getView().getModel().setProperty('/StatusIcon', chk_icon(new_state));
 
          if (this.isStatusShown() != new_state) {
-            // restore size after next resize
-            this.getView().byId('MainPanel')?.getController().rememberAreaSize();
-            this._Page.setShowFooter(new_state);
             const canvp = this.getCanvasPainter();
+            // restore canvas size after getting next resize event
+            if (!canvp?._ignore_section_resize)
+               this.getView().byId('MainPanel')?.getController().rememberAreaSize();
+            this._Page.setShowFooter(new_state);
             canvp?.processChanges('sbits', canvp);
          }
       },
 
+      isToolBarShown() {
+         return this._Page.getShowSubHeader();
+      },
+
       toggleToolBar(new_state) {
+         const old_state = this.isToolBarShown();
          if (new_state === undefined)
-            new_state = this.getView().getModel().getProperty('/ToolbarIcon') === chk_icon(false);
+            new_state = !old_state;
 
-         this.getView().byId('MainPanel')?.getController().rememberAreaSize();
-
-         this._Page.setShowSubHeader(new_state);
-
-         this.getView().getModel().setProperty('/ToolbarIcon', chk_icon(new_state));
+         if (new_state !== old_state) {
+            // restore canvas size after getting next resize event
+            if (!this.getCanvasPainter()?._ignore_section_resize)
+               this.getView().byId('MainPanel')?.getController().rememberAreaSize();
+            this._Page.setShowSubHeader(new_state);
+            this.getView().getModel().setProperty('/ToolbarIcon', chk_icon(new_state));
+         }
       },
 
       toggleToolTip(new_state) {
